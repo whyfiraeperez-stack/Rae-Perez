@@ -1,0 +1,6 @@
+{
+  "name": "Almasor Performance Hub",
+  "description": "Sales performance and SLI monitoring dashboard for Bicol territory (Albay, Sorsogon, Masbate) tracking FiberX, SME, BIDA MTD vs target with raw JO data and formula engine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
