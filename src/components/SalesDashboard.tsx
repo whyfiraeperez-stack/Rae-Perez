@@ -53,7 +53,7 @@ export function SalesDashboard({ onSyncToDashboard, initialUrl = "" }: SalesDash
     Papa.parse(activeUrl, {
       download: true,
       header: true,
-      skipEmptyLines: true,
+      skipEmptyLines: 'greedy',
       complete: (results) => {
         console.log("Parsed Data:", results.data);
         const data = results.data as any[];

@@ -233,10 +233,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <div className="mt-3 pt-2.5 border-t border-[#1e6147] flex items-center justify-between text-[11px] text-emerald-200/90 font-mono">
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  COUNTIFS: 149 (Albay) + 59 (Sorsogon) + 70 (Masbate)
+                  {selectedTerritory === 'All districts' ? (
+                    <>COUNTIFS: {metrics.territoryBreakdowns.ALBAY?.totalFiberX ?? 0} (Albay) + {metrics.territoryBreakdowns.SORSOGON?.totalFiberX ?? 0} (Sorsogon) + {metrics.territoryBreakdowns.MASBATE?.totalFiberX ?? 0} (Masbate)</>
+                  ) : (
+                    <>COUNTIFS ({selectedTerritory}): {metrics.territoryBreakdowns[selectedTerritory as Province]?.inhouseFiberX ?? 0} (Inhouse) + {metrics.territoryBreakdowns[selectedTerritory as Province]?.msaFiberX ?? 0} (MSA)</>
+                  )}
                 </span>
                 <span className="font-bold text-white bg-[#0e3b2a] px-2 py-0.5 rounded border border-[#237053]">
-                  = 278 FiberX
+                  = {runningActual} FiberX
                 </span>
               </div>
             )}

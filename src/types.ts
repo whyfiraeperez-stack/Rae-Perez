@@ -22,7 +22,8 @@ export interface JORecord {
   vendorType: SliType;
   activationDate: string; // YYYY-MM-DD
   status: 'Activated' | 'For Activation' | 'For Closeout';
-  amount?: number; // for SME packages
+  amount?: number; // for SME packages (Col AE: MRC)
+  monthActivated?: string; // Col AA: MONTH ACTIVATED
   slaHours?: number; // e.g. 18, 36, 72, 140
 }
 

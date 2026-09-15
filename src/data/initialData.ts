@@ -165,131 +165,138 @@ export function generateInitialRecords(): JORecord[] {
   addFiberXGroup('SBAS', 'MSA', 'MASBATE', 1, 'R');
 
   // --- 4. SME PACKAGES: Exactly ₱67,990.00 across 17 packages ---
+  // Using exact Column G (Province), Column S (SLI Type), Column AA (Month Activated), Column AC (Package), Column AE (MRC)
+  
   // Albay Inhouse SME (4 packages = ₱16,948.00):
   const albayInhouseSme = [
-    { pkg: 'BizeDge 11000', amt: 11000, vendor: 'INHOUSE - SME', day: 3 },
-    { pkg: 'FlexiBiz 2000', amt: 2000, vendor: 'INHOUSE - BUSINESS CENTER', day: 8 },
-    { pkg: 'MicroBiz 2448', amt: 2448, vendor: 'INHOUSE - SALES AGENT', day: 9 },
-    { pkg: 'FastBiz 1500', amt: 1500, vendor: 'INHOUSE - TECHNICAL DEPARTMENT', day: 11 },
+    { jo: 'R3740007', pkg: 'SME', amt: 1449, vendor: 'INHOUSE - TECHNICAL DEPARTMENT', crew: 'Karl Justin Mora Morada Eclarinal', day: 12 },
+    { jo: 'R3740015', pkg: 'SME', amt: 11000, vendor: 'INHOUSE - SME', crew: 'Mediavillo, Jonel Miraflor', day: 7 },
+    { jo: 'R3740016', pkg: 'SME', amt: 2000, vendor: 'INHOUSE - BUSINESS CENTER', crew: 'INHOUSE - BC', day: 8 },
+    { jo: 'R3740017', pkg: 'SME', amt: 2499, vendor: 'INHOUSE - TECHNICAL DEPARTMENT', crew: 'Mediavillo, Jonel Miraflor', day: 10 },
   ];
   albayInhouseSme.forEach((s) => {
     records.push({
       id: `jo-${idCounter++}`,
-      joNumber: `SME${3780000 + idCounter}`,
+      joNumber: s.jo,
       stateOrProvince: 'ALBAY',
       city: 'CITY OF LEGAZPI',
-      barangayName: 'Bgy. 26 Gogot Commercial',
+      barangayName: 'Central Commercial Hub',
       packageName: s.pkg,
       category: 'SME',
       napCode: 'ALBSME LP01 P2-O',
       napPort: 'P2-O',
-      crew: 'RV069-',
+      crew: s.crew,
       cpeSerialNo: `48575443${(20000 + idCounter).toString(16).toUpperCase()}`,
       agentCode: `${s.vendor} Rep`,
-      sliSystemCheckCrewCode: 'RAVENOUS SLR',
+      sliSystemCheckCrewCode: s.crew,
       sli: s.vendor,
       sliType: 'INHOUSE',
       vendor: s.vendor,
       vendorType: 'INHOUSE',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
       slaHours: 24,
     });
   });
 
-  // Albay MSA SME (3 packages = ₱10,895.00):
+  // Albay MSA SME (6 packages = ₱10,895.00):
   const albayMsaSme = [
-    { pkg: 'BizeDge 4500', amt: 4500, vendor: 'DOMINGUIANO ENTERPRISE', day: 5 },
-    { pkg: 'FastBiz 3500', amt: 3500, vendor: 'SBAS', day: 7 },
-    { pkg: 'MicroBiz 2895', amt: 2895, vendor: 'TOUKON', day: 12 },
+    { jo: 'R3740004', pkg: 'SME', amt: 1599, vendor: 'SBAS', crew: 'ALVIN B. SARCAUGA', day: 3 },
+    { jo: 'R3740005', pkg: 'SME', amt: 2499, vendor: 'SBAS', crew: 'ALVIN B. SARCAUGA', day: 13 },
+    { jo: 'R3740006', pkg: 'SME', amt: 2000, vendor: 'SBAS', crew: 'ALVIN B. SARCAUGA', day: 7 },
+    { jo: 'R3740008', pkg: 'SME', amt: 1599, vendor: 'TOUKON', crew: 'Richard Arimado', day: 11 },
+    { jo: 'R3740009', pkg: 'SME', amt: 1599, vendor: 'BRYTH', crew: 'Allan Bonina', day: 2 },
+    { jo: 'R3740010', pkg: 'SME', amt: 1599, vendor: 'A. NARVAEZ STORE', crew: 'Felix Andes', day: 5 },
   ];
   albayMsaSme.forEach((s) => {
     records.push({
       id: `jo-${idCounter++}`,
-      joNumber: `SME${3780000 + idCounter}`,
+      joNumber: s.jo,
       stateOrProvince: 'ALBAY',
       city: 'DARAGA',
-      barangayName: 'San Roque Market Hub',
+      barangayName: 'Market Commercial Area',
       packageName: s.pkg,
       category: 'SME',
       napCode: 'ALBSME LP04 P4-O',
       napPort: 'P4-O',
-      crew: 'RV116-',
+      crew: s.crew,
       cpeSerialNo: `48575443${(20000 + idCounter).toString(16).toUpperCase()}`,
       agentCode: `${s.vendor} Rep`,
-      sliSystemCheckCrewCode: s.vendor,
+      sliSystemCheckCrewCode: s.crew,
       sli: s.vendor,
       sliType: 'MSA',
       vendor: s.vendor,
       vendorType: 'MSA',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
       slaHours: 22,
     });
   });
 
-  // Sorsogon Inhouse SME (3 packages = ₱9,599.00):
+  // Sorsogon Inhouse SME (2 packages = ₱3,599.00):
   const sorsogonInhouseSme = [
-    { pkg: 'MICROBIZ MAX', amt: 3200, vendor: 'INHOUSE - BUSINESS CENTER', day: 7 },
-    { pkg: 'BizeDge 4399', amt: 4399, vendor: 'INHOUSE - SALES AGENT', day: 10 },
-    { pkg: 'FlexiBiz 2000', amt: 2000, vendor: 'INHOUSE - TECHNICAL DEPARTMENT', day: 12 },
+    { jo: 'R3740001', pkg: 'SME', amt: 1599, vendor: 'INHOUSE - BUSINESS CENTER', crew: 'Dometita, Lance', day: 11 },
+    { jo: 'R3740012', pkg: 'SME', amt: 2000, vendor: 'INHOUSE - SALES AGENT', crew: 'Salvador Monde Salvador Mondejar', day: 10 },
   ];
   sorsogonInhouseSme.forEach((s) => {
     records.push({
       id: `jo-${idCounter++}`,
-      joNumber: `SME${3780000 + idCounter}`,
+      joNumber: s.jo,
       stateOrProvince: 'SORSOGON',
       city: 'CITY OF SORSOGON',
-      barangayName: 'Piot Pob Commercial',
+      barangayName: 'Piot Commercial Area',
       packageName: s.pkg,
       category: 'SME',
       napCode: 'SORSME LP02 P1-O',
       napPort: 'P1-O',
-      crew: 'RV057-',
+      crew: s.crew,
       cpeSerialNo: `48575443${(20000 + idCounter).toString(16).toUpperCase()}`,
       agentCode: `${s.vendor} Rep`,
-      sliSystemCheckCrewCode: 'RAVENOUS SLR',
+      sliSystemCheckCrewCode: s.crew,
       sli: s.vendor,
       sliType: 'INHOUSE',
       vendor: s.vendor,
       vendorType: 'INHOUSE',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
       slaHours: 26,
     });
   });
 
-  // Sorsogon MSA SME (5 packages = ₱22,449.00):
+  // Sorsogon MSA SME (3 packages = ₱28,449.00):
+  // Col G: SORSOGON, Col S: MSA, Col AA: September, Col AC: SME, Col AE: MRC
   const sorsogonMsaSme = [
-    { pkg: 'BizeDge 2100', amt: 2100, vendor: 'DOMINGUIANO ENTERPRISE', day: 5 },
-    { pkg: 'BizeDge 8000', amt: 8000, vendor: 'A. NARVAEZ STORE', day: 6 },
-    { pkg: 'FastBiz 5000', amt: 5000, vendor: 'SBAS', day: 9 },
-    { pkg: 'MicroBiz 4349', amt: 4349, vendor: 'BRYTH', day: 11 },
-    { pkg: 'FlexiBiz 3000', amt: 3000, vendor: 'SBAS', day: 13 },
+    { jo: 'R3740002', pkg: 'SME', amt: 21000, vendor: 'DOMINGUIANO ENTERPRISE', crew: 'Fuentes, Jessica', day: 7 },
+    { jo: 'R3740003', pkg: 'SME', amt: 1449, vendor: 'DOMINGUIANO ENTERPRISE', crew: 'Fuentes, Jessica', day: 8 },
+    { jo: 'R3740013', pkg: 'SME', amt: 6000, vendor: 'DOMINGUIANO ENTERPRISE', crew: 'Ernesto Roman', day: 10 },
   ];
   sorsogonMsaSme.forEach((s) => {
     records.push({
       id: `jo-${idCounter++}`,
-      joNumber: `SME${3780000 + idCounter}`,
+      joNumber: s.jo,
       stateOrProvince: 'SORSOGON',
       city: 'GUBAT',
-      barangayName: 'Bulacao Commercial',
+      barangayName: 'Bulacao Commercial Area',
       packageName: s.pkg,
       category: 'SME',
       napCode: 'SORSME LP05 P3-O',
       napPort: 'P3-O',
-      crew: 'RV116-',
+      crew: s.crew,
       cpeSerialNo: `48575443${(20000 + idCounter).toString(16).toUpperCase()}`,
       agentCode: `${s.vendor} Rep`,
-      sliSystemCheckCrewCode: s.vendor,
+      sliSystemCheckCrewCode: s.crew,
       sli: s.vendor,
       sliType: 'MSA',
       vendor: s.vendor,
       vendorType: 'MSA',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
       slaHours: 24,
@@ -298,32 +305,33 @@ export function generateInitialRecords(): JORecord[] {
 
   // Masbate Inhouse SME (2 packages = ₱8,099.00):
   const masbateInhouseSme = [
-    { pkg: 'FastBiz 4500', amt: 4500, vendor: 'RAVENOUS SLI', day: 8 },
-    { pkg: 'MicroBiz 3599', amt: 3599, vendor: 'INHOUSE - BUSINESS CENTER', day: 10 },
+    { jo: 'R3740011', pkg: 'SME', amt: 6000, vendor: 'RAVENOUS SLI', crew: 'Gallarte, Jomar', day: 9 },
+    { jo: 'R3740014', pkg: 'SME', amt: 2099, vendor: 'INHOUSE - BUSINESS CENTER', crew: 'Bondad, Marvin Cabug', day: 1 },
   ];
   masbateInhouseSme.forEach((s) => {
     records.push({
       id: `jo-${idCounter++}`,
-      joNumber: `SME${3780000 + idCounter}`,
+      joNumber: s.jo,
       stateOrProvince: 'MASBATE',
       city: 'MASBATE CITY',
-      barangayName: 'Port Area Center',
+      barangayName: 'Port Commercial Center',
       packageName: s.pkg,
       category: 'SME',
       napCode: 'MASSME LP01 P2-O',
       napPort: 'P2-O',
-      crew: 'RV069-',
+      crew: s.crew,
       cpeSerialNo: `48575443${(20000 + idCounter).toString(16).toUpperCase()}`,
       agentCode: `${s.vendor} Rep`,
-      sliSystemCheckCrewCode: 'RAVENOUS SLR',
+      sliSystemCheckCrewCode: s.crew,
       sli: s.vendor,
       sliType: 'INHOUSE',
       vendor: s.vendor,
       vendorType: 'INHOUSE',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
-      slaHours: 28,
+      slaHours: 24,
     });
   });
 

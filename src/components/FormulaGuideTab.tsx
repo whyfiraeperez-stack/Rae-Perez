@@ -71,7 +71,7 @@ export const FormulaGuideTab: React.FC<FormulaGuideTabProps> = ({ metrics }) => 
             On September 14, <strong>Days Elapsed = 14</strong> and <strong>Days In Month = 30</strong> (Runrate factor = 30 / 14 ≈ 2.14).
             MTD <strong>{metrics.fiberXCount}</strong> FiberX projects to <strong>{metrics.fiberXRunrate}</strong> month-end activations ({Math.round(metrics.fiberXRunratePct)}% of 859 target).
             <span className="block mt-2 p-2 bg-emerald-50 text-emerald-900 rounded-lg text-[11px] font-medium border border-emerald-200">
-              ✓ Verified via COUNTIFS from raw data: 149 (Albay) + 59 (Sorsogon) + 70 (Masbate) = 278 FiberX.
+              ✓ Verified via COUNTIFS from live data: {metrics.territoryBreakdowns.ALBAY?.totalFiberX ?? 0} (Albay) + {metrics.territoryBreakdowns.SORSOGON?.totalFiberX ?? 0} (Sorsogon) + {metrics.territoryBreakdowns.MASBATE?.totalFiberX ?? 0} (Masbate) = {metrics.fiberXCount} FiberX.
             </span>
           </p>
         </div>

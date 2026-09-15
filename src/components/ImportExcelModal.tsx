@@ -79,7 +79,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     Papa.parse(url, {
       download: true,
       header: true,
-      skipEmptyLines: true,
+      skipEmptyLines: 'greedy',
       complete: (results) => {
         const rawRows = results.data as any[];
         if (!rawRows || rawRows.length === 0) {
@@ -257,26 +257,29 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     };
 
     // Detected column indices
-    // In the Converge sheet: Col G (idx 6)=Province, Col S (idx 18)=SLI TYPE, Col T (idx 19)=VENDOR,
+    // In the Converge sheet:
+    // Col G (idx 6)=Province, Col S (idx 18)=SLI TYPE, Col T (idx 19)=VENDOR,
     // Col U (idx 20)=VENDOR TYPE, Col V (idx 21)=JO DATE, Col W (idx 22)=AGEING, Col X (idx 23)=AGEING DAYS,
-    // Col Y (idx 24)=SLA, Col Z (idx 25)=DELAY REMARKS, Col AC (idx 28)=PACKAGE, Col AE (idx 30)=MRC
-    const provCol = findCol((k) => k.includes('stateorprovince') || k.includes('province') || k === 'state', 6);
-    const sliTypeCol = findCol((k) => (k.includes('slitype') || k === 'channel') && !k.includes('vendor'), 18);
+    // Col Y (idx 24)=SLA, Col Z (idx 25)=DELAY REMARKS, Col AA (idx 26)=MONTH ACTIVATED,
+    // Col AC (idx 28)=PACKAGE, Col AE (idx 30)=MRC
+    const provCol = findCol((k) => k === 'stateorprovince' || k === 'province' || k === 'state', 6);
+    const sliTypeCol = findCol((k) => (k === 'slitype' || k === 'channel') && !k.includes('vendor'), 18);
     const vendorCol = findVendorCol();
     const vendorTypeCol = findCol((k) => k === 'vendortype' || k === 'type', 20);
+    const monthCol = findCol((k) => k === 'monthactivated' || k === 'month' || k === 'activationmonth', 26);
     const wfmSliCol = findCol((k) => k.includes('wfmsliname') || k.includes('wfmsli') || k === 'sliname', -1);
     const joDateCol = findCol((k) => k.includes('jodate') || k === 'date' || k.includes('activationdate'), 21);
     const slaCol = findCol((k) => k === 'sla' || k.includes('ageingdays') || k.includes('aging'), 24);
     const remarksCol = findCol((k) => k.includes('delayremarks') || k.includes('remarks') || k === 'status', 25);
-    const pkgCol = findCol((k) => k === 'package' || k === 'packagename' || k.includes('pkg') || k === 'plan' || k === 'product', 28);
-    const mrcCol = findCol((k) => k === 'mrc' || k === 'amount' || k.includes('monthly') || k.includes('revenue') || k === 'price', 30);
+    const pkgCol = findCol((k) => k === 'package' || k === 'packagename' || k === 'plan' || k === 'product', 28);
+    const mrcCol = findCol((k) => k === 'mrc', 30);
     const joNumCol = findCol((k) => k.includes('jono') || k.includes('jonumber') || k === 'jo', 0);
     const cityCol = findCol((k) => k === 'city' || k === 'municipality', 4);
     const barangayCol = findCol((k) => k === 'barangay' || k.includes('brgy'), 3);
     const crewCol = findCol((k) => k.includes('crew') || k.includes('slisystemcheck'), 18);
 
     setDetectedHeaderInfo(
-      `Header at Row ${bestHeaderRowIdx + 1}: Province(Col ${provCol + 1}), Package(Col ${pkgCol + 1}), Channel(Col ${sliTypeCol + 1}), Vendor(Col ${vendorCol + 1}), MRC(Col ${mrcCol + 1})`
+      `Header at Row ${bestHeaderRowIdx + 1}: Province(Col ${provCol + 1}), Channel(Col ${sliTypeCol + 1}), Month(Col ${monthCol + 1}), Package(Col ${pkgCol + 1}), MRC(Col ${mrcCol + 1})`
     );
 
     const mappedRecords: JORecord[] = [];

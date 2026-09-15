@@ -132,8 +132,15 @@ export function countifsJO(
 }
 
 /**
- * Calculates sum of SME amounts replicating SUMIFS in Google Sheets:
- * =SUMIFS('JO ACTIVATED'!$Amount, 'JO ACTIVATED'!$A:$A, Province, 'JO ACTIVATED'!$G:$G, Channel, 'JO ACTIVATED'!$S:$S, "SME")
+ * Calculates sum of SME amounts replicating SUMIFS in Google Sheets & Excel:
+ * =SUMIFS('JO ACTIVATED'!$AE:$AE, 'JO ACTIVATED'!$G:$G, Province, 'JO ACTIVATED'!$S:$S, Channel, 'JO ACTIVATED'!$AA:$AA, Month, 'JO ACTIVATED'!$AC:$AC, "SME")
+ *
+ * Mapped directly to Converge Almasor columns:
+ * - Col AE: MRC (Amount to sum)
+ * - Col G:  STATEORPROVINCE (ALBAY, SORSOGON, MASBATE)
+ * - Col S:  SLI TYPE (INHOUSE, MSA)
+ * - Col AA: MONTH ACTIVATED (e.g. "September")
+ * - Col AC: PACKAGE (SME)
  */
 export function sumifsAmount(
   records: JORecord[],
@@ -141,17 +148,24 @@ export function sumifsAmount(
     province?: Province;
     sliType?: SliType;
     category?: PackageCategory;
+    month?: string;
   }
 ): number {
   return records
     .filter((r) => {
+      // 1. Column G: STATEORPROVINCE
       if (criteria.province && r.stateOrProvince !== criteria.province) return false;
+      // 2. Column S: SLI TYPE
       if (criteria.sliType && r.sliType !== criteria.sliType) return false;
+      // 3. Column AC: PACKAGE / category
       if (criteria.category && r.category !== criteria.category) return false;
+      // 4. Column AA: MONTH ACTIVATED (if specified)
+      if (criteria.month && r.monthActivated && r.monthActivated.toLowerCase() !== criteria.month.toLowerCase()) return false;
+      // 5. Active Status
       if (r.status !== 'Activated') return false;
       return true;
     })
-    .reduce((sum, r) => sum + (r.amount || 2000), 0);
+    .reduce((sum, r) => sum + (typeof r.amount === 'number' ? r.amount : 0), 0);
 }
 
 /**
