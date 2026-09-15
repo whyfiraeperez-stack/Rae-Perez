@@ -1,7 +1,7 @@
 import React from 'react';
 import { LayoutDashboard, TrendingUp, Users, Database, FileSpreadsheet, Calculator } from 'lucide-react';
 
-export type NavTab = 'overview' | 'performance' | 'vendors' | 'raw_data' | 'formula_guide';
+export type NavTab = 'overview' | 'performance' | 'vendors' | 'raw_data' | 'formula_guide' | 'live_sync';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -146,6 +146,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Calculator className="w-4 h-4 shrink-0" />
             <span>Formula Engine</span>
+          </button>
+
+          <button
+            id="nav-live-sync"
+            onClick={() => onSelectTab('live_sync')}
+            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-150 ${
+              activeTab === 'live_sync'
+                ? 'bg-[#c5eed9] text-[#0d2a21] shadow-sm'
+                : 'text-[#96bdae] hover:text-white hover:bg-[#153e31]'
+            }`}
+          >
+            <div className="flex items-center gap-3.5">
+              <FileSpreadsheet className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>Google Sheet Sync</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              Live
+            </span>
           </button>
         </nav>
       </div>

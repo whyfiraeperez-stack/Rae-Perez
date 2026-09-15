@@ -63,18 +63,22 @@ export interface DailyMetrics {
 
 export interface SyncSourceInfo {
   fileName: string;
-  sheetName: string;
-  importedAt: string;
-  totalRecords: number;
-  fiberXCount: number;
-  smeCount: number;
-  bidaCount: number;
-  s2sCount: number;
-  smeAmountVatInc: number;
-  albayCount: number;
-  sorsogonCount: number;
-  masbateCount: number;
-  inhouseCount: number;
-  msaCount: number;
+  sheetName?: string;
+  sourceUrl?: string;
+  isGoogleSheet?: boolean;
+  importedAt?: string;
+  lastSyncTime?: string;
+  rowCount?: number;
+  totalRecords?: number;
+  fiberXCount?: number;
+  smeCount?: number;
+  bidaCount?: number;
+  s2sCount?: number;
+  smeAmountVatInc?: number;
+  albayCount?: number;
+  sorsogonCount?: number;
+  masbateCount?: number;
+  inhouseCount?: number;
+  msaCount?: number;
   isScreenshotSample?: boolean;
 }

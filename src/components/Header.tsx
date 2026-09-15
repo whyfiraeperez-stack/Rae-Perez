@@ -8,6 +8,7 @@ interface HeaderProps {
   onRefresh: () => void;
   onOpenImport: () => void;
   onOpenAddRecord: () => void;
+  onOpenLiveSync?: () => void;
   recordCount: number;
   vendorCount: number;
   isRefreshing?: boolean;
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefresh,
   onOpenImport,
   onOpenAddRecord,
+  onOpenLiveSync,
   recordCount,
   vendorCount,
   isRefreshing = false,
@@ -101,6 +103,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-600' : ''}`} />
           </button>
+
+          {/* Google Sheet Live Sync button */}
+          {onOpenLiveSync && (
+            <button
+              id="header-sync-gsheet-btn"
+              onClick={onOpenLiveSync}
+              className="flex items-center gap-2 bg-[#e8f7ee] hover:bg-[#d6f0df] border border-[#a8ddbe] text-[#0d3f2c] px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Sync Google Sheet</span>
+            </button>
+          )}
 
           {/* Import Excel button */}
           <button

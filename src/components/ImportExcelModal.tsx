@@ -15,9 +15,11 @@ import {
   Table as TableIcon,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import Papa from 'papaparse';
 import { JORecord, Province, SliType, PackageCategory } from '../types';
 import { SCREENSHOT_SAMPLE_RECORDS } from '../data/screenshotData';
 import { normalizeVendorName } from '../utils/calculations';
+import { mapCsvRowsToJORecords } from '../utils/csvMapper';
 
 interface ImportExcelModalProps {
   isOpen: boolean;
@@ -58,7 +60,49 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const [mode, setMode] = useState<'replace' | 'append'>('replace');
   const [detectedHeaderInfo, setDetectedHeaderInfo] = useState<string>('');
   const [isSampleLoaded, setIsSampleLoaded] = useState(false);
+  const [sourceType, setSourceType] = useState<'excel' | 'gsheet'>('excel');
+  const [gsheetUrl, setGsheetUrl] = useState<string>(() => {
+    return localStorage.getItem('almasor_google_sheet_csv_url') || '';
+  });
+  const [gsheetLoading, setGsheetLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchGoogleSheetCsv = (urlToFetch?: string) => {
+    const url = (urlToFetch !== undefined ? urlToFetch : gsheetUrl).trim();
+    if (!url) {
+      setError('Please provide a valid published Google Sheet CSV link.');
+      return;
+    }
+    setGsheetLoading(true);
+    setError('');
+
+    Papa.parse(url, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const rawRows = results.data as any[];
+        if (!rawRows || rawRows.length === 0) {
+          setError('Google Sheet CSV returned 0 rows.');
+          setGsheetLoading(false);
+          return;
+        }
+        const mapped = mapCsvRowsToJORecords(rawRows);
+        setParsedData(mapped);
+        setFileName('Google_Sheet_Live.csv');
+        setSelectedSheet('JO ACTIVATED');
+        setAvailableSheets([{ name: 'JO ACTIVATED', rowCount: mapped.length, isRecommended: true }]);
+        setDetectedHeaderInfo(`Google Sheet CSV synced via PapaParse: ${mapped.length} records parsed`);
+        setIsSampleLoaded(false);
+        setGsheetLoading(false);
+        localStorage.setItem('almasor_google_sheet_csv_url', url);
+      },
+      error: (err) => {
+        setError(err.message || 'Failed to parse Google Sheet CSV.');
+        setGsheetLoading(false);
+      },
+    });
+  };
 
   const cleanKey = (val: any): string => {
     return String(val || '')
@@ -627,34 +671,98 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
           </button>
         </div>
 
-        {/* Dropzone */}
-        <div
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
-            dragActive
-              ? 'border-emerald-600 bg-emerald-50'
-              : 'border-[#cbdcd2] bg-[#f8fbf9] hover:bg-[#eef6f1]'
-          }`}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx, .xls, .csv"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          <UploadCloud className="w-9 h-9 mx-auto text-emerald-700 mb-1.5" />
-          <p className="text-xs font-bold text-[#144232]">
-            Drop your Excel spreadsheet here or click to browse (.xlsx, .xls, .csv)
-          </p>
-          <p className="text-[11px] text-[#6d8e80] mt-1">
-            Auto-detects columns: <code className="bg-emerald-100/70 text-emerald-900 px-1 py-0.5 rounded font-mono">STATEORPROVINCE (Col G)</code>, <code className="bg-emerald-100/70 text-emerald-900 px-1 py-0.5 rounded font-mono">SLI TYPE (Col S)</code>, <code className="bg-emerald-100/70 text-emerald-900 px-1 py-0.5 rounded font-mono">PACKAGE (Col AC)</code>, <code className="bg-emerald-100/70 text-emerald-900 px-1 py-0.5 rounded font-mono">MRC (Col AE)</code>
-          </p>
+        {/* Source Mode Toggle */}
+        <div className="flex rounded-2xl bg-[#edf4f0] p-1 border border-[#d2e4db]">
+          <button
+            type="button"
+            onClick={() => setSourceType('excel')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              sourceType === 'excel'
+                ? 'bg-white text-[#0f3b2c] shadow-xs'
+                : 'text-[#527a68] hover:text-[#0f3b2c]'
+            }`}
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>Local File (.xlsx / .xls)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSourceType('gsheet')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              sourceType === 'gsheet'
+                ? 'bg-white text-[#0f3b2c] shadow-xs'
+                : 'text-[#527a68] hover:text-[#0f3b2c]'
+            }`}
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Google Sheet CSV (PapaParse Live)</span>
+          </button>
         </div>
+
+        {sourceType === 'excel' ? (
+          /* Dropzone */
+          <div
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
+              dragActive
+                ? 'border-emerald-600 bg-emerald-50'
+                : 'border-[#cbdcd2] bg-[#f8fbf9] hover:bg-[#eef6f1]'
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx, .xls, .csv"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <UploadCloud className="w-9 h-9 mx-auto text-emerald-700 mb-1.5" />
+            <p className="text-xs font-bold text-[#144232]">
+              Drop your Excel spreadsheet here or click to browse (.xlsx, .xls, .csv)
+            </p>
+            <p className="text-[11px] text-[#6d8e80] mt-1">
+              Auto-detects columns: <code className="bg-emerald-100/70 text-emerald-900 px-1 py-0.5 rounded font-mono">STATEORPROVINCE (Col G)</code>, <code className="bg-emerald-100/70 text-emerald-900 px-1 py-0.5 rounded font-mono">SLI TYPE (Col S)</code>, <code className="bg-emerald-100/70 text-emerald-900 px-1 py-0.5 rounded font-mono">PACKAGE (Col AC)</code>, <code className="bg-emerald-100/70 text-emerald-900 px-1 py-0.5 rounded font-mono">MRC (Col AE)</code>
+            </p>
+          </div>
+        ) : (
+          /* Google Sheet CSV Live Sync */
+          <div className="border border-[#cde2d6] bg-[#f8fbf9] rounded-2xl p-4.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#1a4635] flex items-center gap-1.5">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+                Live Published Google Sheet CSV URL:
+              </span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                PapaParse
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <input
+                type="text"
+                value={gsheetUrl}
+                onChange={(e) => setGsheetUrl(e.target.value)}
+                placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"
+                className="flex-1 w-full bg-white border border-[#cfdfd6] focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-xl px-3.5 py-2 text-xs text-[#0f2e22] font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => fetchGoogleSheetCsv(gsheetUrl)}
+                disabled={gsheetLoading}
+                className="w-full sm:w-auto bg-[#144c38] hover:bg-[#0e3a2b] disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs shrink-0"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${gsheetLoading ? 'animate-spin' : ''}`} />
+                <span>{gsheetLoading ? 'Fetching...' : 'Sync Google Sheet'}</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-[#557b6b]">
+              In Google Sheets, use <strong>File &gt; Share &gt; Publish to web &gt; Comma-separated values (.csv)</strong> to get your live CSV link.
+            </p>
+          </div>
+        )}
 
         {/* Multi-Sheet Selection Bar (matching screenshot tabs: VALIDATION, JO ACTIVATED, etc.) */}
         {availableSheets.length > 1 && (

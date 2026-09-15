@@ -8,6 +8,7 @@ import { RawDataTab } from './components/RawDataTab';
 import { FormulaGuideTab } from './components/FormulaGuideTab';
 import { ImportExcelModal } from './components/ImportExcelModal';
 import { AddRecordModal } from './components/AddRecordModal';
+import { SalesDashboard } from './components/SalesDashboard';
 import { generateInitialRecords, INITIAL_DAILY_METRICS } from './data/initialData';
 import { computeDashboardMetrics } from './utils/calculations';
 import { JORecord, VendorSummary, SyncSourceInfo } from './types';
@@ -78,6 +79,11 @@ export default function App() {
   const handleAddVendorRecord = (vendorName?: string) => {
     setTargetVendorForAdd(vendorName);
     setIsAddRecordOpen(true);
+  };
+
+  const handleSyncLiveGoogleSheet = (newRecords: JORecord[], sourceInfo: SyncSourceInfo) => {
+    setRecords(newRecords);
+    setSyncSourceInfo(sourceInfo);
   };
 
   return (
@@ -168,6 +174,18 @@ export default function App() {
           >
             Formula Engine (COUNTIFS)
           </button>
+          <button
+            onClick={() => {
+              setActiveTab('live_sync');
+              setMobileMenuOpen(false);
+            }}
+            className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-between ${
+              activeTab === 'live_sync' ? 'bg-[#c5eed9] text-[#0d2a21]' : 'text-emerald-100'
+            }`}
+          >
+            <span>Google Sheet Sync</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-500 text-emerald-950">LIVE</span>
+          </button>
         </div>
       )}
 
@@ -192,6 +210,7 @@ export default function App() {
             setTargetVendorForAdd(undefined);
             setIsAddRecordOpen(true);
           }}
+          onOpenLiveSync={() => setActiveTab('live_sync')}
           recordCount={records.length}
           vendorCount={metrics.vendorSummaries.length}
           isRefreshing={isRefreshing}
@@ -210,18 +229,18 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'performance' && (
+          <PerformanceTab
+            metrics={metrics}
+            dailyMetrics={dailyMetrics}
+          />
+        )}
+
         {activeTab === 'vendors' && (
           <VendorsTab
             vendorSummaries={metrics.vendorSummaries}
             onAddVendorRecord={handleAddVendorRecord}
             onDeleteVendor={handleDeleteVendor}
-          />
-        )}
-
-        {activeTab === 'performance' && (
-          <PerformanceTab
-            metrics={metrics}
-            dailyMetrics={dailyMetrics}
           />
         )}
 
@@ -239,6 +258,12 @@ export default function App() {
 
         {activeTab === 'formula_guide' && (
           <FormulaGuideTab metrics={metrics} />
+        )}
+
+        {activeTab === 'live_sync' && (
+          <SalesDashboard
+            onSyncToDashboard={handleSyncLiveGoogleSheet}
+          />
         )}
       </main>
 
