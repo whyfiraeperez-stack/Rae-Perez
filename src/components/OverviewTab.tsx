@@ -1,37 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import {
   Wifi,
-  Target,
-  TrendingUp,
-  ArrowUpRight,
   ChevronDown,
   Layers,
-  Calendar,
   CheckCircle2,
-  Table as TableIcon,
-  Filter,
   DollarSign,
   Users,
   RotateCcw,
+  Calendar,
   Sparkles,
+  TrendingUp,
 } from 'lucide-react';
 import { DashboardMetrics, JORecord } from '../types';
 import {
   DateFilterMode,
-  formatDateDisplay,
   formatMonthDisplay,
-  getDatesInMonth,
-  normalizeDate,
   countActivatedForDate,
   countActivatedForMonth,
-  filterRecordsForDate,
-  filterRecordsForMonth,
   sumAmountForDate,
   sumAmountForMonth,
-  getSheetsCountifsFormula,
-  getSheetsSumifsFormula,
 } from '../utils/dateCountingEngine';
-import { DailyActivationTable } from './DailyActivationTable';
+import { FiberXRunningVsTargetChart } from './FiberXRunningVsTargetChart';
 import { SummaryTables } from './SummaryTables';
 import { GroupingMatrixView } from './GroupingMatrixView';
 
@@ -64,22 +53,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onNavigateToVendors,
   onNavigateToRawData,
 }) => {
-  // 4 Core Filters strictly mapped to raw JO ACTIVATED columns:
-  // 1. Date (Col AF: CLOSING DATE)
-  // 2. Province (Col G: STATEORPROVINCE) -> default 'All districts'
-  // 3. SLI Type (Col S: SLI TYPE) -> default 'All' (All SLI Types)
-  // 4. Package (Col AC: PACKAGE) -> default 'All' (All Packages)
+  // Core Interactive Filters mapped to JO ACTIVATED data:
+  // Province (Column G: STATEORPROVINCE) -> default 'All districts'
+  // SLI Type (Column S: SLI TYPE) -> default 'All'
+  // Package (Column AC: PACKAGE) -> default 'All Packages'
   const [selectedProvince, setSelectedProvince] = useState<string>('All districts');
   const [selectedSliType, setSelectedSliType] = useState<string>('All');
   const [selectedPackage, setSelectedPackage] = useState<string>('All Packages');
-  const [showRecordDrawer, setShowRecordDrawer] = useState<boolean>(false);
 
-  // Generate calendar days for the selected month
-  const calendarDays = useMemo(() => {
-    return getDatesInMonth(selectedYear, selectedMonth).map((d) => formatDateDisplay(d));
-  }, [selectedYear, selectedMonth]);
-
-  // Current month label (e.g. "September 2026")
+  // Month label display (e.g. "September 2026")
   const monthDisplayLabel = useMemo(() => {
     return formatMonthDisplay(selectedYear, selectedMonth);
   }, [selectedYear, selectedMonth]);
@@ -93,7 +75,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   };
 
   // -------------------------------------------------------------
-  // HERO CARD 1: DYNAMIC ACTIVATED JO COUNT
+  // HERO CARD 1: ACTIVATED JO COUNT
+  // Dynamically calculated from raw records
   // -------------------------------------------------------------
   const activatedCount = useMemo(() => {
     if (dateMode === 'specific_date') {
@@ -126,7 +109,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   ]);
 
   // -------------------------------------------------------------
-  // HERO CARD 2: DYNAMIC TOTAL MRC (SUM of Column AE)
+  // HERO CARD 2: TOTAL MRC (Monthly Recurring Charge)
+  // Dynamically calculated sum of Column AE (MRC)
   // -------------------------------------------------------------
   const totalMrc = useMemo(() => {
     if (dateMode === 'specific_date') {
@@ -158,39 +142,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     selectedPackage,
   ]);
 
-  // Filtered matching records for inspection drawer
-  const matchingRecords = useMemo(() => {
-    if (dateMode === 'specific_date') {
-      return filterRecordsForDate(
-        records,
-        selectedDate,
-        selectedProvince,
-        selectedSliType,
-        selectedPackage
-      );
-    } else {
-      return filterRecordsForMonth(
-        records,
-        selectedYear,
-        selectedMonth,
-        selectedProvince,
-        selectedSliType,
-        selectedPackage
-      );
-    }
-  }, [
-    records,
-    dateMode,
-    selectedDate,
-    selectedYear,
-    selectedMonth,
-    selectedProvince,
-    selectedSliType,
-    selectedPackage,
-  ]);
-
   // -------------------------------------------------------------
-  // PACKAGE CARDS (Force AC = FIBERX, SME, BIDA)
+  // PACKAGE CARDS (FiberX, SME, BIDA)
   // Respects selected date/month, selected province, and selected SLI
   // -------------------------------------------------------------
   const packageCards = useMemo(() => {
@@ -250,7 +203,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   ]);
 
   // -------------------------------------------------------------
-  // SLI CARDS (Force S = INHOUSE, MSA)
+  // SLI CARDS (INHOUSE & MSA)
   // Respects selected date/month, selected province, and selected package
   // -------------------------------------------------------------
   const sliCards = useMemo(() => {
@@ -311,28 +264,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     selectedPackage,
   ]);
 
-  // Google Sheets formula representations for visual inspection & audit
-  const countFormula = useMemo(() => {
-    return getSheetsCountifsFormula(
-      selectedProvince,
-      selectedSliType,
-      selectedPackage,
-      dateMode === 'specific_date' ? selectedDate : `01-${monthDisplayLabel}`
-    );
-  }, [selectedProvince, selectedSliType, selectedPackage, dateMode, selectedDate, monthDisplayLabel]);
-
-  const sumFormula = useMemo(() => {
-    return getSheetsSumifsFormula(
-      selectedProvince,
-      selectedSliType,
-      selectedPackage,
-      dateMode === 'specific_date' ? selectedDate : `01-${monthDisplayLabel}`
-    );
-  }, [selectedProvince, selectedSliType, selectedPackage, dateMode, selectedDate, monthDisplayLabel]);
+  // Active filter label for hero card subtitle
+  const activeFiltersLabel = useMemo(() => {
+    const parts: string[] = [];
+    if (selectedProvince !== 'All districts') parts.push(selectedProvince);
+    if (selectedSliType !== 'All') parts.push(selectedSliType);
+    if (selectedPackage !== 'All Packages') parts.push(selectedPackage);
+    if (parts.length === 0) return null;
+    return parts.join(' • ');
+  }, [selectedProvince, selectedSliType, selectedPackage]);
 
   return (
     <div id="overview-view" className="space-y-6">
-      {/* Dynamic 4-Filter & Date Control Bar */}
+      {/* Clean Business Filter Bar */}
       <div
         id="filter-bar"
         className="bg-white border border-[#dce7e1] rounded-2xl px-5 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-2xs"
@@ -347,73 +291,33 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <span className="text-xs font-bold text-[#144937]">Dynamic Sheet Sync</span>
           </div>
 
-          {/* 1. Date Mode Selector */}
+          {/* Month Selector */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">Mode:</span>
+            <span className="text-xs font-medium text-[#587a6d]">Month:</span>
             <div className="relative">
               <select
-                id="filter-date-mode"
-                value={dateMode}
-                onChange={(e) => onChangeDateMode(e.target.value as DateFilterMode)}
-                aria-label="Select date mode"
+                id="filter-entire-month"
+                value={`${selectedYear}-${selectedMonth}`}
+                onChange={(e) => {
+                  const [y, m] = e.target.value.split('-').map(Number);
+                  onChangeMonth(y, m);
+                }}
+                aria-label="Select month"
                 className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
               >
-                <option value="entire_month">Entire Month</option>
-                <option value="specific_date">Specific Date</option>
+                {availableMonths.map((m) => (
+                  <option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>
+                    {m.label}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
-          {/* Date Selector or Month Selector */}
-          {dateMode === 'specific_date' ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[#587a6d]">Date (Col AF):</span>
-              <div className="relative">
-                <select
-                  id="filter-specific-date"
-                  value={selectedDate}
-                  onChange={(e) => onChangeDate(e.target.value)}
-                  aria-label="Select specific calendar date"
-                  className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
-                >
-                  {calendarDays.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[#587a6d]">Month:</span>
-              <div className="relative">
-                <select
-                  id="filter-entire-month"
-                  value={`${selectedYear}-${selectedMonth}`}
-                  onChange={(e) => {
-                    const [y, m] = e.target.value.split('-').map(Number);
-                    onChangeMonth(y, m);
-                  }}
-                  aria-label="Select month"
-                  className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
-                >
-                  {availableMonths.map((m) => (
-                    <option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-          )}
-
-          {/* 2. Province Dropdown (Column G: STATEORPROVINCE) */}
+          {/* Province Dropdown */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">Province (Col G):</span>
+            <span className="text-xs font-medium text-[#587a6d]">Province:</span>
             <div className="relative">
               <select
                 id="filter-province"
@@ -431,9 +335,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           </div>
 
-          {/* 3. SLI Type Dropdown (Column S: SLI TYPE) */}
+          {/* SLI Type Dropdown */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">SLI (Col S):</span>
+            <span className="text-xs font-medium text-[#587a6d]">SLI Type:</span>
             <div className="relative">
               <select
                 id="filter-sli-type"
@@ -450,9 +354,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           </div>
 
-          {/* 4. Package Dropdown (Column AC: PACKAGE) */}
+          {/* Package Dropdown */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">Package (Col AC):</span>
+            <span className="text-xs font-medium text-[#587a6d]">Package:</span>
             <div className="relative">
               <select
                 id="filter-package"
@@ -471,28 +375,20 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         </div>
 
-        {/* Action Controls: Reset & Inspect Rows */}
+        {/* Action Controls: Reset */}
         <div className="flex items-center gap-2">
           <button
             onClick={handleResetFilters}
             title="Reset all filters to defaults"
-            className="flex items-center gap-1 text-xs text-[#527567] hover:text-[#0e2d21] bg-[#f0f6f2] hover:bg-[#e4eee8] px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+            className="flex items-center gap-1 text-xs text-[#527567] hover:text-[#0e2d21] bg-[#f0f6f2] hover:bg-[#e4eee8] px-3 py-1.5 rounded-xl transition-colors cursor-pointer font-medium"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
           </button>
-
-          <button
-            onClick={() => setShowRecordDrawer(!showRecordDrawer)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
-          >
-            <TableIcon className="w-3.5 h-3.5 text-emerald-700" />
-            <span>{showRecordDrawer ? 'Hide Rows' : `Inspect Rows (${matchingRecords.length})`}</span>
-          </button>
         </div>
       </div>
 
-      {/* Hero Metric Cards Grid: Activated JO Count (Card 1) + Total MRC (Card 2) */}
+      {/* Hero Metric Cards Grid: Activated JO Count + Total MRC */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* HERO CARD 1: ACTIVATED JO COUNT */}
         <div
@@ -507,14 +403,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div className="w-6 h-6 rounded-full bg-[#1e6147] flex items-center justify-center">
                   <Wifi className="w-3.5 h-3.5 text-emerald-300" />
                 </div>
-                <span>ACTIVATED JO COUNT</span>
+                <span className="tracking-wider">ACTIVATED JO COUNT</span>
               </div>
 
-              <div className="bg-[#0e3b2b] border border-[#276c52] px-2.5 py-1 rounded-full text-[11px] font-semibold text-emerald-300 flex items-center gap-1.5">
+              <div className="bg-[#0e3b2b] border border-[#276c52] px-3 py-1 rounded-full text-[11px] font-semibold text-emerald-300 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>
-                  {dateMode === 'specific_date' ? `Date: ${selectedDate}` : `Month: ${monthDisplayLabel}`}
-                </span>
+                <span>{monthDisplayLabel}</span>
               </div>
             </div>
 
@@ -522,31 +416,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               {activatedCount.toLocaleString()}
             </div>
 
-            <div className="text-xs text-emerald-200 font-medium mt-2 flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <div className="text-xs text-emerald-200/90 font-medium mt-3 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>
-                {dateMode === 'specific_date'
-                  ? `Rows where Column AF = ${selectedDate}`
-                  : `Rows closed in ${monthDisplayLabel}`}
-                {selectedProvince !== 'All districts' && ` • Province = ${selectedProvince}`}
-                {selectedSliType !== 'All' && ` • SLI = ${selectedSliType}`}
-                {selectedPackage !== 'All Packages' && ` • Package = ${selectedPackage}`}
+                {activeFiltersLabel
+                  ? `Filtered: ${activeFiltersLabel}`
+                  : `Total activated job orders for ${monthDisplayLabel}`}
               </span>
             </div>
           </div>
-
-          {/* Dynamic Formula Display */}
-          <div className="mt-6 pt-3 border-t border-[#1e6147] flex items-center justify-between gap-2 text-[11px] font-mono text-emerald-200/90">
-            <span className="truncate" title={countFormula}>
-              {countFormula}
-            </span>
-            <span className="font-bold text-white bg-[#0e3b2a] px-2 py-0.5 rounded shrink-0 border border-[#237053]">
-              = {activatedCount}
-            </span>
-          </div>
         </div>
 
-        {/* HERO CARD 2: TOTAL MRC (Column AE) */}
+        {/* HERO CARD 2: TOTAL MRC */}
         <div
           id="card-total-mrc"
           className="bg-white border border-[#dce7e1] rounded-3xl p-7 shadow-xs flex flex-col justify-between"
@@ -557,10 +438,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div className="w-6 h-6 rounded-full bg-[#dcf2e6] flex items-center justify-center text-[#144c37]">
                   <DollarSign className="w-3.5 h-3.5" />
                 </div>
-                <span>TOTAL MRC (COLUMN AE)</span>
+                <span>TOTAL MRC</span>
               </div>
 
-              <div className="bg-[#f0f6f3] border border-[#d2e3da] px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#144937]">
+              <div className="bg-[#f0f6f3] border border-[#d2e3da] px-3 py-1 rounded-full text-[11px] font-semibold text-[#144937]">
                 Monthly Recurring Charge
               </div>
             </div>
@@ -569,22 +450,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               ₱{totalMrc.toLocaleString()}
             </div>
 
-            <div className="text-xs text-[#5d8071] font-medium mt-2 flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <div className="text-xs text-[#5d8071] font-medium mt-3 flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>
-                Dynamic SUM of Column AE (MRC) matching current filters
+                Consolidated recurring revenue from all activated subscriptions in scope
               </span>
             </div>
-          </div>
-
-          {/* Dynamic Formula Display */}
-          <div className="mt-6 pt-3 border-t border-[#edf3f0] flex items-center justify-between gap-2 text-[11px] font-mono text-[#54796a]">
-            <span className="truncate" title={sumFormula}>
-              {sumFormula}
-            </span>
-            <span className="font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded shrink-0 border border-emerald-200">
-              = ₱{totalMrc.toLocaleString()}
-            </span>
           </div>
         </div>
       </div>
@@ -594,10 +465,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div className="flex items-center gap-2 mb-3">
           <Layers className="w-4 h-4 text-emerald-600" />
           <h2 className="text-sm font-bold text-[#0e2f22] tracking-wider uppercase">
-            PACKAGE BREAKDOWN (COLUMN AC)
+            PACKAGE BREAKDOWN
           </h2>
           <span className="text-xs text-[#688a7c]">
-            (Respecting active date, province, and SLI filters)
+            (Respecting active province and SLI filters)
           </span>
         </div>
 
@@ -611,8 +482,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
                 FiberX Activated
               </span>
-              <span className="text-[11px] font-mono text-[#66887a] bg-[#f0f6f2] px-2 py-0.5 rounded">
-                AC = FIBERX
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                Core Fiber
               </span>
             </div>
             <div className="text-3xl font-black text-[#0f3023]">
@@ -635,8 +506,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="text-xs font-bold text-teal-800 uppercase tracking-wide">
                 SME Activated
               </span>
-              <span className="text-[11px] font-mono text-[#66887a] bg-[#f0f6f2] px-2 py-0.5 rounded">
-                AC = SME
+              <span className="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                Enterprise
               </span>
             </div>
             <div className="text-3xl font-black text-[#0f3023]">
@@ -659,8 +530,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="text-xs font-bold text-cyan-800 uppercase tracking-wide">
                 BIDA Activated
               </span>
-              <span className="text-[11px] font-mono text-[#66887a] bg-[#f0f6f2] px-2 py-0.5 rounded">
-                AC = BIDA
+              <span className="text-[11px] font-semibold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                Affordable
               </span>
             </div>
             <div className="text-3xl font-black text-[#0f3023]">
@@ -681,10 +552,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div className="flex items-center gap-2 mb-3">
           <Users className="w-4 h-4 text-emerald-600" />
           <h2 className="text-sm font-bold text-[#0e2f22] tracking-wider uppercase">
-            SLI CHANNEL BREAKDOWN (COLUMN S)
+            SLI CHANNEL BREAKDOWN
           </h2>
           <span className="text-xs text-[#688a7c]">
-            (Respecting active date, province, and package filters)
+            (Respecting active province and package filters)
           </span>
         </div>
 
@@ -745,6 +616,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </div>
 
+      {/* FIBERX RUNNING VS TARGET CHART
+          (Replaces the old Closed On Breakdown Column AF table) */}
+      <FiberXRunningVsTargetChart
+        records={records}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        selectedProvince={selectedProvince}
+        selectedSliType={selectedSliType}
+      />
+
       {/* Summary Tables: MRC Package Summary & Province Summary */}
       <SummaryTables
         records={records}
@@ -756,89 +637,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         selectedSliType={selectedSliType}
         selectedPackage={selectedPackage}
       />
-
-      {/* Daily Activation Table (Closed On Column AF Breakdown) */}
-      <DailyActivationTable
-        records={records}
-        selectedYear={selectedYear}
-        selectedMonth={selectedMonth}
-        selectedProvince={selectedProvince}
-        selectedPackage={selectedPackage}
-        dateMode={dateMode}
-        selectedDate={selectedDate}
-        onSelectDate={(closedOnDate) => {
-          onChangeDate(closedOnDate);
-          onChangeDateMode('specific_date');
-        }}
-      />
-
-      {/* Matching Raw JO Records Inspection Drawer */}
-      {showRecordDrawer && (
-        <div className="bg-white border border-[#cbe4d5] rounded-3xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-800">
-                <TableIcon className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[#0e2d21]">
-                  Matching JO Rows for {dateMode === 'specific_date' ? selectedDate : monthDisplayLabel}
-                </h3>
-                <p className="text-xs text-[#5d8072]">
-                  {matchingRecords.length} records matching Province=&apos;{selectedProvince}&apos;, SLI=&apos;{selectedSliType}&apos;, Package=&apos;{selectedPackage}&apos;
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowRecordDrawer(false)}
-              className="text-xs text-[#527567] hover:text-[#0e2d21] font-semibold px-2 py-1 cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-
-          {matchingRecords.length === 0 ? (
-            <div className="py-8 text-center text-xs text-[#6e8f81] bg-[#f8faf9] rounded-2xl border border-dashed border-[#d8e6df]">
-              No activated JO records found for the selected filter combination.
-            </div>
-          ) : (
-            <div className="overflow-x-auto max-h-72 border border-[#e2ebe6] rounded-2xl">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-[#f0f6f2] text-[#1e4839] font-bold sticky top-0">
-                  <tr>
-                    <th className="px-3.5 py-2.5">JO Number</th>
-                    <th className="px-3.5 py-2.5">STATEORPROVINCE (Col G)</th>
-                    <th className="px-3.5 py-2.5">SLI TYPE (Col S)</th>
-                    <th className="px-3.5 py-2.5">PACKAGE (Col AC)</th>
-                    <th className="px-3.5 py-2.5">CLOSING DATE (Col AF)</th>
-                    <th className="px-3.5 py-2.5">Vendor</th>
-                    <th className="px-3.5 py-2.5 text-right">MRC (Col AE)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#edf3ef]">
-                  {matchingRecords.slice(0, 100).map((r, i) => (
-                    <tr key={r.id || i} className="hover:bg-[#f6fbf8]">
-                      <td className="px-3.5 py-2 font-mono font-medium text-[#0f2e22]">{r.joNumber}</td>
-                      <td className="px-3.5 py-2 text-[#244c3c] font-semibold">{r.stateOrProvince}</td>
-                      <td className="px-3.5 py-2">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${r.sliType === 'INHOUSE' ? 'bg-emerald-100 text-emerald-900' : 'bg-teal-100 text-teal-900'}`}>
-                          {r.sliType}
-                        </span>
-                      </td>
-                      <td className="px-3.5 py-2 text-[#244c3c]">{r.packageName}</td>
-                      <td className="px-3.5 py-2 font-mono text-[#0e3b2b] font-bold">{r.closingDate || r.activationDate}</td>
-                      <td className="px-3.5 py-2 text-[#4f7164]">{r.vendor}</td>
-                      <td className="px-3.5 py-2 text-right font-medium text-[#184635]">
-                        {r.amount ? `₱${r.amount.toLocaleString()}` : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Raw JO ACTIVATED Dynamic Grouping & Counting Engine */}
       <GroupingMatrixView aggregates={metrics} />

@@ -3,6 +3,7 @@ import { Layers, MapPin, DollarSign } from 'lucide-react';
 import { JORecord } from '../types';
 import {
   DateFilterMode,
+  formatMonthDisplay,
   countActivatedForDate,
   countActivatedForMonth,
   sumAmountForDate,
@@ -193,11 +194,11 @@ export const SummaryTables: React.FC<SummaryTablesProps> = ({
               MRC Package Summary
             </h3>
             <p className="text-xs text-[#5f8173] mt-0.5">
-              Calculated from Col AC (PACKAGE) and Col AE (MRC)
+              Consolidated activations and monthly recurring revenue by package tier
             </p>
           </div>
           <span className="text-xs px-2.5 py-1 bg-[#edf5f0] text-[#1a4b39] font-bold rounded-lg border border-[#cfe2d7]">
-            {dateMode === 'specific_date' ? 'Specific Date' : 'Entire Month'}
+            {formatMonthDisplay(selectedYear, selectedMonth)}
           </span>
         </div>
 
@@ -205,9 +206,9 @@ export const SummaryTables: React.FC<SummaryTablesProps> = ({
           <table className="w-full text-xs text-left">
             <thead className="bg-[#f0f6f2] text-[#1a4435] font-bold border-b border-[#dce7e1]">
               <tr>
-                <th className="px-4 py-3">PACKAGE (Col AC)</th>
+                <th className="px-4 py-3">PACKAGE</th>
                 <th className="px-4 py-3 text-right">JO COUNT</th>
-                <th className="px-4 py-3 text-right">TOTAL MRC (Col AE)</th>
+                <th className="px-4 py-3 text-right">TOTAL MRC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#edf3ef]">
@@ -255,7 +256,7 @@ export const SummaryTables: React.FC<SummaryTablesProps> = ({
               Province Summary
             </h3>
             <p className="text-xs text-[#5f8173] mt-0.5">
-              Calculated from Col G (STATEORPROVINCE) and Col S (SLI TYPE)
+              Channel activations across in-house and partner teams by territory
             </p>
           </div>
           <span className="text-xs px-2.5 py-1 bg-[#edf5f0] text-[#1a4b39] font-bold rounded-lg border border-[#cfe2d7]">
@@ -267,7 +268,7 @@ export const SummaryTables: React.FC<SummaryTablesProps> = ({
           <table className="w-full text-xs text-left">
             <thead className="bg-[#f0f6f2] text-[#1a4435] font-bold border-b border-[#dce7e1]">
               <tr>
-                <th className="px-4 py-3">PROVINCE (Col G)</th>
+                <th className="px-4 py-3">PROVINCE</th>
                 <th className="px-4 py-3 text-right">INHOUSE</th>
                 <th className="px-4 py-3 text-right">MSA</th>
                 <th className="px-4 py-3 text-right">TOTAL</th>
