@@ -1,5 +1,6 @@
 import { JORecord, Province, SliType, PackageCategory } from '../types';
 import { normalizeVendorName } from './calculations';
+import { normalizeDate, formatIsoDate } from './dateCountingEngine';
 
 const cleanKey = (val: any): string => {
   return String(val || '')
@@ -80,6 +81,8 @@ function mapObjectRowsToJORecords(rows: any[]): JORecord[] {
     const pkgRaw = findVal(['package', 'packagename'], ['pkg']);
     // Column AE: MRC (Exact match for MRC takes priority over PVI MRC or Amount Remitted)
     const mrcRaw = findVal(['mrc', 'monthlyrecurringcharge'], ['mrc']) || findVal(['amount', 'revenue'], []);
+    // Column AF: CLOSING DATE (determines activation date)
+    const closingDateRaw = findVal(['closingdate', 'closedate', 'dateclosed', 'closeddate'], ['closing']) || findVal(['jodate', 'activationdate', 'date'], ['date']);
     
     // Auxiliary fields
     const vendorRaw = findVal(['vendorname', 'vendor', 'contractor', 'wfmsliname', 'sliname'], ['vendor']);
@@ -281,6 +284,7 @@ function mapObjectRowsToJORecords(rows: any[]): JORecord[] {
       vendor: resolvedVendor,
       vendorType,
       activationDate: joDate,
+      closingDate: closingDateRaw || joDate,
       monthActivated: monthRaw || 'September',
       status: 'Activated',
       amount,
@@ -346,6 +350,7 @@ function map2DArrayToJORecords(rawRows: any[][]): JORecord[] {
   const mrcCol = findCol((k) => k === 'mrc', 30);
   const joNumCol = findCol((k) => k.includes('jono') || k.includes('jonumber'), 0);
   const joDateCol = findCol((k) => k.includes('jodate') || k === 'date' || k.includes('activation'), 21);
+  const closingDateCol = findCol((k) => k.includes('closingdate') || k.includes('closedate') || k.includes('closing') || k.includes('dateclosed'), 31);
   const cityCol = findCol((k) => k === 'city' || k === 'municipality', 4);
   const brgyCol = findCol((k) => k === 'barangay' || k.includes('brgy'), 3);
   const crewCol = findCol((k) => k.includes('crew') || k.includes('slisystemcheck'), 18);
@@ -366,6 +371,7 @@ function map2DArrayToJORecords(rawRows: any[][]): JORecord[] {
     const joNumRaw = getCellStr(row[joNumCol]);
     const mrcRaw = getCellStr(row[mrcCol]);
     const joDateRaw = getCellStr(row[joDateCol]);
+    const closingDateRaw = getCellStr(row[closingDateCol]) || joDateRaw;
     const cityRaw = getCellStr(row[cityCol]);
     const brgyRaw = getCellStr(row[brgyCol]);
     const crewRaw = getCellStr(row[crewCol]);
@@ -473,6 +479,7 @@ function map2DArrayToJORecords(rawRows: any[][]): JORecord[] {
       vendor: resolvedVendor,
       vendorType,
       activationDate: joDateRaw || '2026-09-14',
+      closingDate: closingDateRaw || joDateRaw || '2026-09-14',
       monthActivated: monthRaw || 'September',
       status: 'Activated',
       amount,

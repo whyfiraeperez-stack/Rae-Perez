@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
-import { Calendar, RotateCw, UploadCloud, Plus, ChevronDown, CheckCircle2, FileSpreadsheet, Sparkles } from 'lucide-react';
+import React from 'react';
+import { Calendar, RotateCw, UploadCloud, Plus, ChevronDown, CheckCircle2, FileSpreadsheet, Layers } from 'lucide-react';
 import { SyncSourceInfo } from '../types';
+import { DateFilterMode, getDatesInMonth, formatDateDisplay, formatMonthDisplay } from '../utils/dateCountingEngine';
 
 interface HeaderProps {
+  dateMode: DateFilterMode;
+  onChangeDateMode: (mode: DateFilterMode) => void;
   selectedDate: string;
   onChangeDate: (date: string) => void;
+  selectedYear: number;
+  selectedMonth: number;
+  onChangeMonth: (year: number, month: number) => void;
+  availableMonths: { year: number; month: number; label: string }[];
   onRefresh: () => void;
   onOpenImport: () => void;
   onOpenAddRecord: () => void;
@@ -19,8 +26,14 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  dateMode,
+  onChangeDateMode,
   selectedDate,
   onChangeDate,
+  selectedYear,
+  selectedMonth,
+  onChangeMonth,
+  availableMonths,
   onRefresh,
   onOpenImport,
   onOpenAddRecord,
@@ -33,16 +46,9 @@ export const Header: React.FC<HeaderProps> = ({
   smeCount,
   bidaCount,
 }) => {
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const dates = [
-    'September 14, 2026',
-    'September 13, 2026',
-    'September 12, 2026',
-    'September 10, 2026',
-    'September 05, 2026',
-    'September 01, 2026',
-  ];
+  // Generate every calendar day for the currently selected month & year (e.g. September 01, 2026 ... September 30, 2026)
+  // Calendar-generated, NOT from spreadsheet rows. Zero-count days are preserved.
+  const calendarDays = getDatesInMonth(selectedYear, selectedMonth).map((d) => formatDateDisplay(d));
 
   return (
     <header id="app-header" className="space-y-4">
@@ -62,37 +68,71 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Date Picker Button */}
-          <div className="relative">
-            <button
-              id="date-picker-btn"
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center gap-2 bg-white border border-[#d6e3dc] hover:border-[#b0c8bd] text-[#1b3d30] px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-            >
-              <Calendar className="w-3.5 h-3.5 text-[#3b6d58]" />
-              <span>{selectedDate}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-[#547366]" />
-            </button>
-
-            {showDatePicker && (
-              <div className="absolute right-0 mt-1.5 w-48 bg-white border border-[#d6e3dc] rounded-xl shadow-lg z-30 py-1">
-                {dates.map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => {
-                      onChangeDate(d);
-                      setShowDatePicker(false);
-                    }}
-                    className={`w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-[#eaf4ef] transition-colors cursor-pointer ${
-                      d === selectedDate ? 'bg-[#daf1e6] text-[#0d2a21] font-bold' : 'text-[#234638]'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Date Filter Mode Selector */}
+          <div className="flex items-center bg-white border border-[#d6e3dc] hover:border-[#b0c8bd] px-3 py-1.5 rounded-xl text-xs shadow-xs transition-colors">
+            <span className="text-[#547366] font-medium mr-1.5 whitespace-nowrap">Date Mode:</span>
+            <div className="relative flex items-center">
+              <select
+                id="header-date-mode-select"
+                value={dateMode}
+                onChange={(e) => onChangeDateMode(e.target.value as DateFilterMode)}
+                aria-label="Select Date Filter Mode"
+                className="appearance-none bg-transparent font-bold text-[#0f2e22] pr-5 focus:outline-hidden cursor-pointer"
+              >
+                <option value="specific_date">Specific Date</option>
+                <option value="entire_month">Entire Month</option>
+              </select>
+              <ChevronDown className="w-3 h-3 text-[#547366] absolute right-0 pointer-events-none" />
+            </div>
           </div>
+
+          {/* Date / Month Selector */}
+          {dateMode === 'specific_date' ? (
+            <div className="flex items-center bg-white border border-[#d6e3dc] hover:border-[#b0c8bd] px-3 py-1.5 rounded-xl text-xs shadow-xs transition-colors">
+              <Calendar className="w-3.5 h-3.5 text-[#3b6d58] mr-1.5 shrink-0" />
+              <span className="text-[#547366] font-medium mr-1.5 whitespace-nowrap">Date:</span>
+              <div className="relative flex items-center">
+                <select
+                  id="header-specific-date-select"
+                  value={selectedDate}
+                  onChange={(e) => onChangeDate(e.target.value)}
+                  aria-label="Select Specific Date"
+                  className="appearance-none bg-transparent font-bold text-[#0f2e22] pr-5 focus:outline-hidden cursor-pointer min-w-[150px]"
+                >
+                  {calendarDays.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3 h-3 text-[#547366] absolute right-0 pointer-events-none" />
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center bg-white border border-[#d6e3dc] hover:border-[#b0c8bd] px-3 py-1.5 rounded-xl text-xs shadow-xs transition-colors">
+              <Calendar className="w-3.5 h-3.5 text-[#3b6d58] mr-1.5 shrink-0" />
+              <span className="text-[#547366] font-medium mr-1.5 whitespace-nowrap">Month:</span>
+              <div className="relative flex items-center">
+                <select
+                  id="header-month-select"
+                  value={`${selectedYear}-${selectedMonth}`}
+                  onChange={(e) => {
+                    const [y, m] = e.target.value.split('-').map(Number);
+                    onChangeMonth(y, m);
+                  }}
+                  aria-label="Select Entire Month"
+                  className="appearance-none bg-transparent font-bold text-[#0f2e22] pr-5 focus:outline-hidden cursor-pointer min-w-[140px]"
+                >
+                  {availableMonths.map((m) => (
+                    <option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3 h-3 text-[#547366] absolute right-0 pointer-events-none" />
+              </div>
+            </div>
+          )}
 
           {/* Refresh button */}
           <button
@@ -161,6 +201,10 @@ export const Header: React.FC<HeaderProps> = ({
                 <> (<strong className="font-semibold text-[#0d2f21]">{fiberXCount}</strong> FiberX, <strong className="font-semibold text-[#0d2f21]">{smeCount || 0}</strong> SME{bidaCount ? `, ${bidaCount} BIDA` : ''})</>
               )}
             </span>
+            <span className="text-gray-400 hidden sm:inline">•</span>
+            <span className="text-[11px] bg-emerald-700/10 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">
+              Mode: {dateMode === 'specific_date' ? `Specific Date (${selectedDate})` : `Entire Month (${formatMonthDisplay(selectedYear, selectedMonth)})`}
+            </span>
           </div>
         </div>
 
@@ -177,4 +221,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-

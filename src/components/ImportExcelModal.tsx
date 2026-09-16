@@ -274,6 +274,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     const pkgCol = findCol((k) => k === 'package' || k === 'packagename' || k === 'plan' || k === 'product', 28);
     const mrcCol = findCol((k) => k === 'mrc', 30);
     const joNumCol = findCol((k) => k.includes('jono') || k.includes('jonumber') || k === 'jo', 0);
+    const closingDateCol = findCol((k) => k.includes('closingdate') || k.includes('closedate') || k.includes('closing') || k.includes('dateclosed'), 31);
     const cityCol = findCol((k) => k === 'city' || k === 'municipality', 4);
     const barangayCol = findCol((k) => k === 'barangay' || k.includes('brgy'), 3);
     const crewCol = findCol((k) => k.includes('crew') || k.includes('slisystemcheck'), 18);
@@ -293,9 +294,11 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       const pkgRaw = getCellStr(row[pkgCol]);
       const vendorRaw = getCellStr(row[vendorCol]);
       const sliTypeRaw = getCellStr(row[sliTypeCol]);
+      const monthRaw = getCellStr(row[monthCol]);
       const mrcRaw = getCellStr(row[mrcCol]);
       const joNumRaw = getCellStr(row[joNumCol]);
       const joDateRaw = getCellStr(row[joDateCol]);
+      const closingDateRaw = getCellStr(row[closingDateCol]) || joDateRaw;
       const slaRaw = getCellStr(row[slaCol]);
       const remarksRaw = getCellStr(row[remarksCol]);
       const cityRaw = getCellStr(row[cityCol]);
@@ -454,10 +457,12 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
         agentCode: `${resolvedVendor} Rep`,
         sliSystemCheckCrewCode: resolvedVendor,
         sli: resolvedVendor,
-        sliType: resolvedVendorType,
+        sliType: sliType,
         vendor: resolvedVendor,
         vendorType: resolvedVendorType,
         activationDate: joDateRaw || '2026-09-14',
+        closingDate: closingDateRaw || joDateRaw || '2026-09-14',
+        monthActivated: monthRaw || 'September',
         status: 'Activated',
         amount: numericMrc,
         slaHours,

@@ -1,5 +1,6 @@
 import { JORecord, Province, SliType, PackageCategory, VendorSummary } from '../types';
 import { TARGET_CONFIGS } from '../data/initialData';
+import { groupAndCountJOActivated, GroupCombinationResult } from './groupingEngine';
 
 export interface TerritoryBreakdown {
   province: Province;
@@ -72,6 +73,8 @@ export interface SummaryAggregates {
 
   territoryBreakdowns: Record<Province, TerritoryBreakdown>;
   vendorSummaries: VendorSummary[];
+  groupingCombinations: GroupCombinationResult[];
+  groupingEngineResult: ReturnType<typeof groupAndCountJOActivated>;
 }
 
 /**
@@ -249,15 +252,18 @@ export function computeDashboardMetrics(
   // Runrate multiplier: Days in Month / Days Elapsed (e.g. 30 / 14 = 2.1428)
   const runrateMultiplier = daysElapsed > 0 ? daysInMonth / daysElapsed : 1;
 
-  let totalFiberX = 0;
+  // Authoritative grouping across STATEORPROVINCE × SLI TYPE × PACKAGE × MONTH ACTIVATED
+  const groupingEngineResult = groupAndCountJOActivated(records);
+
+  let totalFiberX = groupingEngineResult.totalFiberX;
   let totalInhouseFiberX = 0;
   let totalMsaFiberX = 0;
 
-  let totalSmeCount = 0;
-  let totalSmeAmount = 0;
+  let totalSmeCount = groupingEngineResult.totalSmeCount;
+  let totalSmeAmount = groupingEngineResult.totalSmeMrc;
 
-  let totalBidaCount = 0;
-  let totalS2SCount = 0;
+  let totalBidaCount = groupingEngineResult.totalBidaCount;
+  let totalS2SCount = groupingEngineResult.totalS2sCount;
 
   let totalFiberXTarget = 0;
   let totalSmeTargetAmount = 0;
@@ -271,54 +277,37 @@ export function computeDashboardMetrics(
     totalBidaTarget += config.bidaTarget;
     totalS2sTarget += config.s2sTarget;
 
-    // Evaluated via exact COUNTIFS criteria:
-    const inhouseFiberX = countifsJO(records, {
-      province: prov,
-      sliType: 'INHOUSE',
-      category: 'FIBERX',
-      status: 'Activated',
-    });
-    const msaFiberX = countifsJO(records, {
-      province: prov,
-      sliType: 'MSA',
-      category: 'FIBERX',
-      status: 'Activated',
-    });
+    // Evaluated directly from raw JO ACTIVATED groupings:
+    const inhouseFiberX = groupingEngineResult.combinations
+      .filter((c) => c.province === prov && c.sliType === 'INHOUSE' && c.category === 'FIBERX')
+      .reduce((s, c) => s + c.count, 0);
+    const msaFiberX = groupingEngineResult.combinations
+      .filter((c) => c.province === prov && c.sliType === 'MSA' && c.category === 'FIBERX')
+      .reduce((s, c) => s + c.count, 0);
     const provFiberX = inhouseFiberX + msaFiberX;
 
-    const inhouseSmeAmt = sumifsAmount(records, { province: prov, sliType: 'INHOUSE', category: 'SME' });
-    const msaSmeAmt = sumifsAmount(records, { province: prov, sliType: 'MSA', category: 'SME' });
+    const inhouseSmeAmt = groupingEngineResult.combinations
+      .filter((c) => c.province === prov && c.sliType === 'INHOUSE' && c.category === 'SME')
+      .reduce((s, c) => s + c.totalMrc, 0);
+    const msaSmeAmt = groupingEngineResult.combinations
+      .filter((c) => c.province === prov && c.sliType === 'MSA' && c.category === 'SME')
+      .reduce((s, c) => s + c.totalMrc, 0);
     const provSmeAmt = inhouseSmeAmt + msaSmeAmt;
 
-    const inhouseBida = countifsJO(records, {
-      province: prov,
-      sliType: 'INHOUSE',
-      category: 'BIDA',
-      status: 'Activated',
-    });
-    const msaBida = countifsJO(records, {
-      province: prov,
-      sliType: 'MSA',
-      category: 'BIDA',
-      status: 'Activated',
-    });
+    const inhouseBida = groupingEngineResult.combinations
+      .filter((c) => c.province === prov && c.sliType === 'INHOUSE' && c.category === 'BIDA')
+      .reduce((s, c) => s + c.count, 0);
+    const msaBida = groupingEngineResult.combinations
+      .filter((c) => c.province === prov && c.sliType === 'MSA' && c.category === 'BIDA')
+      .reduce((s, c) => s + c.count, 0);
     const provBida = inhouseBida + msaBida;
 
-    const provS2s = countifsJO(records, {
-      province: prov,
-      category: 'S2S',
-      status: 'Activated',
-    });
+    const provS2s = groupingEngineResult.combinations
+      .filter((c) => c.province === prov && c.category === 'S2S')
+      .reduce((s, c) => s + c.count, 0);
 
-    totalFiberX += provFiberX;
     totalInhouseFiberX += inhouseFiberX;
     totalMsaFiberX += msaFiberX;
-
-    totalSmeAmount += provSmeAmt;
-    totalSmeCount += countifsJO(records, { province: prov, category: 'SME', status: 'Activated' });
-
-    totalBidaCount += provBida;
-    totalS2SCount += provS2s;
 
     // Runrate calculations as per Photo 5 formula: X = MTD * (Days in Month / Days Elapsed)
     const fiberXRunrate = Math.round(provFiberX * runrateMultiplier);
@@ -476,5 +465,7 @@ export function computeDashboardMetrics(
 
     territoryBreakdowns: breakdowns,
     vendorSummaries,
+    groupingCombinations: groupingEngineResult.combinations,
+    groupingEngineResult,
   };
 }

@@ -43,17 +43,17 @@ export const INITIAL_DAILY_METRICS = {
   openJOsActivation: 0,
 };
 
-// Seed dataset generator matching exact counts from Photo 2, 3, 4, and 5
-// Evaluated using: =COUNTIFS('JO ACTIVATED'!$A:$A, Province, 'JO ACTIVATED'!$G:$G, Channel, 'JO ACTIVATED'!$S:$S, Package, 'JO ACTIVATED'!$AC:$AC, Status)
+// Seed dataset generator matching exact counts from Photo 1 & 2:
+// Evaluated using: Column G (Province), Column S (SLI Type), Column AA (Month Activated), Column AC (Package)
 //
-// Expected Verified Counts matching Photo 1 & 2:
-// ALBAY:    56 Inhouse + 94 MSA = 150 FiberX | SME: ₱27,843 (4 Inhouse, 3 MSA)
-// SORSOGON: 34 Inhouse + 26 MSA =  60 FiberX | SME: ₱32,048 (3 Inhouse, 5 MSA) | BIDA: 2
-// MASBATE:  36 Inhouse + 34 MSA =  70 FiberX | SME: ₱8,099  (2 Inhouse, 0 MSA)
-// TOTAL FIBERX: 126 Inhouse + 154 MSA = 280
+// Verified Counts from Photo 1 & 2:
+// ALBAY:    62 Inhouse + 103 MSA = 165 FiberX | SME: ₱27,843 (4 Inhouse, 6 MSA)
+// SORSOGON: 38 Inhouse +  30 MSA =  68 FiberX | SME: ₱32,048 (2 Inhouse, 3 MSA) | BIDA: 2
+// MASBATE:  38 Inhouse +  36 MSA =  74 FiberX | SME: ₱8,099  (2 Inhouse, 0 MSA)
+// TOTAL FIBERX: 138 Inhouse + 169 MSA = 307
 // TOTAL SME: ₱67,990.00 (17 packages) | VAT EX (12%): ₱59,831.20
 // TOTAL BIDA: 2
-// GRAND TOTAL ACTIVATED JOS: 299 records
+// GRAND TOTAL ACTIVATED JOS: 326 records
 export function generateInitialRecords(): JORecord[] {
   const records: JORecord[] = [];
   let idCounter = 1;
@@ -65,12 +65,11 @@ export function generateInitialRecords(): JORecord[] {
   };
 
   const fiberXPackages = [
-    'FIBERX 1500 100M',
+    'FIBERX',
+    'FIBERX 1500',
+    'FIBERX 1250',
     'SUPER FIBERX MAX',
-    'FIBERX 1250 100M',
-    'SUPER FIBERX UP',
-    'FIBERX 1500 300M',
-    'SUPER FIBERX PL',
+    'FIBERX 1500 100M',
     'FIBERX NETFLIX',
   ];
 
@@ -86,7 +85,7 @@ export function generateInitialRecords(): JORecord[] {
     for (let i = 0; i < count; i++) {
       const city = cities[i % cities.length];
       const pkg = fiberXPackages[(idCounter + i) % fiberXPackages.length];
-      const day = ((i * 3 + idCounter) % 14) + 1;
+      const day = ((i * 2 + idCounter) % 30) + 1;
       const dateStr = `2026-09-${day.toString().padStart(2, '0')}`;
       const napId = ((i + 1) * 7) % 89 + 1;
       const portId = (i % 8) + 1;
@@ -98,7 +97,7 @@ export function generateInitialRecords(): JORecord[] {
         stateOrProvince: province,
         city,
         barangayName: `Zone ${(i % 12) + 1} Poblacion`,
-        packageName: pkg,
+        packageName: 'FIBERX',
         category: 'FIBERX',
         napCode: `${province.substring(0, 3)}001 LP${napId} NP P${portId}-O`,
         napPort: `P${portId}-O`,
@@ -111,56 +110,59 @@ export function generateInitialRecords(): JORecord[] {
         vendor,
         vendorType,
         activationDate: dateStr,
+        closingDate: dateStr,
+        monthActivated: 'September',
         status: 'Activated',
+        amount: 1500,
         slaHours: sla,
       });
     }
   }
 
-  // --- 1. ALBAY FIBERX: Exactly 56 INHOUSE, 94 MSA -> Total 150 ---
-  // Inhouse Albay (56):
-  addFiberXGroup('INHOUSE - SALES AGENT', 'INHOUSE', 'ALBAY', 20, 'R');
-  addFiberXGroup('RAVENOUS SLI', 'INHOUSE', 'ALBAY', 15, 'R');
-  addFiberXGroup('INHOUSE - BUSINESS CENTER', 'INHOUSE', 'ALBAY', 11, 'J');
-  addFiberXGroup('INHOUSE - TECHNICAL DEPARTMENT', 'INHOUSE', 'ALBAY', 6, 'R');
+  // --- 1. ALBAY FIBERX: Exactly 62 INHOUSE, 103 MSA -> Total 165 ---
+  // Inhouse Albay (62):
+  addFiberXGroup('INHOUSE - SALES AGENT', 'INHOUSE', 'ALBAY', 22, 'R');
+  addFiberXGroup('RAVENOUS SLI', 'INHOUSE', 'ALBAY', 17, 'R');
+  addFiberXGroup('INHOUSE - BUSINESS CENTER', 'INHOUSE', 'ALBAY', 12, 'J');
+  addFiberXGroup('INHOUSE - TECHNICAL DEPARTMENT', 'INHOUSE', 'ALBAY', 7, 'R');
   addFiberXGroup('INHOUSE - SME', 'INHOUSE', 'ALBAY', 3, 'R');
   addFiberXGroup('TELEDIGISALES', 'INHOUSE', 'ALBAY', 1, 'R');
 
-  // MSA Albay (94):
-  addFiberXGroup('A. NARVAEZ STORE', 'MSA', 'ALBAY', 30, 'R');
-  addFiberXGroup('SERAPH TRUCKING SERVICES', 'MSA', 'ALBAY', 20, 'R');
-  addFiberXGroup('BRYTH', 'MSA', 'ALBAY', 18, 'R');
-  addFiberXGroup('SBAS', 'MSA', 'ALBAY', 14, 'R');
-  addFiberXGroup('DOMINGUIANO ENTERPRISE', 'MSA', 'ALBAY', 6, 'R');
+  // MSA Albay (103):
+  addFiberXGroup('A. NARVAEZ STORE', 'MSA', 'ALBAY', 33, 'R');
+  addFiberXGroup('SERAPH TRUCKING SERVICES', 'MSA', 'ALBAY', 22, 'R');
+  addFiberXGroup('BRYTH', 'MSA', 'ALBAY', 20, 'R');
+  addFiberXGroup('SBAS', 'MSA', 'ALBAY', 15, 'R');
+  addFiberXGroup('DOMINGUIANO ENTERPRISE', 'MSA', 'ALBAY', 7, 'R');
   addFiberXGroup('TOUKON', 'MSA', 'ALBAY', 6, 'R');
 
-  // --- 2. SORSOGON FIBERX: Exactly 34 INHOUSE, 26 MSA -> Total 60 ---
-  // Inhouse Sorsogon (34):
-  addFiberXGroup('RAVENOUS SLI', 'INHOUSE', 'SORSOGON', 12, 'R');
-  addFiberXGroup('INHOUSE - SALES AGENT', 'INHOUSE', 'SORSOGON', 8, 'R');
-  addFiberXGroup('INHOUSE - BUSINESS CENTER', 'INHOUSE', 'SORSOGON', 8, 'J');
+  // --- 2. SORSOGON FIBERX: Exactly 38 INHOUSE, 30 MSA -> Total 68 ---
+  // Inhouse Sorsogon (38):
+  addFiberXGroup('RAVENOUS SLI', 'INHOUSE', 'SORSOGON', 14, 'R');
+  addFiberXGroup('INHOUSE - SALES AGENT', 'INHOUSE', 'SORSOGON', 9, 'R');
+  addFiberXGroup('INHOUSE - BUSINESS CENTER', 'INHOUSE', 'SORSOGON', 9, 'J');
   addFiberXGroup('INHOUSE - TECHNICAL DEPARTMENT', 'INHOUSE', 'SORSOGON', 3, 'R');
   addFiberXGroup('INHOUSE - SME', 'INHOUSE', 'SORSOGON', 2, 'R');
   addFiberXGroup('TELEDIGISALES', 'INHOUSE', 'SORSOGON', 1, 'R');
 
-  // MSA Sorsogon (26):
-  addFiberXGroup('A. NARVAEZ STORE', 'MSA', 'SORSOGON', 21, 'R');
-  addFiberXGroup('SERAPH TRUCKING SERVICES', 'MSA', 'SORSOGON', 4, 'R');
+  // MSA Sorsogon (30):
+  addFiberXGroup('A. NARVAEZ STORE', 'MSA', 'SORSOGON', 24, 'R');
+  addFiberXGroup('SERAPH TRUCKING SERVICES', 'MSA', 'SORSOGON', 5, 'R');
   addFiberXGroup('BRYTH', 'MSA', 'SORSOGON', 1, 'R');
 
-  // --- 3. MASBATE FIBERX: Exactly 36 INHOUSE, 34 MSA -> Total 70 ---
-  // Inhouse Masbate (36):
-  addFiberXGroup('INHOUSE - BUSINESS CENTER', 'INHOUSE', 'MASBATE', 9, 'J');
+  // --- 3. MASBATE FIBERX: Exactly 38 INHOUSE, 36 MSA -> Total 74 ---
+  // Inhouse Masbate (38):
+  addFiberXGroup('INHOUSE - BUSINESS CENTER', 'INHOUSE', 'MASBATE', 10, 'J');
   addFiberXGroup('INHOUSE - TECHNICAL DEPARTMENT', 'INHOUSE', 'MASBATE', 9, 'R');
-  addFiberXGroup('RAVENOUS SLI', 'INHOUSE', 'MASBATE', 6, 'R');
+  addFiberXGroup('RAVENOUS SLI', 'INHOUSE', 'MASBATE', 7, 'R');
   addFiberXGroup('INHOUSE - SALES AGENT', 'INHOUSE', 'MASBATE', 4, 'R');
   addFiberXGroup('INHOUSE - SME', 'INHOUSE', 'MASBATE', 4, 'R');
   addFiberXGroup('TELEDIGISALES', 'INHOUSE', 'MASBATE', 3, 'R');
   addFiberXGroup('ONLINE APPLICATION', 'INHOUSE', 'MASBATE', 1, 'R');
 
-  // MSA Masbate (34):
-  addFiberXGroup('A. NARVAEZ STORE', 'MSA', 'MASBATE', 14, 'R');
-  addFiberXGroup('SERAPH TRUCKING SERVICES', 'MSA', 'MASBATE', 10, 'R');
+  // MSA Masbate (36):
+  addFiberXGroup('A. NARVAEZ STORE', 'MSA', 'MASBATE', 15, 'R');
+  addFiberXGroup('SERAPH TRUCKING SERVICES', 'MSA', 'MASBATE', 11, 'R');
   addFiberXGroup('BRYTH', 'MSA', 'MASBATE', 9, 'R');
   addFiberXGroup('SBAS', 'MSA', 'MASBATE', 1, 'R');
 
@@ -194,6 +196,7 @@ export function generateInitialRecords(): JORecord[] {
       vendor: s.vendor,
       vendorType: 'INHOUSE',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      closingDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
       monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
@@ -230,6 +233,7 @@ export function generateInitialRecords(): JORecord[] {
       vendor: s.vendor,
       vendorType: 'MSA',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      closingDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
       monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
@@ -262,6 +266,7 @@ export function generateInitialRecords(): JORecord[] {
       vendor: s.vendor,
       vendorType: 'INHOUSE',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      closingDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
       monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
@@ -296,6 +301,7 @@ export function generateInitialRecords(): JORecord[] {
       vendor: s.vendor,
       vendorType: 'MSA',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      closingDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
       monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
@@ -328,6 +334,7 @@ export function generateInitialRecords(): JORecord[] {
       vendor: s.vendor,
       vendorType: 'INHOUSE',
       activationDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
+      closingDate: `2026-09-${s.day.toString().padStart(2, '0')}`,
       monthActivated: 'September',
       status: 'Activated',
       amount: s.amt,
@@ -356,7 +363,10 @@ export function generateInitialRecords(): JORecord[] {
       vendor: 'INHOUSE - SALES AGENT',
       vendorType: 'INHOUSE',
       activationDate: '2026-09-08',
+      closingDate: '2026-09-08',
+      monthActivated: 'September',
       status: 'Activated',
+      amount: 888,
       slaHours: 19,
     },
     {
@@ -378,7 +388,10 @@ export function generateInitialRecords(): JORecord[] {
       vendor: 'INHOUSE - SALES AGENT',
       vendorType: 'INHOUSE',
       activationDate: '2026-09-12',
+      closingDate: '2026-09-12',
+      monthActivated: 'September',
       status: 'Activated',
+      amount: 888,
       slaHours: 21,
     }
   );

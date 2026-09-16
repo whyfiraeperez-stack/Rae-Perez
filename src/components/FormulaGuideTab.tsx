@@ -46,7 +46,7 @@ export const FormulaGuideTab: React.FC<FormulaGuideTabProps> = ({ metrics }) => 
                 =COUNTIFS(&apos;JO ACTIVATED&apos;!$A:$A, C5, &apos;JO ACTIVATED&apos;!$G:$G, B$8, &apos;JO ACTIVATED&apos;!$S:$S, C$8, &apos;JO ACTIVATED&apos;!$AC:$AC, D$7)
               </div>
               <div className="text-[11px] text-emerald-400/80 mt-2 font-sans grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-[#184e3a]">
-                <div>• <strong>$A:$A = C5</strong>: Matches Province (Albay / Sorsogon / Masbate)</div>
+                <div>• <strong>$AA:$AA = C5</strong>: Matches Province (Albay / Sorsogon / Masbate)</div>
                 <div>• <strong>$G:$G = B$8</strong>: Matches SLI Type (INHOUSE / MSA)</div>
                 <div>• <strong>$S:$S = C$8</strong>: Matches Package Category (FIBERX, SME, BIDA)</div>
                 <div>• <strong>$AC:$AC = D$7</strong>: Validates Activation Date &amp; Status</div>

@@ -21,6 +21,7 @@ export interface JORecord {
   vendor: string;
   vendorType: SliType;
   activationDate: string; // YYYY-MM-DD
+  closingDate?: string; // Column AF: CLOSING DATE (determines activation/closing date)
   status: 'Activated' | 'For Activation' | 'For Closeout';
   amount?: number; // for SME packages (Col AE: MRC)
   monthActivated?: string; // Col AA: MONTH ACTIVATED
@@ -83,3 +84,5 @@ export interface SyncSourceInfo {
   msaCount?: number;
   isScreenshotSample?: boolean;
 }
+
+export type DashboardMetrics = import('./utils/calculations').SummaryAggregates;
