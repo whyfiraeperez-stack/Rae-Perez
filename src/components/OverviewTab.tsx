@@ -168,7 +168,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     if (selectedPackage === 'S2S') {
       return selectedProvince === 'All districts' ? 40 : 15;
     }
-    return 660; // All Packages total
+    return 859; // All Packages total
   }, [selectedPackage, selectedProvince]);
 
   const daysInMonth = useMemo(() => {
