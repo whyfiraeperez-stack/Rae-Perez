@@ -21,7 +21,7 @@ export default function App() {
   const [dailyMetrics, setDailyMetrics] = useState(INITIAL_DAILY_METRICS);
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
   const [dateMode, setDateMode] = useState<DateFilterMode>('specific_date');
-  const [selectedDate, setSelectedDate] = useState('September 14, 2026');
+  const [selectedDate, setSelectedDate] = useState('September 15, 2026');
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(8); // 8 = September (0-indexed)
   const [isRefreshing, setIsRefreshing] = useState(false);

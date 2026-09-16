@@ -17,6 +17,7 @@ import {
   formatDateDisplay,
   formatMonthDisplay,
   getDatesInMonth,
+  normalizeDate,
   countActivatedForDate,
   countActivatedForMonth,
   filterRecordsForDate,
@@ -55,10 +56,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onNavigateToVendors,
   onNavigateToRawData,
 }) => {
-  // Dashboard filters
-  const [selectedTerritory, setSelectedTerritory] = useState<string>('All districts');
-  const [selectedSliType, setSelectedSliType] = useState<string>('All');
-  const [selectedMeasure, setSelectedMeasure] = useState<string>('FiberX');
+  // Dashboard filters strictly aligned with requirements:
+  // 1. Date (selectedDate)
+  // 2. Province (selectedProvince, Column G: STATEORPROVINCE)
+  // 3. SLI Type (selectedSliType, Column S: SLI TYPE)
+  // 4. Package (selectedPackage, Column AC: PACKAGE)
+  const [selectedProvince, setSelectedProvince] = useState<string>('Albay');
+  const [selectedSliType, setSelectedSliType] = useState<string>('INHOUSE');
+  const [selectedPackage, setSelectedPackage] = useState<string>('FiberX');
   const [showRecordDrawer, setShowRecordDrawer] = useState<boolean>(false);
 
   // Generate calendar days dynamically for the selected month (e.g. September 01, 2026 ... September 30, 2026)
@@ -72,26 +77,32 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   }, [selectedYear, selectedMonth]);
 
   // Dynamic calculation using raw JO ACTIVATED data and authoritative Column AF (CLOSING DATE)
+  // count = COUNTIFS(
+  //   'JO ACTIVATED'!G:G, selectedProvince,
+  //   'JO ACTIVATED'!S:S, selectedSliType,
+  //   'JO ACTIVATED'!AC:AC, selectedPackage,
+  //   'JO ACTIVATED'!AF:AF, selectedDate
+  // )
   const activatedCount = useMemo(() => {
     if (dateMode === 'specific_date') {
       return countActivatedForDate(
         records,
         selectedDate,
-        selectedTerritory === 'All districts' ? 'All' : selectedTerritory,
-        selectedSliType === 'All SLI Types' ? 'All' : selectedSliType,
-        selectedMeasure === 'All Packages' ? 'All' : selectedMeasure
+        selectedProvince,
+        selectedSliType,
+        selectedPackage
       );
     } else {
       return countActivatedForMonth(
         records,
         selectedYear,
         selectedMonth,
-        selectedTerritory === 'All districts' ? 'All' : selectedTerritory,
-        selectedSliType === 'All SLI Types' ? 'All' : selectedSliType,
-        selectedMeasure === 'All Packages' ? 'All' : selectedMeasure
+        selectedProvince,
+        selectedSliType,
+        selectedPackage
       );
     }
-  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedTerritory, selectedSliType, selectedMeasure]);
+  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedProvince, selectedSliType, selectedPackage]);
 
   // Filtered matching records for inspection
   const matchingRecords = useMemo(() => {
@@ -99,21 +110,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       return filterRecordsForDate(
         records,
         selectedDate,
-        selectedTerritory === 'All districts' ? 'All' : selectedTerritory,
-        selectedSliType === 'All SLI Types' ? 'All' : selectedSliType,
-        selectedMeasure === 'All Packages' ? 'All' : selectedMeasure
+        selectedProvince,
+        selectedSliType,
+        selectedPackage
       );
     } else {
       return filterRecordsForMonth(
         records,
         selectedYear,
         selectedMonth,
-        selectedTerritory === 'All districts' ? 'All' : selectedTerritory,
-        selectedSliType === 'All SLI Types' ? 'All' : selectedSliType,
-        selectedMeasure === 'All Packages' ? 'All' : selectedMeasure
+        selectedProvince,
+        selectedSliType,
+        selectedPackage
       );
     }
-  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedTerritory, selectedSliType, selectedMeasure]);
+  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedProvince, selectedSliType, selectedPackage]);
 
   // SME MRC Amount calculation if SME is chosen
   const activatedSmeAmount = useMemo(() => {
@@ -121,44 +132,44 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       return sumAmountForDate(
         records,
         selectedDate,
-        selectedTerritory === 'All districts' ? 'All' : selectedTerritory,
-        selectedSliType === 'All SLI Types' ? 'All' : selectedSliType,
-        selectedMeasure === 'All Packages' ? 'All' : selectedMeasure
+        selectedProvince,
+        selectedSliType,
+        selectedPackage
       );
     } else {
       return sumAmountForMonth(
         records,
         selectedYear,
         selectedMonth,
-        selectedTerritory === 'All districts' ? 'All' : selectedTerritory,
-        selectedSliType === 'All SLI Types' ? 'All' : selectedSliType,
-        selectedMeasure === 'All Packages' ? 'All' : selectedMeasure
+        selectedProvince,
+        selectedSliType,
+        selectedPackage
       );
     }
-  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedTerritory, selectedSliType, selectedMeasure]);
+  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedProvince, selectedSliType, selectedPackage]);
 
   // Territory targets mapping based on photo baseline
   const monthlyTarget = useMemo(() => {
-    if (selectedMeasure === 'FiberX') {
-      if (selectedTerritory === 'Albay') return 300;
-      if (selectedTerritory === 'Sorsogon') return 120;
-      if (selectedTerritory === 'Masbate') return 140;
+    if (selectedPackage === 'FiberX') {
+      if (selectedProvince === 'Albay') return 300;
+      if (selectedProvince === 'Sorsogon') return 120;
+      if (selectedProvince === 'Masbate') return 140;
       return 560; // All districts
     }
-    if (selectedMeasure === 'SME') {
-      if (selectedTerritory === 'Albay') return 100000;
-      if (selectedTerritory === 'Sorsogon') return 40000;
-      if (selectedTerritory === 'Masbate') return 60000;
+    if (selectedPackage === 'SME') {
+      if (selectedProvince === 'Albay') return 100000;
+      if (selectedProvince === 'Sorsogon') return 40000;
+      if (selectedProvince === 'Masbate') return 60000;
       return 200000; // All districts
     }
-    if (selectedMeasure === 'BIDA') {
-      return selectedTerritory === 'All districts' ? 60 : 20;
+    if (selectedPackage === 'BIDA') {
+      return selectedProvince === 'All districts' ? 60 : 20;
     }
-    if (selectedMeasure === 'S2S') {
-      return selectedTerritory === 'All districts' ? 40 : 15;
+    if (selectedPackage === 'S2S') {
+      return selectedProvince === 'All districts' ? 40 : 15;
     }
     return 660; // All Packages total
-  }, [selectedMeasure, selectedTerritory]);
+  }, [selectedPackage, selectedProvince]);
 
   const daysInMonth = useMemo(() => {
     return new Date(selectedYear, selectedMonth + 1, 0).getDate();
@@ -166,9 +177,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   // Target and Progress calculation depending on Date Mode
   const effectiveTarget = dateMode === 'specific_date' ? Math.max(1, Math.round(monthlyTarget / daysInMonth)) : monthlyTarget;
-  const targetActualValue = selectedMeasure === 'SME' ? activatedSmeAmount : activatedCount;
+  const targetActualValue = selectedPackage === 'SME' ? activatedSmeAmount : activatedCount;
   const progressPct = effectiveTarget > 0 ? (targetActualValue / effectiveTarget) * 100 : 0;
-  const runningUnit = selectedMeasure === 'SME' ? '₱' : '';
+  const runningUnit = selectedPackage === 'SME' ? '₱' : '';
+
+  // Parsed target date components for exact Google Sheets formula display
+  const parsedTargetDate = useMemo(() => normalizeDate(selectedDate), [selectedDate]);
+  const targetYear = parsedTargetDate ? parsedTargetDate.getFullYear() : selectedYear;
+  const targetMonth = parsedTargetDate ? parsedTargetDate.getMonth() + 1 : selectedMonth + 1;
+  const targetDay = parsedTargetDate ? parsedTargetDate.getDate() : 15;
 
   // Channel Mix numbers calculated directly from matching records
   const inhouseCount = useMemo(() => {
@@ -193,22 +210,22 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   // Province breakdowns for district cards
   const provinceCounts = useMemo(() => {
     const albay = (dateMode === 'specific_date'
-      ? filterRecordsForDate(records, selectedDate, 'ALBAY', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedMeasure === 'All Packages' ? 'All' : selectedMeasure)
-      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'ALBAY', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedMeasure === 'All Packages' ? 'All' : selectedMeasure)
+      ? filterRecordsForDate(records, selectedDate, 'ALBAY', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
+      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'ALBAY', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
     ).length;
 
     const sorsogon = (dateMode === 'specific_date'
-      ? filterRecordsForDate(records, selectedDate, 'SORSOGON', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedMeasure === 'All Packages' ? 'All' : selectedMeasure)
-      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'SORSOGON', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedMeasure === 'All Packages' ? 'All' : selectedMeasure)
+      ? filterRecordsForDate(records, selectedDate, 'SORSOGON', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
+      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'SORSOGON', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
     ).length;
 
     const masbate = (dateMode === 'specific_date'
-      ? filterRecordsForDate(records, selectedDate, 'MASBATE', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedMeasure === 'All Packages' ? 'All' : selectedMeasure)
-      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'MASBATE', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedMeasure === 'All Packages' ? 'All' : selectedMeasure)
+      ? filterRecordsForDate(records, selectedDate, 'MASBATE', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
+      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'MASBATE', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
     ).length;
 
     return { albay, sorsogon, masbate };
-  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedSliType, selectedMeasure]);
+  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedSliType, selectedPackage]);
 
   return (
     <div id="overview-view" className="space-y-6">
@@ -291,21 +308,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           )}
 
-          {/* Territory Dropdown (Column G: STATEORPROVINCE) */}
+          {/* Province Dropdown (Column G: STATEORPROVINCE) */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">Territory</span>
+            <span className="text-xs font-medium text-[#587a6d]">Province</span>
             <div className="relative">
               <select
-                id="filter-territory"
-                value={selectedTerritory}
-                onChange={(e) => setSelectedTerritory(e.target.value)}
-                aria-label="Filter territory"
+                id="filter-province"
+                value={selectedProvince}
+                onChange={(e) => setSelectedProvince(e.target.value)}
+                aria-label="Filter province"
                 className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
               >
-                <option value="All districts">All districts</option>
                 <option value="Albay">Albay</option>
                 <option value="Sorsogon">Sorsogon</option>
                 <option value="Masbate">Masbate</option>
+                <option value="All districts">All districts</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -322,23 +339,23 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 aria-label="Filter SLI Type"
                 className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
               >
-                <option value="All">All SLI Types</option>
                 <option value="INHOUSE">INHOUSE</option>
                 <option value="MSA">MSA</option>
+                <option value="All">All SLI Types</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
-          {/* Package / Measure Dropdown (Column AC: PACKAGE) */}
+          {/* Package Dropdown (Column AC: PACKAGE) */}
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-[#587a6d]">Package</span>
             <div className="relative">
               <select
-                id="filter-measure"
-                value={selectedMeasure}
-                onChange={(e) => setSelectedMeasure(e.target.value)}
-                aria-label="Filter package measure"
+                id="filter-package"
+                value={selectedPackage}
+                onChange={(e) => setSelectedPackage(e.target.value)}
+                aria-label="Filter package"
                 className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
               >
                 <option value="FiberX">FiberX</option>
@@ -381,7 +398,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 </div>
                 <span>
                   {dateMode === 'specific_date' ? selectedDate : monthDisplayLabel} •{' '}
-                  {selectedMeasure === 'All Packages' ? 'All Packages' : selectedMeasure} Activated
+                  {selectedProvince} / {selectedSliType} / {selectedPackage} Activated
                 </span>
               </div>
 
@@ -392,10 +409,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-              {/* Giant Count Number (Strict user requirement) */}
+              {/* Giant Count Number (Strict user requirement: Activated count completely controlled by date selector and raw JO data) */}
               <div>
                 <div className="text-6xl font-extrabold tracking-tight text-white font-sans">
-                  {selectedMeasure === 'SME' ? `₱${activatedSmeAmount.toLocaleString()}` : activatedCount.toLocaleString()}
+                  {activatedCount.toLocaleString()}
                 </div>
 
                 {/* Clear mode subtext specified in prompt */}
@@ -406,9 +423,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       ? `Activated on ${selectedDate}`
                       : `Activated during ${monthDisplayLabel}`}
                   </span>
-                  {selectedMeasure === 'SME' && (
-                    <span className="text-white font-bold ml-1">
-                      ({activatedCount} JOs)
+                  {selectedPackage === 'SME' && (
+                    <span className="text-emerald-100 font-bold ml-1.5 bg-[#0e3b2b] px-2 py-0.5 rounded-md border border-[#276c52]">
+                      MRC: ₱{activatedSmeAmount.toLocaleString()}
                     </span>
                   )}
                 </div>
@@ -453,7 +470,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="flex items-center justify-between text-xs text-emerald-200/80 font-medium mt-2.5">
               <span>0</span>
               <span className="text-white font-bold text-xs bg-[#1a5a41] px-2.5 py-0.5 rounded-full">
-                {activatedCount} {selectedMeasure} Activated
+                {activatedCount} {selectedPackage} Activated
               </span>
               <span>{runningUnit}{effectiveTarget.toLocaleString()}</span>
             </div>
@@ -463,13 +480,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="flex items-center gap-1.5 truncate max-w-md">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 {dateMode === 'specific_date' ? (
-                  <span>COUNTIFS(G=&quot;{selectedTerritory}&quot;, S=&quot;{selectedSliType}&quot;, AC=&quot;{selectedMeasure}&quot;, AF=&quot;{selectedDate}&quot;)</span>
+                  <span>=COUNTIFS(&#39;JO ACTIVATED&#39;!G:G, &quot;{selectedProvince}&quot;, &#39;JO ACTIVATED&#39;!S:S, &quot;{selectedSliType}&quot;, &#39;JO ACTIVATED&#39;!AC:AC, &quot;{selectedPackage}&quot;, &#39;JO ACTIVATED&#39;!AF:AF, DATE({targetYear},{targetMonth},{targetDay}))</span>
                 ) : (
-                  <span>COUNTIFS(G=&quot;{selectedTerritory}&quot;, S=&quot;{selectedSliType}&quot;, AC=&quot;{selectedMeasure}&quot;, AF in {monthDisplayLabel})</span>
+                  <span>=COUNTIFS(&#39;JO ACTIVATED&#39;!G:G, &quot;{selectedProvince}&quot;, &#39;JO ACTIVATED&#39;!S:S, &quot;{selectedSliType}&quot;, &#39;JO ACTIVATED&#39;!AC:AC, &quot;{selectedPackage}&quot;, &#39;JO ACTIVATED&#39;!AF:AF in {monthDisplayLabel})</span>
                 )}
               </span>
               <span className="font-bold text-white bg-[#0e3b2a] px-2 py-0.5 rounded border border-[#237053]">
-                = {activatedCount} JOs
+                = {activatedCount}
               </span>
             </div>
           </div>
@@ -485,11 +502,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               PORTFOLIO SNAPSHOT
             </div>
             <h2 className="text-xl font-bold text-[#0f2e22] mt-0.5">
-              {selectedTerritory === 'All districts' ? 'Bicol territory' : `${selectedTerritory} district`}
+              {selectedProvince === 'All districts' ? 'Bicol territory' : `${selectedProvince} district`}
             </h2>
             <p className="text-xs text-[#688a7e] font-normal mt-0.5">
               Filter: {selectedSliType === 'All' ? 'All SLI Types' : selectedSliType} •{' '}
-              {selectedMeasure === 'All Packages' ? 'All Packages' : selectedMeasure}
+              {selectedPackage === 'All Packages' ? 'All Packages' : selectedPackage}
             </p>
           </div>
 
@@ -571,7 +588,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   Matching JO Rows for {dateMode === 'specific_date' ? selectedDate : monthDisplayLabel}
                 </h3>
                 <p className="text-xs text-[#5d8072]">
-                  {matchingRecords.length} records where Province=&apos;{selectedTerritory}&apos;, SLI Type=&apos;{selectedSliType}&apos;, Package=&apos;{selectedMeasure}&apos;
+                  {matchingRecords.length} records where Province=&apos;{selectedProvince}&apos;, SLI Type=&apos;{selectedSliType}&apos;, Package=&apos;{selectedPackage}&apos;
                 </p>
               </div>
             </div>
@@ -695,7 +712,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {/* Footer of District Breakdown */}
           <div className="flex items-center justify-between border-t border-[#edf3f0] pt-4 text-xs">
             <span className="text-[#648779]">
-              Filtered by: {selectedSliType === 'All' ? 'All SLI Types' : selectedSliType} • {selectedMeasure}
+              Filtered by: {selectedSliType === 'All' ? 'All SLI Types' : selectedSliType} • {selectedPackage}
             </span>
             {onNavigateToVendors && (
               <button

@@ -17,29 +17,51 @@ export const MONTH_NAMES = [
   'December',
 ];
 
+const MONTH_MAP: Record<string, number> = {
+  jan: 0, january: 0,
+  feb: 1, february: 1,
+  mar: 2, march: 2,
+  apr: 3, april: 3,
+  may: 4,
+  jun: 5, june: 5,
+  jul: 6, july: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11,
+};
+
 /**
- * Robust date normalizer supporting:
- * - Day-Month-Year (e.g. "14-09-2026", "01-09-2026", "14/09/2026", "14.09.2026")
- * - Year-Month-Day (e.g. "2026-09-14", "2026/09/14")
- * - English text (e.g. "September 14, 2026", "14 Sep 2026")
- * - Excel numeric serial numbers (e.g. ~46280)
- * - Native Date objects
+ * Authoritative Date Normalizer supporting:
+ * - Date strings such as "15-Sep-2026", "15-SEP-2026", "15 Sep 2026", "15-September-2026", "15-Sep-26"
+ * - Month-first strings such as "September 15, 2026", "Sep 15, 2026", "Sep-15-2026"
+ * - ISO & Year-first strings: "2026-09-15", "2026/09/15", "2026-09-15T00:00:00.000Z"
+ * - Standard numeric dates: "15-09-2026", "15/09/2026", "9/15/2026", "09/15/2026"
+ * - Real spreadsheet dates: Excel numeric serial numbers (e.g. 46281) & native Date objects
  */
 export function normalizeDate(value: any): Date | null {
   if (value === null || value === undefined || value === '') return null;
 
+  // 1. Native Date object
   if (value instanceof Date) {
-    return isNaN(value.getTime()) ? null : new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    return isNaN(value.getTime())
+      ? null
+      : new Date(value.getFullYear(), value.getMonth(), value.getDate());
   }
 
-  // Handle Excel serial date numbers (e.g. 46280)
+  // 2. Real Excel numeric serial numbers (e.g. 46280, 46281)
   if (
     typeof value === 'number' ||
-    (!isNaN(Number(value)) && !String(value).includes('-') && !String(value).includes('/') && !String(value).includes('.'))
+    (!isNaN(Number(value)) &&
+      !String(value).includes('-') &&
+      !String(value).includes('/') &&
+      !String(value).includes('.') &&
+      !String(value).includes('T'))
   ) {
     const num = Number(value);
     if (num > 20000 && num < 80000) {
-      // Excel epoch: Dec 30 1899 due to the 1900 leap-year bug
+      // Excel epoch: Dec 30 1899 UTC
       const excelEpoch = new Date(Date.UTC(1899, 11, 30));
       const msPerDay = 24 * 60 * 60 * 1000;
       const d = new Date(excelEpoch.getTime() + num * msPerDay);
@@ -50,33 +72,97 @@ export function normalizeDate(value: any): Date | null {
   const str = String(value).trim();
   if (!str) return null;
 
-  // 1. Day-Month-Year format: DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY
-  // E.g. "14-09-2026" or "01-09-2026"
-  const dmyMatch = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})(.*)$/);
-  if (dmyMatch) {
-    const day = parseInt(dmyMatch[1], 10);
-    const month = parseInt(dmyMatch[2], 10) - 1;
-    const year = parseInt(dmyMatch[3], 10);
-    const d = new Date(year, month, day);
-    if (!isNaN(d.getTime()) && d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) {
-      return d;
+  // 3. Named month with Day first (e.g. "15-Sep-2026", "15-SEP-2026", "15 Sep 2026", "15-September-2026", "15-Sep-26")
+  const dMmmYMatch = str.match(/^(\d{1,2})[-/ ]([A-Za-z]+)[-/ ](\d{2,4})(.*)$/);
+  if (dMmmYMatch) {
+    const day = parseInt(dMmmYMatch[1], 10);
+    const mStr = dMmmYMatch[2].toLowerCase();
+    let year = parseInt(dMmmYMatch[3], 10);
+    if (year < 100) year += 2000;
+    const month =
+      MONTH_MAP[mStr] ??
+      MONTH_NAMES.findIndex((m) => m.toLowerCase().startsWith(mStr.slice(0, 3)));
+    if (month >= 0) {
+      const d = new Date(year, month, day);
+      if (
+        !isNaN(d.getTime()) &&
+        d.getDate() === day &&
+        d.getMonth() === month &&
+        d.getFullYear() === year
+      ) {
+        return d;
+      }
     }
   }
 
-  // 2. Year-Month-Day format: YYYY-MM-DD or YYYY/MM/DD
+  // 4. Named month with Month first (e.g. "Sep-15-2026", "September 15, 2026", "Sep 15 2026")
+  const mmmDYMatch = str.match(/^([A-Za-z]+)[-/ ](\d{1,2}),?[-/ ](\d{2,4})(.*)$/);
+  if (mmmDYMatch) {
+    const mStr = mmmDYMatch[1].toLowerCase();
+    const day = parseInt(mmmDYMatch[2], 10);
+    let year = parseInt(mmmDYMatch[3], 10);
+    if (year < 100) year += 2000;
+    const month =
+      MONTH_MAP[mStr] ??
+      MONTH_NAMES.findIndex((m) => m.toLowerCase().startsWith(mStr.slice(0, 3)));
+    if (month >= 0) {
+      const d = new Date(year, month, day);
+      if (
+        !isNaN(d.getTime()) &&
+        d.getDate() === day &&
+        d.getMonth() === month &&
+        d.getFullYear() === year
+      ) {
+        return d;
+      }
+    }
+  }
+
+  // 5. Year-Month-Day format (e.g. "2026-09-15" or "2026/09/15" or ISO timestamp)
   const ymdMatch = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(.*)$/);
   if (ymdMatch) {
     const year = parseInt(ymdMatch[1], 10);
     const month = parseInt(ymdMatch[2], 10) - 1;
     const day = parseInt(ymdMatch[3], 10);
     const d = new Date(year, month, day);
-    if (!isNaN(d.getTime()) && d.getDate() === day && d.getMonth() === month && d.getFullYear() === year) {
+    if (
+      !isNaN(d.getTime()) &&
+      d.getDate() === day &&
+      d.getMonth() === month &&
+      d.getFullYear() === year
+    ) {
       return d;
     }
   }
 
-  // 3. English month string parsing: "September 14, 2026" or "14 Sep 2026"
-  const parsed = new Date(str);
+  // 6. Day-Month-Year or Month-Day-Year numeric: "15-09-2026", "15/09/2026", "9/15/2026", "09/15/2026"
+  const numMatch = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})(.*)$/);
+  if (numMatch) {
+    const p1 = parseInt(numMatch[1], 10);
+    const p2 = parseInt(numMatch[2], 10);
+    let year = parseInt(numMatch[3], 10);
+    if (year < 100) year += 2000;
+
+    let day = p1;
+    let month = p2 - 1;
+    // If first part <= 12 and second part > 12, it's M/D/Y (e.g. 9/15/2026)
+    if (p1 <= 12 && p2 > 12) {
+      month = p1 - 1;
+      day = p2;
+    }
+    const d = new Date(year, month, day);
+    if (
+      !isNaN(d.getTime()) &&
+      d.getDate() === day &&
+      d.getMonth() === month &&
+      d.getFullYear() === year
+    ) {
+      return d;
+    }
+  }
+
+  // 7. General standard Date fallback
+  const parsed = new Date(str.replace(/-/g, ' '));
   if (!isNaN(parsed.getTime())) {
     return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
   }
@@ -163,31 +249,31 @@ export function getAvailableMonths(records: JORecord[]): { year: number; month: 
 /**
  * Checks if a record matches territory/province filter (Column G: STATEORPROVINCE)
  */
-function matchesProvince(record: JORecord, selectedProvince: string): boolean {
-  if (!selectedProvince || selectedProvince === 'All districts' || selectedProvince === 'ALL' || selectedProvince === 'All') {
+export function matchesProvince(record: JORecord, selectedProvince: string): boolean {
+  if (!selectedProvince || selectedProvince === 'All districts' || selectedProvince === 'ALL' || selectedProvince === 'All' || selectedProvince === 'All Provinces') {
     return true;
   }
   const cleanFilter = selectedProvince.trim().toUpperCase();
   const cleanRecordProv = (record.stateOrProvince || '').trim().toUpperCase();
-  return cleanRecordProv === cleanFilter;
+  return cleanRecordProv === cleanFilter || (cleanFilter.length >= 3 && cleanRecordProv.includes(cleanFilter));
 }
 
 /**
  * Checks if a record matches SLI Type filter (Column S: SLI TYPE)
  */
-function matchesSliType(record: JORecord, selectedSliType: string): boolean {
+export function matchesSliType(record: JORecord, selectedSliType: string): boolean {
   if (!selectedSliType || selectedSliType === 'All' || selectedSliType === 'ALL' || selectedSliType === 'All SLI Types') {
     return true;
   }
   const cleanFilter = selectedSliType.trim().toUpperCase();
-  const cleanRecordSli = (record.sliType || '').trim().toUpperCase();
+  const cleanRecordSli = (record.sliType || record.vendorType || '').trim().toUpperCase();
   return cleanRecordSli === cleanFilter;
 }
 
 /**
  * Checks if a record matches Package filter (Column AC: PACKAGE)
  */
-function matchesPackage(record: JORecord, selectedPackage: string): boolean {
+export function matchesPackage(record: JORecord, selectedPackage: string): boolean {
   if (!selectedPackage || selectedPackage === 'All' || selectedPackage === 'ALL' || selectedPackage === 'All Packages' || selectedPackage === 'Total') {
     return true;
   }
@@ -195,9 +281,56 @@ function matchesPackage(record: JORecord, selectedPackage: string): boolean {
   const cleanCategory = (record.category || '').trim().toUpperCase();
   const cleanPkgName = (record.packageName || '').trim().toUpperCase();
 
+  if (cleanFilter === 'FIBERX') {
+    return cleanCategory === 'FIBERX' || cleanPkgName === 'FIBERX' || cleanPkgName.startsWith('FIBERX') || cleanPkgName.includes('FIBERX');
+  }
+  if (cleanFilter === 'SME') {
+    return (
+      cleanCategory === 'SME' ||
+      cleanPkgName === 'SME' ||
+      cleanPkgName.includes('SME') ||
+      cleanPkgName.includes('BIZ') ||
+      cleanPkgName.includes('FAST') ||
+      cleanPkgName.includes('ENTERPRISE')
+    );
+  }
+  if (cleanFilter === 'BIDA') {
+    return cleanCategory === 'BIDA' || cleanPkgName === 'BIDA' || cleanPkgName.includes('BIDA');
+  }
+  if (cleanFilter === 'S2S' || cleanFilter === 'SURF2SAWA') {
+    return (
+      cleanCategory === 'S2S' ||
+      cleanPkgName === 'S2S' ||
+      cleanPkgName.includes('S2S') ||
+      cleanPkgName.includes('SURF2SAWA') ||
+      cleanPkgName.includes('SURF')
+    );
+  }
+
   if (cleanCategory === cleanFilter) return true;
-  if (cleanPkgName.includes(cleanFilter)) return true;
+  if (cleanPkgName === cleanFilter || cleanPkgName.includes(cleanFilter)) return true;
   return false;
+}
+
+/**
+ * Generates the equivalent Google Sheets formula string for verification
+ * =COUNTIFS('JO ACTIVATED'!G:G,"ALBAY",'JO ACTIVATED'!S:S,"INHOUSE",'JO ACTIVATED'!AC:AC,"FIBERX",'JO ACTIVATED'!AF:AF,DATE(2026,9,15))
+ */
+export function getSheetsCountifsFormula(
+  selectedProvince: string,
+  selectedSliType: string,
+  selectedPackage: string,
+  selectedDate: Date | string
+): string {
+  const target = normalizeDate(selectedDate);
+  const provStr = selectedProvince === 'All districts' ? 'ALL' : selectedProvince.toUpperCase();
+  const sliStr = selectedSliType === 'All' || selectedSliType === 'All SLI Types' ? 'ALL' : selectedSliType.toUpperCase();
+  const pkgStr = selectedPackage === 'All Packages' ? 'ALL' : selectedPackage.toUpperCase();
+  const dateStr = target
+    ? `DATE(${target.getFullYear()},${target.getMonth() + 1},${target.getDate()})`
+    : `"${selectedDate}"`;
+
+  return `=COUNTIFS('JO ACTIVATED'!G:G,"${provStr}",'JO ACTIVATED'!S:S,"${sliStr}",'JO ACTIVATED'!AC:AC,"${pkgStr}",'JO ACTIVATED'!AF:AF,${dateStr})`;
 }
 
 /**
