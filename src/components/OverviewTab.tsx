@@ -10,8 +10,12 @@ import {
   CheckCircle2,
   Table as TableIcon,
   Filter,
+  DollarSign,
+  Users,
+  RotateCcw,
+  Sparkles,
 } from 'lucide-react';
-import { DashboardMetrics, JORecord, Province, SliType } from '../types';
+import { DashboardMetrics, JORecord } from '../types';
 import {
   DateFilterMode,
   formatDateDisplay,
@@ -24,7 +28,11 @@ import {
   filterRecordsForMonth,
   sumAmountForDate,
   sumAmountForMonth,
+  getSheetsCountifsFormula,
+  getSheetsSumifsFormula,
 } from '../utils/dateCountingEngine';
+import { DailyActivationTable } from './DailyActivationTable';
+import { SummaryTables } from './SummaryTables';
 import { GroupingMatrixView } from './GroupingMatrixView';
 
 interface OverviewTabProps {
@@ -56,33 +64,37 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onNavigateToVendors,
   onNavigateToRawData,
 }) => {
-  // Dashboard filters strictly aligned with requirements:
-  // 1. Date (selectedDate)
-  // 2. Province (selectedProvince, Column G: STATEORPROVINCE)
-  // 3. SLI Type (selectedSliType, Column S: SLI TYPE)
-  // 4. Package (selectedPackage, Column AC: PACKAGE)
-  const [selectedProvince, setSelectedProvince] = useState<string>('Albay');
-  const [selectedSliType, setSelectedSliType] = useState<string>('INHOUSE');
-  const [selectedPackage, setSelectedPackage] = useState<string>('FiberX');
+  // 4 Core Filters strictly mapped to raw JO ACTIVATED columns:
+  // 1. Date (Col AF: CLOSING DATE)
+  // 2. Province (Col G: STATEORPROVINCE) -> default 'All districts'
+  // 3. SLI Type (Col S: SLI TYPE) -> default 'All' (All SLI Types)
+  // 4. Package (Col AC: PACKAGE) -> default 'All' (All Packages)
+  const [selectedProvince, setSelectedProvince] = useState<string>('All districts');
+  const [selectedSliType, setSelectedSliType] = useState<string>('All');
+  const [selectedPackage, setSelectedPackage] = useState<string>('All Packages');
   const [showRecordDrawer, setShowRecordDrawer] = useState<boolean>(false);
 
-  // Generate calendar days dynamically for the selected month (e.g. September 01, 2026 ... September 30, 2026)
+  // Generate calendar days for the selected month
   const calendarDays = useMemo(() => {
     return getDatesInMonth(selectedYear, selectedMonth).map((d) => formatDateDisplay(d));
   }, [selectedYear, selectedMonth]);
 
-  // Current month display label
+  // Current month label (e.g. "September 2026")
   const monthDisplayLabel = useMemo(() => {
     return formatMonthDisplay(selectedYear, selectedMonth);
   }, [selectedYear, selectedMonth]);
 
-  // Dynamic calculation using raw JO ACTIVATED data and authoritative Column AF (CLOSING DATE)
-  // count = COUNTIFS(
-  //   'JO ACTIVATED'!G:G, selectedProvince,
-  //   'JO ACTIVATED'!S:S, selectedSliType,
-  //   'JO ACTIVATED'!AC:AC, selectedPackage,
-  //   'JO ACTIVATED'!AF:AF, selectedDate
-  // )
+  // Reset filters handler
+  const handleResetFilters = () => {
+    setSelectedProvince('All districts');
+    setSelectedSliType('All');
+    setSelectedPackage('All Packages');
+    onChangeDateMode('entire_month');
+  };
+
+  // -------------------------------------------------------------
+  // HERO CARD 1: DYNAMIC ACTIVATED JO COUNT
+  // -------------------------------------------------------------
   const activatedCount = useMemo(() => {
     if (dateMode === 'specific_date') {
       return countActivatedForDate(
@@ -102,9 +114,51 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         selectedPackage
       );
     }
-  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedProvince, selectedSliType, selectedPackage]);
+  }, [
+    records,
+    dateMode,
+    selectedDate,
+    selectedYear,
+    selectedMonth,
+    selectedProvince,
+    selectedSliType,
+    selectedPackage,
+  ]);
 
-  // Filtered matching records for inspection
+  // -------------------------------------------------------------
+  // HERO CARD 2: DYNAMIC TOTAL MRC (SUM of Column AE)
+  // -------------------------------------------------------------
+  const totalMrc = useMemo(() => {
+    if (dateMode === 'specific_date') {
+      return sumAmountForDate(
+        records,
+        selectedDate,
+        selectedProvince,
+        selectedSliType,
+        selectedPackage
+      );
+    } else {
+      return sumAmountForMonth(
+        records,
+        selectedYear,
+        selectedMonth,
+        selectedProvince,
+        selectedSliType,
+        selectedPackage
+      );
+    }
+  }, [
+    records,
+    dateMode,
+    selectedDate,
+    selectedYear,
+    selectedMonth,
+    selectedProvince,
+    selectedSliType,
+    selectedPackage,
+  ]);
+
+  // Filtered matching records for inspection drawer
   const matchingRecords = useMemo(() => {
     if (dateMode === 'specific_date') {
       return filterRecordsForDate(
@@ -124,155 +178,204 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         selectedPackage
       );
     }
-  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedProvince, selectedSliType, selectedPackage]);
+  }, [
+    records,
+    dateMode,
+    selectedDate,
+    selectedYear,
+    selectedMonth,
+    selectedProvince,
+    selectedSliType,
+    selectedPackage,
+  ]);
 
-  // SME MRC Amount calculation if SME is chosen
-  const activatedSmeAmount = useMemo(() => {
-    if (dateMode === 'specific_date') {
-      return sumAmountForDate(
-        records,
-        selectedDate,
-        selectedProvince,
-        selectedSliType,
-        selectedPackage
-      );
-    } else {
-      return sumAmountForMonth(
-        records,
-        selectedYear,
-        selectedMonth,
-        selectedProvince,
-        selectedSliType,
-        selectedPackage
-      );
-    }
-  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedProvince, selectedSliType, selectedPackage]);
+  // -------------------------------------------------------------
+  // PACKAGE CARDS (Force AC = FIBERX, SME, BIDA)
+  // Respects selected date/month, selected province, and selected SLI
+  // -------------------------------------------------------------
+  const packageCards = useMemo(() => {
+    const calcPkg = (pkgKey: string) => {
+      const count =
+        dateMode === 'specific_date'
+          ? countActivatedForDate(
+              records,
+              selectedDate,
+              selectedProvince,
+              selectedSliType,
+              pkgKey
+            )
+          : countActivatedForMonth(
+              records,
+              selectedYear,
+              selectedMonth,
+              selectedProvince,
+              selectedSliType,
+              pkgKey
+            );
 
-  // Territory targets mapping based on photo baseline
-  const monthlyTarget = useMemo(() => {
-    if (selectedPackage === 'FiberX') {
-      if (selectedProvince === 'Albay') return 300;
-      if (selectedProvince === 'Sorsogon') return 120;
-      if (selectedProvince === 'Masbate') return 140;
-      return 560; // All districts
-    }
-    if (selectedPackage === 'SME') {
-      if (selectedProvince === 'Albay') return 100000;
-      if (selectedProvince === 'Sorsogon') return 40000;
-      if (selectedProvince === 'Masbate') return 60000;
-      return 200000; // All districts
-    }
-    if (selectedPackage === 'BIDA') {
-      return selectedProvince === 'All districts' ? 60 : 20;
-    }
-    if (selectedPackage === 'S2S') {
-      return selectedProvince === 'All districts' ? 40 : 15;
-    }
-    return 859; // All Packages total
-  }, [selectedPackage, selectedProvince]);
+      const mrc =
+        dateMode === 'specific_date'
+          ? sumAmountForDate(
+              records,
+              selectedDate,
+              selectedProvince,
+              selectedSliType,
+              pkgKey
+            )
+          : sumAmountForMonth(
+              records,
+              selectedYear,
+              selectedMonth,
+              selectedProvince,
+              selectedSliType,
+              pkgKey
+            );
 
-  const daysInMonth = useMemo(() => {
-    return new Date(selectedYear, selectedMonth + 1, 0).getDate();
-  }, [selectedYear, selectedMonth]);
+      return { count, mrc };
+    };
 
-  // Target and Progress calculation depending on Date Mode
-  const effectiveTarget = dateMode === 'specific_date' ? Math.max(1, Math.round(monthlyTarget / daysInMonth)) : monthlyTarget;
-  const targetActualValue = selectedPackage === 'SME' ? activatedSmeAmount : activatedCount;
-  const progressPct = effectiveTarget > 0 ? (targetActualValue / effectiveTarget) * 100 : 0;
-  const runningUnit = selectedPackage === 'SME' ? '₱' : '';
+    return {
+      fiberx: calcPkg('FIBERX'),
+      sme: calcPkg('SME'),
+      bida: calcPkg('BIDA'),
+    };
+  }, [
+    records,
+    dateMode,
+    selectedDate,
+    selectedYear,
+    selectedMonth,
+    selectedProvince,
+    selectedSliType,
+  ]);
 
-  // Parsed target date components for exact Google Sheets formula display
-  const parsedTargetDate = useMemo(() => normalizeDate(selectedDate), [selectedDate]);
-  const targetYear = parsedTargetDate ? parsedTargetDate.getFullYear() : selectedYear;
-  const targetMonth = parsedTargetDate ? parsedTargetDate.getMonth() + 1 : selectedMonth + 1;
-  const targetDay = parsedTargetDate ? parsedTargetDate.getDate() : 15;
+  // -------------------------------------------------------------
+  // SLI CARDS (Force S = INHOUSE, MSA)
+  // Respects selected date/month, selected province, and selected package
+  // -------------------------------------------------------------
+  const sliCards = useMemo(() => {
+    const calcSli = (sliKey: string) => {
+      const count =
+        dateMode === 'specific_date'
+          ? countActivatedForDate(
+              records,
+              selectedDate,
+              selectedProvince,
+              sliKey,
+              selectedPackage
+            )
+          : countActivatedForMonth(
+              records,
+              selectedYear,
+              selectedMonth,
+              selectedProvince,
+              sliKey,
+              selectedPackage
+            );
 
-  // Channel Mix numbers calculated directly from matching records
-  const inhouseCount = useMemo(() => {
-    return matchingRecords.filter((r) => (r.sliType || '').toUpperCase() === 'INHOUSE').length;
-  }, [matchingRecords]);
+      const mrc =
+        dateMode === 'specific_date'
+          ? sumAmountForDate(
+              records,
+              selectedDate,
+              selectedProvince,
+              sliKey,
+              selectedPackage
+            )
+          : sumAmountForMonth(
+              records,
+              selectedYear,
+              selectedMonth,
+              selectedProvince,
+              sliKey,
+              selectedPackage
+            );
 
-  const msaCount = useMemo(() => {
-    return matchingRecords.filter((r) => (r.sliType || '').toUpperCase() === 'MSA').length;
-  }, [matchingRecords]);
+      return { count, mrc };
+    };
 
-  const channelTotal = inhouseCount + msaCount;
-  const inhousePct = channelTotal > 0 ? Math.round((inhouseCount / channelTotal) * 100) : 0;
-  const msaPct = channelTotal > 0 ? 100 - inhousePct : 0;
+    const inhouse = calcSli('INHOUSE');
+    const msa = calcSli('MSA');
+    const total = inhouse.count + msa.count;
+    const inhousePct = total > 0 ? ((inhouse.count / total) * 100).toFixed(1) : '0';
+    const msaPct = total > 0 ? ((msa.count / total) * 100).toFixed(1) : '0';
 
-  // Donut SVG parameters
-  const strokeWidth = 14;
-  const radius = 46;
-  const circumference = 2 * Math.PI * radius;
-  const inhouseDash = (circumference * inhousePct) / 100;
-  const msaDash = circumference - inhouseDash;
+    return { inhouse, msa, total, inhousePct, msaPct };
+  }, [
+    records,
+    dateMode,
+    selectedDate,
+    selectedYear,
+    selectedMonth,
+    selectedProvince,
+    selectedPackage,
+  ]);
 
-  // Province breakdowns for district cards
-  const provinceCounts = useMemo(() => {
-    const albay = (dateMode === 'specific_date'
-      ? filterRecordsForDate(records, selectedDate, 'ALBAY', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
-      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'ALBAY', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
-    ).length;
+  // Google Sheets formula representations for visual inspection & audit
+  const countFormula = useMemo(() => {
+    return getSheetsCountifsFormula(
+      selectedProvince,
+      selectedSliType,
+      selectedPackage,
+      dateMode === 'specific_date' ? selectedDate : `01-${monthDisplayLabel}`
+    );
+  }, [selectedProvince, selectedSliType, selectedPackage, dateMode, selectedDate, monthDisplayLabel]);
 
-    const sorsogon = (dateMode === 'specific_date'
-      ? filterRecordsForDate(records, selectedDate, 'SORSOGON', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
-      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'SORSOGON', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
-    ).length;
-
-    const masbate = (dateMode === 'specific_date'
-      ? filterRecordsForDate(records, selectedDate, 'MASBATE', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
-      : filterRecordsForMonth(records, selectedYear, selectedMonth, 'MASBATE', selectedSliType === 'All SLI Types' ? 'All' : selectedSliType, selectedPackage === 'All Packages' ? 'All' : selectedPackage)
-    ).length;
-
-    return { albay, sorsogon, masbate };
-  }, [records, dateMode, selectedDate, selectedYear, selectedMonth, selectedSliType, selectedPackage]);
+  const sumFormula = useMemo(() => {
+    return getSheetsSumifsFormula(
+      selectedProvince,
+      selectedSliType,
+      selectedPackage,
+      dateMode === 'specific_date' ? selectedDate : `01-${monthDisplayLabel}`
+    );
+  }, [selectedProvince, selectedSliType, selectedPackage, dateMode, selectedDate, monthDisplayLabel]);
 
   return (
     <div id="overview-view" className="space-y-6">
-      {/* Dynamic Filter / Date Control Bar */}
+      {/* Dynamic 4-Filter & Date Control Bar */}
       <div
         id="filter-bar"
         className="bg-white border border-[#dce7e1] rounded-2xl px-5 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-2xs"
       >
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Live indicator */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Live Data Badge */}
           <div className="flex items-center gap-2 mr-1">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
-            <span className="text-xs font-bold text-[#144937]">Live Data</span>
+            <span className="text-xs font-bold text-[#144937]">Dynamic Sheet Sync</span>
           </div>
 
-          {/* Date Mode Selector */}
+          {/* 1. Date Mode Selector */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">Date Mode</span>
+            <span className="text-xs font-medium text-[#587a6d]">Mode:</span>
             <div className="relative">
               <select
                 id="filter-date-mode"
                 value={dateMode}
                 onChange={(e) => onChangeDateMode(e.target.value as DateFilterMode)}
                 aria-label="Select date mode"
-                className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
+                className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
               >
-                <option value="specific_date">Specific Date</option>
                 <option value="entire_month">Entire Month</option>
+                <option value="specific_date">Specific Date</option>
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
-          {/* Date Selector (Specific Date Mode) or Month Selector (Entire Month Mode) */}
+          {/* Date Selector or Month Selector */}
           {dateMode === 'specific_date' ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[#587a6d]">Date</span>
+              <span className="text-xs font-medium text-[#587a6d]">Date (Col AF):</span>
               <div className="relative">
                 <select
                   id="filter-specific-date"
                   value={selectedDate}
                   onChange={(e) => onChangeDate(e.target.value)}
                   aria-label="Select specific calendar date"
-                  className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
+                  className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
                 >
                   {calendarDays.map((d) => (
                     <option key={d} value={d}>
@@ -280,12 +383,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-[#587a6d]">Month</span>
+              <span className="text-xs font-medium text-[#587a6d]">Month:</span>
               <div className="relative">
                 <select
                   id="filter-entire-month"
@@ -295,7 +398,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     onChangeMonth(y, m);
                   }}
                   aria-label="Select month"
-                  className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
+                  className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-bold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
                 >
                   {availableMonths.map((m) => (
                     <option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>
@@ -303,277 +406,371 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           )}
 
-          {/* Province Dropdown (Column G: STATEORPROVINCE) */}
+          {/* 2. Province Dropdown (Column G: STATEORPROVINCE) */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">Province</span>
+            <span className="text-xs font-medium text-[#587a6d]">Province (Col G):</span>
             <div className="relative">
               <select
                 id="filter-province"
                 value={selectedProvince}
                 onChange={(e) => setSelectedProvince(e.target.value)}
                 aria-label="Filter province"
-                className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
+                className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
               >
-                <option value="Albay">Albay</option>
-                <option value="Sorsogon">Sorsogon</option>
-                <option value="Masbate">Masbate</option>
                 <option value="All districts">All districts</option>
+                <option value="Albay">ALBAY</option>
+                <option value="Masbate">MASBATE</option>
+                <option value="Sorsogon">SORSOGON</option>
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
-          {/* SLI Type Dropdown (Column S: SLI TYPE) */}
+          {/* 3. SLI Type Dropdown (Column S: SLI TYPE) */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">SLI Type</span>
+            <span className="text-xs font-medium text-[#587a6d]">SLI (Col S):</span>
             <div className="relative">
               <select
                 id="filter-sli-type"
                 value={selectedSliType}
                 onChange={(e) => setSelectedSliType(e.target.value)}
                 aria-label="Filter SLI Type"
-                className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
+                className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
               >
+                <option value="All">All SLI Types</option>
                 <option value="INHOUSE">INHOUSE</option>
                 <option value="MSA">MSA</option>
-                <option value="All">All SLI Types</option>
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
-          {/* Package Dropdown (Column AC: PACKAGE) */}
+          {/* 4. Package Dropdown (Column AC: PACKAGE) */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#587a6d]">Package</span>
+            <span className="text-xs font-medium text-[#587a6d]">Package (Col AC):</span>
             <div className="relative">
               <select
                 id="filter-package"
                 value={selectedPackage}
                 onChange={(e) => setSelectedPackage(e.target.value)}
                 aria-label="Filter package"
-                className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-8 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
+                className="appearance-none bg-[#f4f9f6] border border-[#d2e3da] text-[#123d2e] text-xs font-semibold rounded-xl pl-3 pr-7 py-1.5 focus:outline-hidden focus:border-emerald-600 cursor-pointer"
               >
-                <option value="FiberX">FiberX</option>
+                <option value="All Packages">All Packages</option>
+                <option value="FiberX">FIBERX</option>
                 <option value="SME">SME</option>
                 <option value="BIDA">BIDA</option>
-                <option value="S2S">S2S</option>
-                <option value="All Packages">All Packages</option>
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#587a6d] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
         </div>
 
-        {/* Inspect Matching Rows toggle */}
-        <button
-          onClick={() => setShowRecordDrawer(!showRecordDrawer)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
-        >
-          <TableIcon className="w-3.5 h-3.5 text-emerald-700" />
-          <span>{showRecordDrawer ? 'Hide Rows' : `Inspect Rows (${matchingRecords.length})`}</span>
-        </button>
+        {/* Action Controls: Reset & Inspect Rows */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleResetFilters}
+            title="Reset all filters to defaults"
+            className="flex items-center gap-1 text-xs text-[#527567] hover:text-[#0e2d21] bg-[#f0f6f2] hover:bg-[#e4eee8] px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+
+          <button
+            onClick={() => setShowRecordDrawer(!showRecordDrawer)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+          >
+            <TableIcon className="w-3.5 h-3.5 text-emerald-700" />
+            <span>{showRecordDrawer ? 'Hide Rows' : `Inspect Rows (${matchingRecords.length})`}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Top Cards Grid (Left Hero Card + Right Portfolio Snapshot) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Hero Card - Deep Forest Green */}
+      {/* Hero Metric Cards Grid: Activated JO Count (Card 1) + Total MRC (Card 2) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* HERO CARD 1: ACTIVATED JO COUNT */}
         <div
-          id="hero-metric-card"
-          className="lg:col-span-7 bg-[#144c38] text-white rounded-3xl p-7 shadow-md flex flex-col justify-between relative overflow-hidden"
+          id="card-activated-jo-count"
+          className="bg-[#144c38] text-white rounded-3xl p-7 shadow-md flex flex-col justify-between relative overflow-hidden"
         >
-          {/* Subtle decorative background glow */}
           <div className="absolute -right-16 -top-16 w-64 h-64 bg-[#1f6a4e] rounded-full blur-3xl opacity-30 pointer-events-none"></div>
 
           <div>
-            {/* Card Header & Date Mode Badge */}
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <div className="flex items-center gap-2 text-emerald-200 text-xs font-semibold">
                 <div className="w-6 h-6 rounded-full bg-[#1e6147] flex items-center justify-center">
                   <Wifi className="w-3.5 h-3.5 text-emerald-300" />
                 </div>
-                <span>
-                  {dateMode === 'specific_date' ? selectedDate : monthDisplayLabel} •{' '}
-                  {selectedProvince} / {selectedSliType} / {selectedPackage} Activated
-                </span>
+                <span>ACTIVATED JO COUNT</span>
               </div>
 
               <div className="bg-[#0e3b2b] border border-[#276c52] px-2.5 py-1 rounded-full text-[11px] font-semibold text-emerald-300 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>{dateMode === 'specific_date' ? 'Specific Date Mode' : 'Entire Month Mode'}</span>
+                <span>
+                  {dateMode === 'specific_date' ? `Date: ${selectedDate}` : `Month: ${monthDisplayLabel}`}
+                </span>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-              {/* Giant Count Number (Strict user requirement: Activated count completely controlled by date selector and raw JO data) */}
-              <div>
-                <div className="text-6xl font-extrabold tracking-tight text-white font-sans">
-                  {activatedCount.toLocaleString()}
-                </div>
+            <div className="text-6xl font-black tracking-tight text-white font-sans mt-2">
+              {activatedCount.toLocaleString()}
+            </div>
 
-                {/* Clear mode subtext specified in prompt */}
-                <div className="text-xs text-emerald-200 font-medium mt-1.5 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>
-                    {dateMode === 'specific_date'
-                      ? `Activated on ${selectedDate}`
-                      : `Activated during ${monthDisplayLabel}`}
-                  </span>
-                  {selectedPackage === 'SME' && (
-                    <span className="text-emerald-100 font-bold ml-1.5 bg-[#0e3b2b] px-2 py-0.5 rounded-md border border-[#276c52]">
-                      MRC: ₱{activatedSmeAmount.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-
-                <div className="text-[11px] text-emerald-300/80 mt-1">
-                  Source: Column AF (CLOSING DATE) matching raw JO ACTIVATED data
-                </div>
-              </div>
-
-              {/* Sub-card: Target Attainment */}
-              <div className="bg-[#113f2e]/90 border border-[#276b51] rounded-2xl p-4 min-w-[160px] text-center shadow-inner">
-                <div className="w-7 h-7 mx-auto rounded-full bg-[#1b5d43] flex items-center justify-center mb-1.5">
-                  <Target className="w-4 h-4 text-emerald-300" />
-                </div>
-                <div className="text-[11px] font-semibold text-emerald-200 uppercase tracking-wide">
-                  {dateMode === 'specific_date' ? 'Daily Pace' : 'Monthly Attainment'}
-                </div>
-                <div className="text-2xl font-black text-white mt-0.5">
-                  {progressPct.toFixed(1)}%
-                </div>
-                <div className="text-[11px] text-emerald-300 font-semibold flex items-center justify-center gap-1 mt-1">
-                  <span>Goal: {runningUnit}{effectiveTarget.toLocaleString()}</span>
-                </div>
-              </div>
+            <div className="text-xs text-emerald-200 font-medium mt-2 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>
+                {dateMode === 'specific_date'
+                  ? `Rows where Column AF = ${selectedDate}`
+                  : `Rows closed in ${monthDisplayLabel}`}
+                {selectedProvince !== 'All districts' && ` • Province = ${selectedProvince}`}
+                {selectedSliType !== 'All' && ` • SLI = ${selectedSliType}`}
+                {selectedPackage !== 'All Packages' && ` • Package = ${selectedPackage}`}
+              </span>
             </div>
           </div>
 
-          {/* Progress Slider Track */}
-          <div className="mt-8 pt-4">
-            <div className="relative flex items-center">
-              <div className="w-full h-3 bg-[#0c3123] rounded-full overflow-hidden p-0.5 shadow-inner">
-                <div
-                  className="h-full bg-linear-to-r from-emerald-400 to-[#38d39f] rounded-full transition-all duration-700 relative"
-                  style={{ width: `${Math.min(100, Math.max(2, progressPct))}%` }}
-                >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-md -mr-1 border-2 border-emerald-600"></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Range markers */}
-            <div className="flex items-center justify-between text-xs text-emerald-200/80 font-medium mt-2.5">
-              <span>0</span>
-              <span className="text-white font-bold text-xs bg-[#1a5a41] px-2.5 py-0.5 rounded-full">
-                {activatedCount} {selectedPackage} Activated
-              </span>
-              <span>{runningUnit}{effectiveTarget.toLocaleString()}</span>
-            </div>
-
-            {/* Formula verification banner */}
-            <div className="mt-3 pt-2.5 border-t border-[#1e6147] flex flex-wrap items-center justify-between gap-2 text-[11px] text-emerald-200/90 font-mono">
-              <span className="flex items-center gap-1.5 truncate max-w-md">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                {dateMode === 'specific_date' ? (
-                  <span>=COUNTIFS(&#39;JO ACTIVATED&#39;!G:G, &quot;{selectedProvince}&quot;, &#39;JO ACTIVATED&#39;!S:S, &quot;{selectedSliType}&quot;, &#39;JO ACTIVATED&#39;!AC:AC, &quot;{selectedPackage}&quot;, &#39;JO ACTIVATED&#39;!AF:AF, DATE({targetYear},{targetMonth},{targetDay}))</span>
-                ) : (
-                  <span>=COUNTIFS(&#39;JO ACTIVATED&#39;!G:G, &quot;{selectedProvince}&quot;, &#39;JO ACTIVATED&#39;!S:S, &quot;{selectedSliType}&quot;, &#39;JO ACTIVATED&#39;!AC:AC, &quot;{selectedPackage}&quot;, &#39;JO ACTIVATED&#39;!AF:AF in {monthDisplayLabel})</span>
-                )}
-              </span>
-              <span className="font-bold text-white bg-[#0e3b2a] px-2 py-0.5 rounded border border-[#237053]">
-                = {activatedCount}
-              </span>
-            </div>
+          {/* Dynamic Formula Display */}
+          <div className="mt-6 pt-3 border-t border-[#1e6147] flex items-center justify-between gap-2 text-[11px] font-mono text-emerald-200/90">
+            <span className="truncate" title={countFormula}>
+              {countFormula}
+            </span>
+            <span className="font-bold text-white bg-[#0e3b2a] px-2 py-0.5 rounded shrink-0 border border-[#237053]">
+              = {activatedCount}
+            </span>
           </div>
         </div>
 
-        {/* Right Card - Portfolio Snapshot */}
+        {/* HERO CARD 2: TOTAL MRC (Column AE) */}
         <div
-          id="portfolio-snapshot-card"
-          className="lg:col-span-5 bg-white border border-[#dce7e1] rounded-3xl p-7 shadow-xs flex flex-col justify-between"
+          id="card-total-mrc"
+          className="bg-white border border-[#dce7e1] rounded-3xl p-7 shadow-xs flex flex-col justify-between"
         >
           <div>
-            <div className="text-[11px] font-bold tracking-wider text-[#587a6d] uppercase">
-              PORTFOLIO SNAPSHOT
-            </div>
-            <h2 className="text-xl font-bold text-[#0f2e22] mt-0.5">
-              {selectedProvince === 'All districts' ? 'Bicol territory' : `${selectedProvince} district`}
-            </h2>
-            <p className="text-xs text-[#688a7e] font-normal mt-0.5">
-              Filter: {selectedSliType === 'All' ? 'All SLI Types' : selectedSliType} •{' '}
-              {selectedPackage === 'All Packages' ? 'All Packages' : selectedPackage}
-            </p>
-          </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2 text-[#4e7465] text-xs font-semibold uppercase tracking-wider">
+                <div className="w-6 h-6 rounded-full bg-[#dcf2e6] flex items-center justify-center text-[#144c37]">
+                  <DollarSign className="w-3.5 h-3.5" />
+                </div>
+                <span>TOTAL MRC (COLUMN AE)</span>
+              </div>
 
-          {/* 3 Metric Cards side by side */}
-          <div className="grid grid-cols-3 gap-3 my-4">
-            {/* Activated Count */}
-            <div className="bg-[#f7faf8] border border-[#e2ece6] rounded-2xl p-3.5 flex flex-col justify-between">
-              <div className="w-6 h-6 rounded-full bg-[#dcf2e6] flex items-center justify-center text-[#144c37] mb-2">
-                <Wifi className="w-3 h-3" />
-              </div>
-              <div className="text-[10px] font-semibold text-[#5a7c6f]">
-                {dateMode === 'specific_date' ? 'Date Count' : 'Month Total'}
-              </div>
-              <div className="text-xl font-bold text-[#0e2c20] mt-0.5">
-                {activatedCount.toLocaleString()}
-              </div>
-              <div className="text-[10px] text-[#719385] mt-1 truncate">
-                {dateMode === 'specific_date' ? 'on date' : 'in month'}
+              <div className="bg-[#f0f6f3] border border-[#d2e3da] px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#144937]">
+                Monthly Recurring Charge
               </div>
             </div>
 
-            {/* Target */}
-            <div className="bg-[#f7faf8] border border-[#e2ece6] rounded-2xl p-3.5 flex flex-col justify-between">
-              <div className="w-6 h-6 rounded-full bg-[#dcf2e6] flex items-center justify-center text-[#144c37] mb-2">
-                <Target className="w-3 h-3" />
-              </div>
-              <div className="text-[10px] font-semibold text-[#5a7c6f]">
-                {dateMode === 'specific_date' ? 'Daily Goal' : 'Target'}
-              </div>
-              <div className="text-xl font-bold text-[#0e2c20] mt-0.5">
-                {runningUnit}{effectiveTarget.toLocaleString()}
-              </div>
-              <div className="text-[10px] text-[#719385] mt-1">
-                {dateMode === 'specific_date' ? 'run-rate goal' : 'monthly goal'}
-              </div>
+            <div className="text-5xl font-black tracking-tight text-[#0f3124] font-sans mt-2">
+              ₱{totalMrc.toLocaleString()}
             </div>
 
-            {/* Progress */}
-            <div className="bg-[#f7faf8] border border-[#e2ece6] rounded-2xl p-3.5 flex flex-col justify-between">
-              <div className="w-6 h-6 rounded-full bg-[#dcf2e6] flex items-center justify-center text-[#144c37] mb-2">
-                <TrendingUp className="w-3 h-3" />
-              </div>
-              <div className="text-[10px] font-semibold text-[#5a7c6f]">
-                Progress
-              </div>
-              <div className="text-xl font-bold text-[#0e2c20] mt-0.5">
-                {progressPct.toFixed(1)}%
-              </div>
-              <div className="w-full bg-[#e0ede6] h-1.5 rounded-full overflow-hidden mt-2">
-                <div
-                  className="bg-emerald-600 h-full rounded-full"
-                  style={{ width: `${Math.min(100, progressPct)}%` }}
-                ></div>
-              </div>
+            <div className="text-xs text-[#5d8071] font-medium mt-2 flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>
+                Dynamic SUM of Column AE (MRC) matching current filters
+              </span>
             </div>
           </div>
 
-          <div className="text-[11px] text-[#698a7d] flex items-center justify-between border-t border-[#edf3f0] pt-3">
-            <span>
-              Mode: <strong className="text-[#144c38] font-bold">{dateMode === 'specific_date' ? 'Specific Date' : 'Entire Month'}</strong>
+          {/* Dynamic Formula Display */}
+          <div className="mt-6 pt-3 border-t border-[#edf3f0] flex items-center justify-between gap-2 text-[11px] font-mono text-[#54796a]">
+            <span className="truncate" title={sumFormula}>
+              {sumFormula}
             </span>
-            <span className="font-semibold text-emerald-700">
-              Matching rows: {matchingRecords.length}
+            <span className="font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded shrink-0 border border-emerald-200">
+              = ₱{totalMrc.toLocaleString()}
             </span>
           </div>
         </div>
       </div>
+
+      {/* Package Breakdown Cards (FiberX, SME, BIDA) */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Layers className="w-4 h-4 text-emerald-600" />
+          <h2 className="text-sm font-bold text-[#0e2f22] tracking-wider uppercase">
+            PACKAGE BREAKDOWN (COLUMN AC)
+          </h2>
+          <span className="text-xs text-[#688a7c]">
+            (Respecting active date, province, and SLI filters)
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* FiberX Card */}
+          <div
+            id="card-package-fiberx"
+            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-2 hover:border-emerald-400 transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
+                FiberX Activated
+              </span>
+              <span className="text-[11px] font-mono text-[#66887a] bg-[#f0f6f2] px-2 py-0.5 rounded">
+                AC = FIBERX
+              </span>
+            </div>
+            <div className="text-3xl font-black text-[#0f3023]">
+              {packageCards.fiberx.count.toLocaleString()}
+            </div>
+            <div className="text-xs text-[#527768] font-medium flex items-center justify-between pt-1 border-t border-[#f0f5f2]">
+              <span>Total MRC:</span>
+              <span className="font-mono font-bold text-emerald-900">
+                ₱{packageCards.fiberx.mrc.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          {/* SME Card */}
+          <div
+            id="card-package-sme"
+            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-2 hover:border-emerald-400 transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-teal-800 uppercase tracking-wide">
+                SME Activated
+              </span>
+              <span className="text-[11px] font-mono text-[#66887a] bg-[#f0f6f2] px-2 py-0.5 rounded">
+                AC = SME
+              </span>
+            </div>
+            <div className="text-3xl font-black text-[#0f3023]">
+              {packageCards.sme.count.toLocaleString()}
+            </div>
+            <div className="text-xs text-[#527768] font-medium flex items-center justify-between pt-1 border-t border-[#f0f5f2]">
+              <span>Total MRC:</span>
+              <span className="font-mono font-bold text-emerald-900">
+                ₱{packageCards.sme.mrc.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          {/* BIDA Card */}
+          <div
+            id="card-package-bida"
+            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-2 hover:border-emerald-400 transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-cyan-800 uppercase tracking-wide">
+                BIDA Activated
+              </span>
+              <span className="text-[11px] font-mono text-[#66887a] bg-[#f0f6f2] px-2 py-0.5 rounded">
+                AC = BIDA
+              </span>
+            </div>
+            <div className="text-3xl font-black text-[#0f3023]">
+              {packageCards.bida.count.toLocaleString()}
+            </div>
+            <div className="text-xs text-[#527768] font-medium flex items-center justify-between pt-1 border-t border-[#f0f5f2]">
+              <span>Total MRC:</span>
+              <span className="font-mono font-bold text-emerald-900">
+                ₱{packageCards.bida.mrc.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SLI Channel Breakdown Cards (INHOUSE & MSA) */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Users className="w-4 h-4 text-emerald-600" />
+          <h2 className="text-sm font-bold text-[#0e2f22] tracking-wider uppercase">
+            SLI CHANNEL BREAKDOWN (COLUMN S)
+          </h2>
+          <span className="text-xs text-[#688a7c]">
+            (Respecting active date, province, and package filters)
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* INHOUSE Card */}
+          <div
+            id="card-sli-inhouse"
+            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-2 hover:border-emerald-400 transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                <span className="text-xs font-bold text-[#0f3023] uppercase tracking-wide">
+                  INHOUSE Activated
+                </span>
+              </div>
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                {sliCards.inhousePct}% share
+              </span>
+            </div>
+            <div className="text-3xl font-black text-[#0f3023]">
+              {sliCards.inhouse.count.toLocaleString()}
+            </div>
+            <div className="text-xs text-[#527768] font-medium flex items-center justify-between pt-1 border-t border-[#f0f5f2]">
+              <span>Total MRC:</span>
+              <span className="font-mono font-bold text-emerald-900">
+                ₱{sliCards.inhouse.mrc.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          {/* MSA Card */}
+          <div
+            id="card-sli-msa"
+            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-2 hover:border-teal-400 transition-colors"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+                <span className="text-xs font-bold text-[#0f3023] uppercase tracking-wide">
+                  MSA Activated
+                </span>
+              </div>
+              <span className="text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                {sliCards.msaPct}% share
+              </span>
+            </div>
+            <div className="text-3xl font-black text-[#0f3023]">
+              {sliCards.msa.count.toLocaleString()}
+            </div>
+            <div className="text-xs text-[#527768] font-medium flex items-center justify-between pt-1 border-t border-[#f0f5f2]">
+              <span>Total MRC:</span>
+              <span className="font-mono font-bold text-teal-900">
+                ₱{sliCards.msa.mrc.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Tables: MRC Package Summary & Province Summary */}
+      <SummaryTables
+        records={records}
+        dateMode={dateMode}
+        selectedDate={selectedDate}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        selectedProvince={selectedProvince}
+        selectedSliType={selectedSliType}
+        selectedPackage={selectedPackage}
+      />
+
+      {/* Daily Activation Table (Closed On Column AF Breakdown) */}
+      <DailyActivationTable
+        records={records}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        selectedProvince={selectedProvince}
+        selectedPackage={selectedPackage}
+        dateMode={dateMode}
+        selectedDate={selectedDate}
+        onSelectDate={(closedOnDate) => {
+          onChangeDate(closedOnDate);
+          onChangeDateMode('specific_date');
+        }}
+      />
 
       {/* Matching Raw JO Records Inspection Drawer */}
       {showRecordDrawer && (
@@ -588,13 +785,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   Matching JO Rows for {dateMode === 'specific_date' ? selectedDate : monthDisplayLabel}
                 </h3>
                 <p className="text-xs text-[#5d8072]">
-                  {matchingRecords.length} records where Province=&apos;{selectedProvince}&apos;, SLI Type=&apos;{selectedSliType}&apos;, Package=&apos;{selectedPackage}&apos;
+                  {matchingRecords.length} records matching Province=&apos;{selectedProvince}&apos;, SLI=&apos;{selectedSliType}&apos;, Package=&apos;{selectedPackage}&apos;
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowRecordDrawer(false)}
-              className="text-xs text-[#527567] hover:text-[#0e2d21] font-semibold px-2 py-1"
+              className="text-xs text-[#527567] hover:text-[#0e2d21] font-semibold px-2 py-1 cursor-pointer"
             >
               Close
             </button>
@@ -602,7 +799,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
           {matchingRecords.length === 0 ? (
             <div className="py-8 text-center text-xs text-[#6e8f81] bg-[#f8faf9] rounded-2xl border border-dashed border-[#d8e6df]">
-              No activated JO records found for {dateMode === 'specific_date' ? selectedDate : monthDisplayLabel} with current filters.
+              No activated JO records found for the selected filter combination.
             </div>
           ) : (
             <div className="overflow-x-auto max-h-72 border border-[#e2ebe6] rounded-2xl">
@@ -642,191 +839,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           )}
         </div>
       )}
-
-      {/* Bottom Grid: District Breakdown (Left) + Channel Mix (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* District Breakdown */}
-        <div
-          id="district-breakdown-card"
-          className="lg:col-span-7 bg-white border border-[#dce7e1] rounded-3xl p-7 shadow-xs flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="text-[11px] font-bold tracking-wider text-[#587a6d] uppercase">
-                  DISTRICT BREAKDOWN
-                </div>
-                <h2 className="text-xl font-bold text-[#0f2e22]">
-                  {dateMode === 'specific_date' ? `Activations on ${selectedDate}` : `Activations during ${monthDisplayLabel}`}
-                </h2>
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center gap-4 text-xs font-semibold text-[#547366]">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#18533e]"></span>
-                  <span>activated</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Territory Bars */}
-            <div className="space-y-4 my-6">
-              {[
-                { name: 'Albay', prov: 'ALBAY', count: provinceCounts.albay, target: dateMode === 'specific_date' ? 10 : 300 },
-                { name: 'Sorsogon', prov: 'SORSOGON', count: provinceCounts.sorsogon, target: dateMode === 'specific_date' ? 4 : 120 },
-                { name: 'Masbate', prov: 'MASBATE', count: provinceCounts.masbate, target: dateMode === 'specific_date' ? 5 : 140 },
-              ].map((item) => {
-                const totalFiltered = provinceCounts.albay + provinceCounts.sorsogon + provinceCounts.masbate;
-                const pctOfTotal = totalFiltered > 0 ? (item.count / totalFiltered) * 100 : 0;
-
-                return (
-                  <div key={item.prov} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-[#143e30]">{item.name}</span>
-                        <span className="text-[#6d8d80] text-[11px]">
-                          ({item.count} JOs)
-                        </span>
-                      </div>
-                      <span className="font-bold text-[#143e30]">{pctOfTotal.toFixed(1)}% of total</span>
-                    </div>
-
-                    {/* Bar visualization */}
-                    <div className="w-full h-3 bg-[#e8f0ec] rounded-full overflow-hidden flex">
-                      <div
-                        className="bg-[#18533e] h-full rounded-l-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, pctOfTotal)}%` }}
-                      ></div>
-                      <div
-                        className="bg-[#d6e3dc] h-full"
-                        style={{ width: `${Math.max(0, 100 - pctOfTotal)}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Footer of District Breakdown */}
-          <div className="flex items-center justify-between border-t border-[#edf3f0] pt-4 text-xs">
-            <span className="text-[#648779]">
-              Filtered by: {selectedSliType === 'All' ? 'All SLI Types' : selectedSliType} • {selectedPackage}
-            </span>
-            {onNavigateToVendors && (
-              <button
-                onClick={onNavigateToVendors}
-                className="font-bold text-[#144c38] hover:text-[#0b3325] flex items-center gap-1 hover:underline transition-colors"
-              >
-                <span>View vendor contribution</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Channel Mix - Donut Card */}
-        <div
-          id="channel-mix-card"
-          className="lg:col-span-5 bg-white border border-[#dce7e1] rounded-3xl p-7 shadow-xs flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex items-center justify-between">
-              <div className="text-[11px] font-bold tracking-wider text-[#587a6d] uppercase">
-                CHANNEL MIX
-              </div>
-              <span className="text-xs font-semibold text-[#5a7d70]">
-                {channelTotal.toLocaleString()} total
-              </span>
-            </div>
-            <h2 className="text-xl font-bold text-[#0f2e22] mt-0.5">
-              {dateMode === 'specific_date' ? `Contribution on ${selectedDate}` : `Contribution in ${monthDisplayLabel}`}
-            </h2>
-
-            {/* Donut Chart Visualization */}
-            <div className="flex items-center justify-center my-6">
-              <div className="relative w-44 h-44 flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r={radius}
-                    fill="transparent"
-                    stroke="#e8f0ec"
-                    strokeWidth={strokeWidth}
-                  />
-                  {channelTotal > 0 && (
-                    <>
-                      <circle
-                        cx="60"
-                        cy="60"
-                        r={radius}
-                        fill="transparent"
-                        stroke="#14563f"
-                        strokeWidth={strokeWidth}
-                        strokeDasharray={`${inhouseDash} ${circumference}`}
-                        strokeDashoffset="0"
-                        className="transition-all duration-700"
-                      />
-                      <circle
-                        cx="60"
-                        cy="60"
-                        r={radius}
-                        fill="transparent"
-                        stroke="#2dd4bf"
-                        strokeWidth={strokeWidth}
-                        strokeDasharray={`${msaDash} ${circumference}`}
-                        strokeDashoffset={`-${inhouseDash}`}
-                        className="transition-all duration-700"
-                      />
-                    </>
-                  )}
-                </svg>
-
-                {/* Donut Center */}
-                <div className="absolute flex flex-col items-center justify-center text-center">
-                  <span className="text-3xl font-extrabold text-[#0f2f23] tracking-tight">
-                    {channelTotal.toLocaleString()}
-                  </span>
-                  <span className="text-[10px] font-semibold text-[#668b7d] uppercase tracking-wider">
-                    {dateMode === 'specific_date' ? 'ON DATE' : 'IN MONTH'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Legend & Breakdown */}
-            <div className="space-y-2.5 pt-2 border-t border-[#edf3f0]">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#14563f]"></span>
-                  <span className="font-semibold text-[#184233]">INHOUSE</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-[#668b7d] font-medium">{inhouseCount}</span>
-                  <span className="font-bold text-[#143d2f] w-10 text-right">{inhousePct}%</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#2dd4bf]"></span>
-                  <span className="font-semibold text-[#184233]">MSA</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-[#668b7d] font-medium">{msaCount}</span>
-                  <span className="font-bold text-[#143d2f] w-10 text-right">{msaPct}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-[11px] text-[#6d9183] border-t border-[#edf3f0] pt-3 text-center font-mono">
-            Formula: <code>COUNTIFS(S:S, &quot;INHOUSE&quot;|&quot;MSA&quot;, AF:AF, date)</code>
-          </div>
-        </div>
-      </div>
 
       {/* Raw JO ACTIVATED Dynamic Grouping & Counting Engine */}
       <GroupingMatrixView aggregates={metrics} />

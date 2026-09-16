@@ -313,6 +313,16 @@ export function matchesPackage(record: JORecord, selectedPackage: string): boole
 }
 
 /**
+ * Format a Date object into the standard Closed On display: DD-Mmm-YYYY (e.g., 01-Sep-2026, 15-Sep-2026)
+ */
+export function formatClosedOnDisplay(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const monthAbbrs = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthStr = monthAbbrs[date.getMonth()] || 'Sep';
+  return `${day}-${monthStr}-${date.getFullYear()}`;
+}
+
+/**
  * Generates the equivalent Google Sheets formula string for verification
  * =COUNTIFS('JO ACTIVATED'!G:G,"ALBAY",'JO ACTIVATED'!S:S,"INHOUSE",'JO ACTIVATED'!AC:AC,"FIBERX",'JO ACTIVATED'!AF:AF,DATE(2026,9,15))
  */
@@ -323,14 +333,35 @@ export function getSheetsCountifsFormula(
   selectedDate: Date | string
 ): string {
   const target = normalizeDate(selectedDate);
-  const provStr = selectedProvince === 'All districts' ? 'ALL' : selectedProvince.toUpperCase();
-  const sliStr = selectedSliType === 'All' || selectedSliType === 'All SLI Types' ? 'ALL' : selectedSliType.toUpperCase();
-  const pkgStr = selectedPackage === 'All Packages' ? 'ALL' : selectedPackage.toUpperCase();
+  const provCriteria = selectedProvince === 'All districts' ? '' : `'JO ACTIVATED'!G:G,"${selectedProvince.toUpperCase()}",`;
+  const sliCriteria = selectedSliType === 'All' || selectedSliType === 'All SLI Types' ? '' : `'JO ACTIVATED'!S:S,"${selectedSliType.toUpperCase()}",`;
+  const pkgCriteria = selectedPackage === 'All' || selectedPackage === 'All Packages' ? '' : `'JO ACTIVATED'!AC:AC,"${selectedPackage.toUpperCase()}",`;
   const dateStr = target
     ? `DATE(${target.getFullYear()},${target.getMonth() + 1},${target.getDate()})`
     : `"${selectedDate}"`;
 
-  return `=COUNTIFS('JO ACTIVATED'!G:G,"${provStr}",'JO ACTIVATED'!S:S,"${sliStr}",'JO ACTIVATED'!AC:AC,"${pkgStr}",'JO ACTIVATED'!AF:AF,${dateStr})`;
+  return `=COUNTIFS(${provCriteria}${sliCriteria}${pkgCriteria}'JO ACTIVATED'!AF:AF,${dateStr})`;
+}
+
+/**
+ * Generates the equivalent Google Sheets SUMIFS formula for Total MRC verification
+ * =SUMIFS('JO ACTIVATED'!AE:AE,'JO ACTIVATED'!G:G,"ALBAY",'JO ACTIVATED'!S:S,"INHOUSE",'JO ACTIVATED'!AC:AC,"FIBERX",'JO ACTIVATED'!AF:AF,DATE(2026,9,15))
+ */
+export function getSheetsSumifsFormula(
+  selectedProvince: string,
+  selectedSliType: string,
+  selectedPackage: string,
+  selectedDate: Date | string
+): string {
+  const target = normalizeDate(selectedDate);
+  const provCriteria = selectedProvince === 'All districts' ? '' : `,'JO ACTIVATED'!G:G,"${selectedProvince.toUpperCase()}"`;
+  const sliCriteria = selectedSliType === 'All' || selectedSliType === 'All SLI Types' ? '' : `,'JO ACTIVATED'!S:S,"${selectedSliType.toUpperCase()}"`;
+  const pkgCriteria = selectedPackage === 'All' || selectedPackage === 'All Packages' ? '' : `,'JO ACTIVATED'!AC:AC,"${selectedPackage.toUpperCase()}"`;
+  const dateStr = target
+    ? `DATE(${target.getFullYear()},${target.getMonth() + 1},${target.getDate()})`
+    : `"${selectedDate}"`;
+
+  return `=SUMIFS('JO ACTIVATED'!AE:AE,'JO ACTIVATED'!AF:AF,${dateStr}${provCriteria}${sliCriteria}${pkgCriteria})`;
 }
 
 /**

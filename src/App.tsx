@@ -20,7 +20,7 @@ export default function App() {
   const [records, setRecords] = useState<JORecord[]>(() => generateInitialRecords());
   const [dailyMetrics, setDailyMetrics] = useState(INITIAL_DAILY_METRICS);
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
-  const [dateMode, setDateMode] = useState<DateFilterMode>('specific_date');
+  const [dateMode, setDateMode] = useState<DateFilterMode>('entire_month');
   const [selectedDate, setSelectedDate] = useState('September 15, 2026');
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(8); // 8 = September (0-indexed)
@@ -32,9 +32,9 @@ export default function App() {
   const [syncSourceInfo, setSyncSourceInfo] = useState<SyncSourceInfo | null>({
     fileName: 'ALMASOR_SLI_MONITORING.xlsx',
     sheetName: 'JO ACTIVATED',
-    isScreenshotSample: true,
+    isScreenshotSample: false,
     lastSyncTime: '01:00 PM',
-    rowCount: 44,
+    rowCount: 388,
   });
 
   // Fetch shared records from server so all users see identical synced data
