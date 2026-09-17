@@ -1,15 +1,27 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import * as XLSX from "xlsx";
+
 import {
-  LineChart,
+  CartesianGrid,
+  Legend,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from "recharts";
+
+/* =========================================================
+   CONFIGURATION
+========================================================= */
 
 const GOOGLE_SHEET_ID =
   "17Vpc9LKVa2sD8FIUefqEQaM937dbTFIKnBeQ-5XCSNg";
@@ -17,10 +29,21 @@ const GOOGLE_SHEET_ID =
 const GOOGLE_SHEET_URL =
   `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}`;
 
-const MONTH_OPTIONS = [
-  "2026-09",
-];
+/*
+  Live refresh interval.
 
+  60 seconds = dashboard checks Google Sheet once per minute.
+*/
+const LIVE_REFRESH_MS = 60_000;
+
+/*
+  Initial/default reporting month.
+*/
+const DEFAULT_MONTH = "2026-09";
+
+/*
+  Dashboard filters.
+*/
 const PROVINCES = [
   "All districts",
   "Albay",
@@ -42,20 +65,39 @@ const PACKAGES = [
 ];
 
 /*
-  SUMMARY target rows from the workbook.
+  Current workbook target-row mapping.
+
+  SUMMARY:
+    row 11 = ALBAY
+    row 17 = SORSOGON
+    row 23 = MASBATE
+    row 29 = OVERALL
 
   D = FIBERX
   E = SME
   F = BIDA
 */
-const TARGET_ROWS = {
+const TARGET_ROWS: Record<string, number> = {
   "All districts": 29,
   Albay: 11,
   Sorsogon: 17,
   Masbate: 23,
-} as const;
+};
 
-type Row = Record<string, any>;
+/* =========================================================
+   TYPES
+========================================================= */
+
+type RawRow = Record<string, any>;
+
+type ParsedJO = {
+  joNumber: string;
+  province: string;
+  sliType: string;
+  package: string;
+  mrc: number;
+  closingDate: Date;
+};
 
 type Filters = {
   month: string;
@@ -70,14 +112,18 @@ type Targets = {
   bida: number;
 };
 
-type ParsedJo = {
-  joNumber: string;
-  province: string;
-  sliType: string;
-  package: string;
-  mrc: number;
-  closingDate: Date;
+type LiveState = {
+  sourceName: string;
+  joRows: RawRow[];
+  summaryRows: RawRow[];
+  lastSynced: Date | null;
+  syncing: boolean;
+  error: string;
 };
+
+/* =========================================================
+   TEXT NORMALIZATION
+========================================================= */
 
 function normalizeText(value: any): string {
   return String(value ?? "")
@@ -95,48 +141,90 @@ function normalizeProvince(value: any): string {
 }
 
 function normalizePackage(value: any): string {
-  const v = compactText(value);
+  const valueText = compactText(value);
 
-  if (v === "FIBERX" || v.startsWith("FIBERX")) {
+  if (
+    valueText === "FIBERX" ||
+    valueText.startsWith("FIBERX")
+  ) {
     return "FIBERX";
   }
 
-  if (v === "SME" || v.startsWith("SME")) {
+  if (
+    valueText === "SME" ||
+    valueText.startsWith("SME")
+  ) {
     return "SME";
   }
 
-  if (v === "BIDA" || v.startsWith("BIDA")) {
+  if (
+    valueText === "BIDA" ||
+    valueText.startsWith("BIDA")
+  ) {
     return "BIDA";
   }
 
-  if (v === "S2S" || v.startsWith("S2S")) {
+  if (
+    valueText === "S2S" ||
+    valueText.startsWith("S2S")
+  ) {
     return "S2S";
   }
 
-  return v;
+  return valueText;
 }
 
-function normalizeSli(row: Row): string {
-  const sli = normalizeText(row["SLI TYPE"]);
+/*
+  SLI TYPE is the primary source.
 
-  if (sli === "INHOUSE") return "INHOUSE";
-  if (sli === "MSA") return "MSA";
+  VENDOR TYPE is used as fallback when SLI TYPE
+  is blank/unavailable in an Excel export.
+*/
+function normalizeSLI(row: RawRow): string {
+  const sli = normalizeText(
+    row["SLI TYPE"] ?? row["S"]
+  );
 
-  // Fallback used when SLI TYPE is blank/unavailable in Excel.
-  const vendor = normalizeText(row["VENDOR TYPE"]);
+  if (sli === "INHOUSE") {
+    return "INHOUSE";
+  }
 
-  if (vendor === "INHOUSE") return "INHOUSE";
-  if (vendor === "MSA") return "MSA";
+  if (sli === "MSA") {
+    return "MSA";
+  }
+
+  const vendor = normalizeText(
+    row["VENDOR TYPE"] ?? row["U"]
+  );
+
+  if (vendor === "INHOUSE") {
+    return "INHOUSE";
+  }
+
+  if (vendor === "MSA") {
+    return "MSA";
+  }
 
   return "";
 }
 
+/* =========================================================
+   NUMBER NORMALIZATION
+========================================================= */
+
 function numberValue(value: any): number {
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return 0;
   }
 
-  if (typeof value === "number" && Number.isFinite(value)) {
+  if (
+    typeof value === "number" &&
+    Number.isFinite(value)
+  ) {
     return value;
   }
 
@@ -146,17 +234,33 @@ function numberValue(value: any): number {
     .replace(/\s/g, "")
     .trim();
 
-  const n = Number(cleaned);
+  const result = Number(cleaned);
 
-  return Number.isFinite(n) ? n : 0;
+  return Number.isFinite(result)
+    ? result
+    : 0;
 }
 
-function parseDate(value: any): Date | null {
-  if (value === null || value === undefined || value === "") {
+/* =========================================================
+   DATE PARSING
+========================================================= */
+
+function parseDate(
+  value: any
+): Date | null {
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return null;
   }
 
-  if (value instanceof Date && !isNaN(value.getTime())) {
+  if (
+    value instanceof Date &&
+    !isNaN(value.getTime())
+  ) {
     return new Date(
       value.getFullYear(),
       value.getMonth(),
@@ -166,11 +270,15 @@ function parseDate(value: any): Date | null {
 
   const raw = String(value).trim();
 
-  // Google Visualization API:
-  // Date(2026,8,17)
-  const googleDate = raw.match(
-    /^Date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})\)$/
-  );
+  /*
+    Google Visualization API date:
+
+    Date(2026,8,17)
+  */
+  const googleDate =
+    raw.match(
+      /^Date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})\)$/
+    );
 
   if (googleDate) {
     return new Date(
@@ -180,19 +288,39 @@ function parseDate(value: any): Date | null {
     );
   }
 
-  // Excel serial date
+  /*
+    Excel serial number.
+  */
   if (/^-?\d+(?:\.\d+)?$/.test(raw)) {
+
     const serial = Number(raw);
 
-    if (serial > 20000 && serial < 80000) {
-      const excelEpoch = new Date(
-        Date.UTC(1899, 11, 30)
-      );
+    if (
+      serial > 20000 &&
+      serial < 80000
+    ) {
 
-      const date = new Date(
-        excelEpoch.getTime() +
-          serial * 24 * 60 * 60 * 1000
-      );
+      const excelEpoch =
+        new Date(
+          Date.UTC(
+            1899,
+            11,
+            30
+          )
+        );
+
+      const milliseconds =
+        serial *
+        24 *
+        60 *
+        60 *
+        1000;
+
+      const date =
+        new Date(
+          excelEpoch.getTime() +
+          milliseconds
+        );
 
       return new Date(
         date.getUTCFullYear(),
@@ -202,29 +330,34 @@ function parseDate(value: any): Date | null {
     }
   }
 
-  const formats = [
-    /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/,
-    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
-    /^(\d{4})-(\d{1,2})-(\d{1,2})$/,
-  ];
-
-  const dmyMonth = raw.match(formats[0]);
+  /*
+    DD-MMM-YYYY
+  */
+  const dmyMonth = raw.match(
+    /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/
+  );
 
   if (dmyMonth) {
-    const parsed = new Date(
+
+    const date = new Date(
       `${dmyMonth[2]} ${dmyMonth[1]}, ${dmyMonth[3]}`
     );
 
-    if (!isNaN(parsed.getTime())) {
+    if (!isNaN(date.getTime())) {
       return new Date(
-        parsed.getFullYear(),
-        parsed.getMonth(),
-        parsed.getDate()
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate()
       );
     }
   }
 
-  const slashDate = raw.match(formats[1]);
+  /*
+    MM/DD/YYYY
+  */
+  const slashDate = raw.match(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+  );
 
   if (slashDate) {
     return new Date(
@@ -234,7 +367,12 @@ function parseDate(value: any): Date | null {
     );
   }
 
-  const isoDate = raw.match(formats[2]);
+  /*
+    YYYY-MM-DD
+  */
+  const isoDate = raw.match(
+    /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+  );
 
   if (isoDate) {
     return new Date(
@@ -244,38 +382,69 @@ function parseDate(value: any): Date | null {
     );
   }
 
-  const generic = new Date(raw);
+  /*
+    Last fallback.
+  */
+  const genericDate =
+    new Date(raw);
 
-  if (!isNaN(generic.getTime())) {
+  if (
+    !isNaN(
+      genericDate.getTime()
+    )
+  ) {
     return new Date(
-      generic.getFullYear(),
-      generic.getMonth(),
-      generic.getDate()
+      genericDate.getFullYear(),
+      genericDate.getMonth(),
+      genericDate.getDate()
     );
   }
 
   return null;
 }
 
-function monthKey(date: Date): string {
+/* =========================================================
+   DATE HELPERS
+========================================================= */
+
+function monthKey(
+  date: Date
+): string {
+
   return [
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
+    String(
+      date.getMonth() + 1
+    ).padStart(2, "0"),
   ].join("-");
 }
 
-function dateKey(date: Date): string {
+function dateKey(
+  date: Date
+): string {
+
   return [
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
+    String(
+      date.getMonth() + 1
+    ).padStart(2, "0"),
+    String(
+      date.getDate()
+    ).padStart(2, "0"),
   ].join("-");
 }
 
-export function daysInSelectedMonth(month: string): number {
-  const [year, monthNumber] = month
-    .split("-")
-    .map(Number);
+export function monthDays(
+  month: string
+): number {
+
+  const [
+    year,
+    monthNumber,
+  ] =
+    month
+      .split("-")
+      .map(Number);
 
   return new Date(
     year,
@@ -284,173 +453,118 @@ export function daysInSelectedMonth(month: string): number {
   ).getDate();
 }
 
-function monthDisplay(month: string): string {
-  const [year, monthNumber] = month
-    .split("-")
-    .map(Number);
+function formatMonth(
+  month: string
+): string {
+
+  const [
+    year,
+    monthNumber,
+  ] =
+    month
+      .split("-")
+      .map(Number);
 
   return new Date(
     year,
     monthNumber - 1,
     1
-  ).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  ).toLocaleDateString(
+    "en-US",
+    {
+      month: "long",
+      year: "numeric",
+    }
+  );
 }
 
-export function shortMonthDisplay(month: string): string {
-  const [year, monthNumber] = month
-    .split("-")
-    .map(Number);
+function formatCount(
+  value: number
+): string {
 
-  return new Date(
-    year,
-    monthNumber - 1,
-    1
-  ).toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-  });
+  return Math.round(
+    numberValue(value)
+  ).toLocaleString(
+    "en-PH"
+  );
 }
 
-function formatCount(value: number): string {
-  return Math.round(value).toLocaleString("en-PH");
+function formatPeso(
+  value: number
+): string {
+
+  return `₱${numberValue(
+    value
+  ).toLocaleString(
+    "en-PH",
+    {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }
+  )}`;
 }
 
-function formatPeso(value: number): string {
-  return `₱${numberValue(value).toLocaleString("en-PH", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
-}
+/* =========================================================
+   PERCENTAGE
+========================================================= */
 
-function achievement(
+function calculatePercentage(
   actual: number,
   target: number
 ): number {
-  if (!Number.isFinite(target) || target <= 0) {
+
+  if (
+    !Number.isFinite(target) ||
+    target <= 0
+  ) {
     return 0;
   }
 
-  if (!Number.isFinite(actual)) {
+  if (
+    !Number.isFinite(actual)
+  ) {
     return 0;
   }
 
-  return (actual / target) * 100;
+  return (
+    actual /
+    target
+  ) *
+  100;
 }
 
-function filterMatches(
-  row: ParsedJo,
-  filters: Filters
-): boolean {
-  if (
-    filters.province !== "All districts" &&
-    row.province !== normalizeProvince(filters.province)
-  ) {
-    return false;
-  }
+/* =========================================================
+   GOOGLE SHEETS GVIZ
+========================================================= */
 
-  if (
-    filters.sliType !== "All SLI Types" &&
-    row.sliType !== normalizeText(filters.sliType)
-  ) {
-    return false;
-  }
-
-  return true;
-}
-
-function packageFilterMatches(
-  row: ParsedJo,
-  filters: Filters
-): boolean {
-  if (
-    filters.package !== "All Packages" &&
-    row.package !== normalizePackage(filters.package)
-  ) {
-    return false;
-  }
-
-  return true;
-}
-
-/*
-  Convert raw spreadsheet records to clean JO records.
-*/
-function buildParsedRows(
-  rawRows: Row[]
-): ParsedJo[] {
-  const clean: ParsedJo[] = [];
-
-  for (const row of rawRows) {
-    const joNumber = String(
-      row["JO NUMBER"] ?? ""
-    ).trim();
-
-    if (!joNumber || joNumber === "JO NUMBER") continue;
-
-    const closingDate = parseDate(
-      row["CLOSING DATE"]
-    );
-
-    if (!closingDate) continue;
-
-    const packageName = normalizePackage(
-      row["PACKAGE"]
-    );
-
-    if (
-      packageName !== "FIBERX" &&
-      packageName !== "SME" &&
-      packageName !== "BIDA"
-    ) {
-      continue;
-    }
-
-    clean.push({
-      joNumber,
-      province: normalizeProvince(
-        row["STATEORPROVINCE"]
-      ),
-      sliType: normalizeSli(row),
-      package: packageName,
-      mrc: numberValue(row["MRC"]),
-      closingDate,
-    });
-  }
-
-  /*
-    Remove duplicate JO numbers.
-
-    This is important because the dashboard should not
-    double count a JO if the source contains duplicate rows.
-  */
-  const unique = new Map<string, ParsedJo>();
-
-  for (const row of clean) {
-    if (!unique.has(row.joNumber)) {
-      unique.set(row.joNumber, row);
-    }
-  }
-
-  return Array.from(unique.values());
-}
-
-/*
-  Google Visualization API parser.
-*/
-async function fetchGviz(
+async function fetchGoogleSheet(
   sheetName: string,
   query: string
-): Promise<any> {
-  const url =
-    `${GOOGLE_SHEET_URL}/gviz/tq?` +
-    `tqx=out:json` +
-    `&sheet=${encodeURIComponent(sheetName)}` +
-    `&tq=${encodeURIComponent(query)}`;
+): Promise<RawRow[]> {
 
-  const response = await fetch(url);
+  const url =
+    `${GOOGLE_SHEET_URL}/gviz/tq` +
+    `?sheet=${encodeURIComponent(
+      sheetName
+    )}` +
+    `&tq=${encodeURIComponent(
+      query
+    )}` +
+    `&tqx=out:json` +
+    `&_=${Date.now()}`;
+
+  const response =
+    await fetch(
+      url,
+      {
+        method: "GET",
+        cache: "no-store",
+        headers: {
+          Accept:
+            "text/plain",
+        },
+      }
+    );
 
   if (!response.ok) {
     throw new Error(
@@ -458,224 +572,1116 @@ async function fetchGviz(
     );
   }
 
-  const text = await response.text();
+  const text =
+    await response.text();
 
-  const match = text.match(
-    /google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/
-  );
+  const match =
+    text.match(
+      /google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/
+    );
 
   if (!match) {
     throw new Error(
-      `${sheetName} returned an unreadable Google Visualization response.`
+      `Could not parse ${sheetName} from Google Sheets.`
     );
   }
 
-  const json = JSON.parse(match[1]);
+  const json =
+    JSON.parse(match[1]);
 
-  if (json.status === "error") {
+  if (
+    json.status ===
+    "error"
+  ) {
+
     throw new Error(
-      json.errors?.[0]?.detailed_message ||
-      json.errors?.[0]?.message ||
-      `Google Sheet query failed for ${sheetName}.`
+      json.errors?.[0]
+        ?.detailed_message ||
+      json.errors?.[0]
+        ?.message ||
+      `Google Sheets error: ${sheetName}`
     );
   }
 
-  return json.table;
+  const table =
+    json.table;
+
+  const headers =
+    table.cols.map(
+      (
+        column: any,
+        index: number
+      ) =>
+        column.label ||
+        column.id ||
+        `Column${index + 1}`
+    );
+
+  return table.rows.map(
+    (row: any) => {
+
+      const record: RawRow =
+        {};
+
+      headers.forEach(
+        (
+          header: string,
+          index: number
+        ) => {
+
+          record[header] =
+            row.c?.[index]?.v ??
+            "";
+        }
+      );
+
+      return record;
+    }
+  );
 }
 
-/*
-  Read only the columns actually required from JO ACTIVATED.
+/* =========================================================
+   LIVE JO ACTIVATED
+========================================================= */
 
-  G  = Province
-  S  = SLI TYPE
-  U  = VENDOR TYPE fallback
-  AC = PACKAGE
-  AE = MRC
-  AF = CLOSING DATE
-  A  = JO NUMBER
-*/
-async function fetchJoActivatedFromGoogle(): Promise<Row[]> {
-  const table = await fetchGviz(
+async function fetchJOActivated(): Promise<RawRow[]> {
+
+  /*
+    Actual sheet columns:
+
+    A  = JO NUMBER
+    G  = STATEORPROVINCE
+    S  = SLI TYPE
+    U  = VENDOR TYPE
+    AC = PACKAGE
+    AE = MRC
+    AF = CLOSING DATE
+  */
+
+  return fetchGoogleSheet(
     "JO ACTIVATED",
     `
       select A,G,S,U,AC,AE,AF
-      where AF is not null
+      where A is not null
     `
   );
-
-  return table.rows.map((row: any) => {
-    const values = row.c || [];
-
-    return {
-      "JO NUMBER": values[0]?.v ?? "",
-      "STATEORPROVINCE": values[1]?.v ?? "",
-      "SLI TYPE": values[2]?.v ?? "",
-      "VENDOR TYPE": values[3]?.v ?? "",
-      "PACKAGE": values[4]?.v ?? "",
-      "MRC": values[5]?.v ?? "",
-      "CLOSING DATE": values[6]?.v ?? "",
-    };
-  });
 }
 
-/*
-  SUMMARY is read directly from the target cells.
+/* =========================================================
+   LIVE SUMMARY
+========================================================= */
 
-  Row numbers:
-  11 = Albay
-  17 = Sorsogon
-  23 = Masbate
-  29 = Overall
-
-  Columns:
-  D = FiberX
-  E = SME
-  F = BIDA
-
-  No target values are hard-coded here.
-*/
-async function fetchTargetRow(
-  rowNumber: number
-): Promise<Targets> {
-  const table = await fetchGviz(
-    "SUMMARY",
-    `select C,D,E,F`
-  );
+async function fetchSummary(): Promise<RawRow[]> {
 
   /*
-    Gviz "select C,D,E,F" returns the SUMMARY table.
-    We look in the rowNumber area for the row where Column C is "Target",
-    falling back to Math.abs of the row values to guarantee positive targets.
-  */
-  let targetRow = table.rows[rowNumber - 1];
+    We retrieve:
+      B = PROVINCE
+      C = SLI
+      D = FIBERX
+      E = SME
+      F = BIDA
 
-  // If the indexed row isn't explicitly "Target", search nearby rows
-  if (targetRow) {
-    const cLabel = String(targetRow.c?.[0]?.v || "").trim().toUpperCase();
-    if (cLabel !== "TARGET") {
-      for (let offset = -3; offset <= 3; offset++) {
-        const candidate = table.rows[rowNumber - 1 + offset];
+    This allows target values to be read directly
+    from SUMMARY.
+  */
+
+  return fetchGoogleSheet(
+    "SUMMARY",
+    `
+      select B,C,D,E,F
+    `
+  );
+}
+
+/* =========================================================
+   PARSE JO RECORDS
+========================================================= */
+
+function getRowValue(row: RawRow, ...keys: string[]): any {
+  for (const key of keys) {
+    if (row[key] !== undefined && row[key] !== null && row[key] !== "") {
+      return row[key];
+    }
+  }
+  return "";
+}
+
+function parseJORows(
+  rawRows: RawRow[]
+): ParsedJO[] {
+
+  const parsed: ParsedJO[] =
+    [];
+
+  for (
+    const row of rawRows
+  ) {
+
+    const joNumber =
+      String(
+        getRowValue(row, "JO NUMBER", "A")
+      ).trim();
+
+    if (!joNumber || joNumber === "JO NUMBER") {
+      continue;
+    }
+
+    const closingDate =
+      parseDate(
+        getRowValue(row, "CLOSING DATE", "AF")
+      );
+
+    if (!closingDate) {
+      continue;
+    }
+
+    const packageName =
+      normalizePackage(
+        getRowValue(row, "PACKAGE", "AC")
+      );
+
+    /*
+      Only the three dashboard
+      packages are included.
+    */
+    if (
+      packageName !==
+        "FIBERX" &&
+      packageName !==
+        "SME" &&
+      packageName !==
+        "BIDA"
+    ) {
+      continue;
+    }
+
+    parsed.push({
+      joNumber,
+      province:
+        normalizeProvince(
+          getRowValue(row, "STATEORPROVINCE", "G")
+        ),
+
+      sliType:
+        normalizeSLI(row),
+
+      package:
+        packageName,
+
+      mrc:
+        numberValue(
+          getRowValue(row, "MRC", "AE")
+        ),
+
+      closingDate,
+    });
+  }
+
+  /*
+    IMPORTANT:
+    De-duplicate using JO NUMBER.
+
+    This prevents counting the same JO twice
+    if duplicate records exist in the source.
+  */
+  const unique =
+    new Map<
+      string,
+      ParsedJO
+    >();
+
+  for (
+    const row of parsed
+  ) {
+
+    if (
+      !unique.has(
+        row.joNumber
+      )
+    ) {
+      unique.set(
+        row.joNumber,
+        row
+      );
+    }
+  }
+
+  return Array.from(
+    unique.values()
+  );
+}
+
+/* =========================================================
+   FILTER HELPERS
+========================================================= */
+
+function matchesProvince(
+  row: ParsedJO,
+  province: string
+): boolean {
+
+  if (
+    province ===
+    "All districts"
+  ) {
+    return true;
+  }
+
+  return (
+    row.province ===
+    normalizeProvince(
+      province
+    )
+  );
+}
+
+function matchesSLI(
+  row: ParsedJO,
+  sliType: string
+): boolean {
+
+  if (
+    sliType ===
+    "All SLI Types"
+  ) {
+    return true;
+  }
+
+  return (
+    row.sliType ===
+    normalizeText(
+      sliType
+    )
+  );
+}
+
+function matchesPackage(
+  row: ParsedJO,
+  packageName: string
+): boolean {
+
+  if (
+    packageName ===
+    "All Packages"
+  ) {
+    return true;
+  }
+
+  return (
+    row.package ===
+    normalizePackage(
+      packageName
+    )
+  );
+}
+
+/* =========================================================
+   LIVE GOOGLE SHEET HOOK
+========================================================= */
+
+function useLiveGoogleSheet() {
+
+  const [state, setState] =
+    useState<LiveState>({
+      sourceName: "Live Google Sheet",
+      joRows: [],
+      summaryRows: [],
+      lastSynced: null,
+      syncing: false,
+      error: "",
+    });
+
+  const mountedRef =
+    useRef(true);
+
+  const syncNow =
+    useCallback(
+      async (
+        silent = false
+      ) => {
+
         if (
-          candidate &&
-          String(candidate.c?.[0]?.v || "").trim().toUpperCase() === "TARGET"
+          !mountedRef.current
         ) {
-          targetRow = candidate;
-          break;
+          return;
         }
+
+        setState(
+          previous => ({
+            ...previous,
+            syncing: true,
+            error:
+              silent
+                ? previous.error
+                : "",
+          })
+        );
+
+        try {
+
+          /*
+            Read both sheets at the same time.
+          */
+
+          const [
+            joRows,
+            summaryRows,
+          ] =
+            await Promise.all([
+              fetchJOActivated(),
+              fetchSummary(),
+            ]);
+
+          if (
+            !mountedRef.current
+          ) {
+            return;
+          }
+
+          setState({
+            sourceName: "Live Google Sheet",
+            joRows,
+            summaryRows,
+            lastSynced:
+              new Date(),
+            syncing: false,
+            error: "",
+          });
+
+        } catch (
+          error: any
+        ) {
+
+          if (
+            !mountedRef.current
+          ) {
+            return;
+          }
+
+          /*
+            Keep previous good data.
+          */
+
+          setState(
+            previous => ({
+              ...previous,
+
+              syncing: false,
+
+              error:
+                error?.message ||
+                "Unable to refresh Google Sheet.",
+            })
+          );
+        }
+      },
+      []
+    );
+
+  const setManualExcel = useCallback((excelJo: RawRow[], excelSummary: RawRow[], fileName: string) => {
+    setState({
+      sourceName: fileName,
+      joRows: excelJo,
+      summaryRows: excelSummary,
+      lastSynced: new Date(),
+      syncing: false,
+      error: "",
+    });
+  }, []);
+
+  useEffect(
+    () => {
+
+      mountedRef.current =
+        true;
+
+      /*
+        Initial load.
+      */
+
+      syncNow();
+
+      /*
+        Auto-refresh.
+      */
+
+      const interval =
+        window.setInterval(
+          () => {
+
+            if (
+              document.visibilityState ===
+              "visible"
+            ) {
+              syncNow(true);
+            }
+
+          },
+          LIVE_REFRESH_MS
+        );
+
+      /*
+        Refresh immediately
+        when returning to tab.
+      */
+
+      const handleVisibility =
+        () => {
+
+          if (
+            document.visibilityState ===
+            "visible"
+          ) {
+            syncNow(true);
+          }
+        };
+
+      document.addEventListener(
+        "visibilitychange",
+        handleVisibility
+      );
+
+      return () => {
+
+        mountedRef.current =
+          false;
+
+        window.clearInterval(
+          interval
+        );
+
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibility
+        );
+      };
+
+    },
+    [syncNow]
+  );
+
+  return {
+    ...state,
+
+    refresh:
+      () => syncNow(false),
+
+    setManualExcel,
+  };
+}
+
+/* =========================================================
+   TARGETS FROM SUMMARY
+========================================================= */
+
+function getTargets(
+  summaryRows: RawRow[],
+  province: string
+): Targets {
+
+  const targetProvince =
+    province ===
+    "All districts"
+      ? "OVERALL"
+      : normalizeProvince(
+          province
+        );
+
+  /*
+    Walk through SUMMARY rows tracking the active province section.
+    This handles merged / grouped Google Sheets structures where
+    the province label appears once at the section header and subsequent
+    rows (such as "Target") have Column B empty or labeled differently.
+  */
+  let currentProvince = "";
+
+  for (let i = 0; i < summaryRows.length; i++) {
+    const row = summaryRows[i];
+
+    const provLabel = normalizeProvince(
+      getRowValue(row, "PROVINCE", "B")
+    );
+
+    if (provLabel) {
+      currentProvince = provLabel;
+    }
+
+    const sliLabel = normalizeText(
+      getRowValue(row, "SLI", "C")
+    );
+
+    if (sliLabel === "TARGET") {
+      if (currentProvince === targetProvince) {
+        return {
+          fiberX: Math.abs(numberValue(getRowValue(row, "FIBERX", "D"))),
+          sme: Math.abs(numberValue(getRowValue(row, "SME", "E"))),
+          bida: Math.abs(numberValue(getRowValue(row, "BIDA", "F"))),
+        };
       }
     }
   }
 
-  if (!targetRow) {
-    throw new Error(
-      `SUMMARY target row ${rowNumber} could not be found.`
-    );
-  }
-
-  const cells = targetRow.c || [];
-
-  return {
-    fiberX: Math.abs(numberValue(cells[1]?.v)),
-    sme: Math.abs(numberValue(cells[2]?.v)),
-    bida: Math.abs(numberValue(cells[3]?.v)),
-  };
-}
-
-async function fetchAllTargets(): Promise<
-  Record<string, Targets>
-> {
-  const [
-    overall,
-    albay,
-    sorsogon,
-    masbate,
-  ] = await Promise.all([
-    fetchTargetRow(29),
-    fetchTargetRow(11),
-    fetchTargetRow(17),
-    fetchTargetRow(23),
-  ]);
-
-  return {
-    "All districts": overall,
-    Albay: albay,
-    Sorsogon: sorsogon,
-    Masbate: masbate,
-  };
-}
-
-export default function App() {
-  const [rows, setRows] = useState<ParsedJo[]>([]);
-  const [targetsByProvince, setTargetsByProvince] =
-    useState<Record<string, Targets>>({});
-
-  const [source, setSource] = useState(
-    "No source loaded"
-  );
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const fileRef = useRef<HTMLInputElement | null>(null);
-
-  const [filters, setFilters] = useState<Filters>({
-    month: "2026-09",
-    province: "All districts",
-    sliType: "All SLI Types",
-    package: "All Packages",
-  });
-
   /*
-    Sync Google Sheet.
+    Fallback to workbook target-row index position if header
+    labels were shifted or parsed differently.
   */
-  async function syncGoogleSheet() {
-    setLoading(true);
-    setError("");
+  const rowNumber = TARGET_ROWS[province];
+  if (rowNumber && summaryRows.length > 0) {
+    let candidate = summaryRows[rowNumber - 1];
 
-    try {
-      const [
-        rawRows,
-        targetRows,
-      ] = await Promise.all([
-        fetchJoActivatedFromGoogle(),
-        fetchAllTargets(),
-      ]);
+    if (candidate) {
+      const cLabel = normalizeText(getRowValue(candidate, "SLI", "C"));
+      if (cLabel !== "TARGET") {
+        for (let offset = -3; offset <= 3; offset++) {
+          const check = summaryRows[rowNumber - 1 + offset];
+          if (check && normalizeText(getRowValue(check, "SLI", "C")) === "TARGET") {
+            candidate = check;
+            break;
+          }
+        }
+      }
 
-      setRows(buildParsedRows(rawRows));
-      setTargetsByProvince(targetRows);
-      setSource("Google Sheet");
-    } catch (err: any) {
-      setError(
-        err?.message ||
-        "Google Sheet synchronization failed."
-      );
-    } finally {
-      setLoading(false);
+      if (candidate) {
+        return {
+          fiberX: Math.abs(numberValue(getRowValue(candidate, "FIBERX", "D"))),
+          sme: Math.abs(numberValue(getRowValue(candidate, "SME", "E"))),
+          bida: Math.abs(numberValue(getRowValue(candidate, "BIDA", "F"))),
+        };
+      }
     }
   }
 
-  // Auto-sync Google Sheet on initial page mount
-  useEffect(() => {
-    syncGoogleSheet();
-  }, []);
+  return {
+    fiberX: 0,
+    sme: 0,
+    bida: 0,
+  };
+}
+
+/* =========================================================
+   MAIN APP
+========================================================= */
+
+export default function App() {
+
+  const {
+    sourceName,
+    joRows,
+    summaryRows,
+    lastSynced,
+    syncing,
+    error,
+    refresh,
+    setManualExcel,
+  } =
+    useLiveGoogleSheet();
+
+  const [
+    filters,
+    setFilters,
+  ] =
+    useState<Filters>({
+      month:
+        DEFAULT_MONTH,
+
+      province:
+        "All districts",
+
+      sliType:
+        "All SLI Types",
+
+      package:
+        "All Packages",
+    });
+
+  const fileRef =
+    useRef<HTMLInputElement | null>(
+      null
+    );
+
+  const [
+    excelLoading,
+    setExcelLoading,
+  ] =
+    useState(false);
 
   /*
-    Excel sync.
+    Parse live Google Sheet records.
   */
-  async function syncExcel(file: File) {
-    setLoading(true);
-    setError("");
+
+  const rows =
+    useMemo(
+      () =>
+        parseJORows(
+          joRows
+        ),
+      [joRows]
+    );
+
+  /*
+    Month options available from data, defaulting with DEFAULT_MONTH.
+  */
+  const monthOptions = useMemo(() => {
+    const set = new Set<string>();
+    set.add(DEFAULT_MONTH);
+    for (const r of rows) {
+      set.add(monthKey(r.closingDate));
+    }
+    return Array.from(set).sort().reverse();
+  }, [rows]);
+
+  /*
+    Selected month.
+  */
+
+  const monthRows =
+    useMemo(
+      () =>
+        rows.filter(
+          row =>
+            monthKey(
+              row.closingDate
+            ) ===
+            filters.month
+        ),
+      [
+        rows,
+        filters.month,
+      ]
+    );
+
+  /*
+    Main dashboard scope:
+      Month
+      Province
+      SLI
+      Package
+  */
+
+  const filteredRows =
+    useMemo(
+      () =>
+        monthRows.filter(
+          row =>
+            matchesProvince(
+              row,
+              filters.province
+            ) &&
+            matchesSLI(
+              row,
+              filters.sliType
+            ) &&
+            matchesPackage(
+              row,
+              filters.package
+            )
+        ),
+      [
+        monthRows,
+        filters.province,
+        filters.sliType,
+        filters.package,
+      ]
+    );
+
+  /*
+    Package scope:
+
+    Month + Province + SLI
+
+    Package selector intentionally does
+    NOT hide the other package cards.
+  */
+
+  const packageRows =
+    useMemo(
+      () =>
+        monthRows.filter(
+          row =>
+            matchesProvince(
+              row,
+              filters.province
+            ) &&
+            matchesSLI(
+              row,
+              filters.sliType
+            )
+        ),
+      [
+        monthRows,
+        filters.province,
+        filters.sliType,
+      ]
+    );
+
+  /*
+    Targets.
+  */
+
+  const targets =
+    useMemo(
+      () =>
+        getTargets(
+          summaryRows,
+          filters.province
+        ),
+      [
+        summaryRows,
+        filters.province,
+      ]
+    );
+
+  /*
+    Main dashboard metrics.
+  */
+
+  const metrics =
+    useMemo(() => {
+
+      let activatedJO = 0;
+
+      let totalMRC = 0;
+
+      let fiberX = 0;
+      let fiberXMRC = 0;
+
+      let sme = 0;
+      let smeMRC = 0;
+
+      let bida = 0;
+      let bidaMRC = 0;
+
+      for (
+        const row of filteredRows
+      ) {
+
+        activatedJO++;
+
+        totalMRC +=
+          row.mrc;
+
+        if (
+          row.package ===
+          "FIBERX"
+        ) {
+          fiberX++;
+          fiberXMRC +=
+            row.mrc;
+        }
+
+        if (
+          row.package ===
+          "SME"
+        ) {
+          sme++;
+          smeMRC +=
+            row.mrc;
+        }
+
+        if (
+          row.package ===
+          "BIDA"
+        ) {
+          bida++;
+          bidaMRC +=
+            row.mrc;
+        }
+      }
+
+      return {
+        activatedJO,
+        totalMRC,
+
+        fiberX,
+        fiberXMRC,
+
+        sme,
+        smeMRC,
+
+        bida,
+        bidaMRC,
+      };
+
+    }, [filteredRows]);
+
+  /*
+    Package metrics.
+
+    These remain visible regardless
+    of Package dropdown selection.
+  */
+
+  const packageMetrics =
+    useMemo(() => {
+
+      let fiberX = 0;
+      let fiberXMRC = 0;
+
+      let sme = 0;
+      let smeMRC = 0;
+
+      let bida = 0;
+      let bidaMRC = 0;
+
+      for (
+        const row of packageRows
+      ) {
+
+        if (
+          row.package ===
+          "FIBERX"
+        ) {
+          fiberX++;
+          fiberXMRC +=
+            row.mrc;
+        }
+
+        if (
+          row.package ===
+          "SME"
+        ) {
+          sme++;
+          smeMRC +=
+            row.mrc;
+        }
+
+        if (
+          row.package ===
+          "BIDA"
+        ) {
+          bida++;
+          bidaMRC +=
+            row.mrc;
+        }
+      }
+
+      return {
+        fiberX,
+        fiberXMRC,
+
+        sme,
+        smeMRC,
+
+        bida,
+        bidaMRC,
+      };
+
+    }, [packageRows]);
+
+  /*
+    SLI metrics respect Package filter.
+  */
+
+  const sliMetrics =
+    useMemo(() => {
+
+      let inhouse = 0;
+      let msa = 0;
+
+      for (
+        const row of filteredRows
+      ) {
+
+        if (
+          row.sliType ===
+          "INHOUSE"
+        ) {
+          inhouse++;
+        }
+
+        if (
+          row.sliType ===
+          "MSA"
+        ) {
+          msa++;
+        }
+      }
+
+      return {
+        inhouse,
+        msa,
+      };
+
+    }, [filteredRows]);
+
+  /*
+    ACHIEVEMENT %
+
+    FiberX = JO count / FiberX target
+    SME = MRC / SME target
+    BIDA = JO count / BIDA target
+  */
+
+  const fiberXAchievement =
+    calculatePercentage(
+      packageMetrics.fiberX,
+      targets.fiberX
+    );
+
+  const smeAchievement =
+    calculatePercentage(
+      packageMetrics.smeMRC,
+      targets.sme
+    );
+
+  const bidaAchievement =
+    calculatePercentage(
+      packageMetrics.bida,
+      targets.bida
+    );
+
+  /*
+    FIBERX RUNNING VS TARGET
+  */
+
+  const fiberChart =
+    useMemo(() => {
+
+      const [
+        year,
+        monthNumber,
+      ] =
+        filters.month
+          .split("-")
+          .map(Number);
+
+      const totalDays =
+        new Date(
+          year,
+          monthNumber,
+          0
+        ).getDate();
+
+      /*
+        FiberX records only.
+      */
+
+      const fiberRows =
+        monthRows.filter(
+          row =>
+            row.package ===
+              "FIBERX" &&
+            matchesProvince(
+              row,
+              filters.province
+            ) &&
+            matchesSLI(
+              row,
+              filters.sliType
+            )
+        );
+
+      const counts =
+        new Map<
+          string,
+          number
+        >();
+
+      for (
+        const row of fiberRows
+      ) {
+
+        const key =
+          dateKey(
+            row.closingDate
+          );
+
+        counts.set(
+          key,
+          (counts.get(key) ||
+            0) + 1
+        );
+      }
+
+      const result: any[] =
+        [];
+
+      let running = 0;
+
+      for (
+        let day = 1;
+        day <= totalDays;
+        day++
+      ) {
+
+        const date =
+          new Date(
+            year,
+            monthNumber - 1,
+            day
+          );
+
+        const key =
+          dateKey(date);
+
+        running +=
+          counts.get(key) ||
+          0;
+
+        const runningTarget =
+          targets.fiberX *
+          (day / totalDays);
+
+        result.push({
+          date:
+            date.toLocaleDateString(
+              "en-US",
+              {
+                month: "short",
+                day: "numeric",
+              }
+            ),
+
+          fiberXRunning:
+            running,
+
+          target:
+            Number(
+              runningTarget.toFixed(
+                2
+              )
+            ),
+        });
+      }
+
+      return result;
+
+    }, [
+      monthRows,
+      filters.province,
+      filters.sliType,
+      filters.month,
+      targets.fiberX,
+    ]);
+
+  /* =======================================================
+     EXCEL BACKUP
+  ======================================================= */
+
+  async function loadExcel(
+    file: File
+  ) {
+
+    setExcelLoading(true);
 
     try {
-      const buffer = await file.arrayBuffer();
 
-      const workbook = XLSX.read(buffer, {
-        type: "array",
-        cellDates: true,
-      });
+      const buffer =
+        await file.arrayBuffer();
+
+      const workbook =
+        XLSX.read(
+          buffer,
+          {
+            type: "array",
+            cellDates: true,
+          }
+        );
 
       const joSheet =
-        workbook.Sheets["JO ACTIVATED"];
+        workbook.Sheets[
+          "JO ACTIVATED"
+        ];
 
       if (!joSheet) {
         throw new Error(
@@ -683,392 +1689,76 @@ export default function App() {
         );
       }
 
-      const summarySheet =
-        workbook.Sheets["SUMMARY"];
-
       const rawRows =
-        XLSX.utils.sheet_to_json<Row>(
+        XLSX.utils.sheet_to_json<
+          RawRow
+        >(
           joSheet,
-          { defval: "" }
-        );
-
-      /*
-        For Excel import we also try SUMMARY.
-
-        If SUMMARY is empty in an exported workbook
-        containing Google-only formulas, we do not invent
-        target values.
-      */
-      let targetRows: Record<string, Targets> =
-        {};
-
-      if (summarySheet) {
-        const summaryMatrix =
-          XLSX.utils.sheet_to_json<any[][]>(
-            summarySheet,
-            {
-              header: 1,
-              defval: "",
-            }
-          );
-
-        function readSummaryRow(
-          rowNumber: number
-        ): Targets | null {
-          let row =
-            summaryMatrix[rowNumber - 1];
-
-          // Check if row has "Target" in column C (index 2)
-          if (row && String(row[2] || "").trim().toUpperCase() !== "TARGET") {
-            for (let offset = -3; offset <= 3; offset++) {
-              const candidate = summaryMatrix[rowNumber - 1 + offset];
-              if (
-                candidate &&
-                String(candidate[2] || "").trim().toUpperCase() === "TARGET"
-              ) {
-                row = candidate;
-                break;
-              }
-            }
+          {
+            defval: "",
           }
-
-          if (!row) return null;
-
-          return {
-            fiberX: Math.abs(numberValue(row[3])),
-            sme: Math.abs(numberValue(row[4])),
-            bida: Math.abs(numberValue(row[5])),
-          };
-        }
-
-        const overall = readSummaryRow(29);
-        const albay = readSummaryRow(11);
-        const sorsogon = readSummaryRow(17);
-        const masbate = readSummaryRow(23);
-
-        if (overall) {
-          targetRows["All districts"] = overall;
-        }
-
-        if (albay) {
-          targetRows["Albay"] = albay;
-        }
-
-        if (sorsogon) {
-          targetRows["Sorsogon"] = sorsogon;
-        }
-
-        if (masbate) {
-          targetRows["Masbate"] = masbate;
-        }
-      }
-
-      setRows(buildParsedRows(rawRows));
-      setTargetsByProvince(targetRows);
-      setSource(file.name);
-
-      if (
-        Object.keys(targetRows).length === 0
-      ) {
-        setError(
-          "The JO ACTIVATED data loaded correctly, but SUMMARY target cells were not readable in this Excel export. Google Sheet sync should be used for live targets."
         );
+
+      let summaryRawRows: RawRow[] = [];
+      const summarySheet = workbook.Sheets["SUMMARY"];
+      if (summarySheet) {
+        const matrix = XLSX.utils.sheet_to_json<any[][]>(summarySheet, {
+          header: 1,
+          defval: "",
+        });
+
+        summaryRawRows = matrix.map((row) => ({
+          B: row[1] ?? "",
+          C: row[2] ?? "",
+          D: row[3] ?? "",
+          E: row[4] ?? "",
+          F: row[5] ?? "",
+          PROVINCE: row[1] ?? "",
+          SLI: row[2] ?? "",
+          FIBERX: row[3] ?? "",
+          SME: row[4] ?? "",
+          BIDA: row[5] ?? "",
+        }));
       }
-    } catch (err: any) {
-      setError(
-        err?.message ||
-        "Excel synchronization failed."
+
+      setManualExcel(rawRows, summaryRawRows, file.name);
+
+    } catch (
+      error: any
+    ) {
+
+      console.error(
+        "Excel load failed:",
+        error
       );
+
+      alert(error?.message || "Excel load failed.");
+
     } finally {
-      setLoading(false);
+
+      setExcelLoading(false);
     }
   }
 
-  /*
-    Selected month.
-  */
-  const monthRows = useMemo(() => {
-    return rows.filter(
-      (row) =>
-        monthKey(row.closingDate) ===
-        filters.month
-    );
-  }, [rows, filters.month]);
-
-  /*
-    Main dashboard scope:
-      month + province + SLI + package
-  */
-  const mainScopeRows = useMemo(() => {
-    return monthRows.filter((row) => {
-      if (
-        !filterMatches(row, filters)
-      ) {
-        return false;
-      }
-
-      if (
-        !packageFilterMatches(row, filters)
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [monthRows, filters]);
-
-  /*
-    Package cards:
-      month + province + SLI
-
-    Package selector is intentionally excluded,
-    so FiberX / SME / BIDA remain visible together.
-  */
-  const packageScopeRows = useMemo(() => {
-    return monthRows.filter((row) =>
-      filterMatches(row, filters)
-    );
-  }, [monthRows, filters]);
-
-  /*
-    Active province target.
-  */
-  const targets: Targets =
-    targetsByProvince[filters.province] || {
-      fiberX: 0,
-      sme: 0,
-      bida: 0,
-    };
-
-  /*
-    Main KPI calculations.
-  */
-  const kpis = useMemo(() => {
-    let totalMRC = 0;
-
-    let fiberXCount = 0;
-    let fiberXMRC = 0;
-
-    let smeCount = 0;
-    let smeMRC = 0;
-
-    let bidaCount = 0;
-    let bidaMRC = 0;
-
-    for (const row of mainScopeRows) {
-      totalMRC += row.mrc;
-
-      if (row.package === "FIBERX") {
-        fiberXCount++;
-        fiberXMRC += row.mrc;
-      }
-
-      if (row.package === "SME") {
-        smeCount++;
-        smeMRC += row.mrc;
-      }
-
-      if (row.package === "BIDA") {
-        bidaCount++;
-        bidaMRC += row.mrc;
-      }
-    }
-
-    return {
-      activatedJoCount:
-        mainScopeRows.length,
-
-      totalMRC,
-
-      fiberXCount,
-      fiberXMRC,
-
-      smeCount,
-      smeMRC,
-
-      bidaCount,
-      bidaMRC,
-    };
-  }, [mainScopeRows]);
-
-  /*
-    Package metrics ignore Package filter.
-  */
-  const packageMetrics = useMemo(() => {
-    let fiberX = 0;
-    let fiberXMRC = 0;
-
-    let sme = 0;
-    let smeMRC = 0;
-
-    let bida = 0;
-    let bidaMRC = 0;
-
-    for (const row of packageScopeRows) {
-      if (row.package === "FIBERX") {
-        fiberX++;
-        fiberXMRC += row.mrc;
-      }
-
-      if (row.package === "SME") {
-        sme++;
-        smeMRC += row.mrc;
-      }
-
-      if (row.package === "BIDA") {
-        bida++;
-        bidaMRC += row.mrc;
-      }
-    }
-
-    return {
-      fiberX,
-      fiberXMRC,
-      sme,
-      smeMRC,
-      bida,
-      bidaMRC,
-    };
-  }, [packageScopeRows]);
-
-  /*
-    SLI metrics respect package selector.
-  */
-  const sliMetrics = useMemo(() => {
-    let inhouse = 0;
-    let msa = 0;
-
-    for (const row of mainScopeRows) {
-      if (row.sliType === "INHOUSE") {
-        inhouse++;
-      }
-
-      if (row.sliType === "MSA") {
-        msa++;
-      }
-    }
-
-    return {
-      inhouse,
-      msa,
-    };
-  }, [mainScopeRows]);
-
-  /*
-    FiberX running chart.
-
-    The chart respects:
-      - month
-      - province
-      - SLI type
-
-    Package filter is ignored because the chart is
-    specifically FiberX.
-  */
-  const fiberChart = useMemo(() => {
-    const [year, monthNumber] =
-      filters.month.split("-").map(Number);
-
-    const totalDays = new Date(
-      year,
-      monthNumber,
-      0
-    ).getDate();
-
-    const fiberRows = monthRows.filter(
-      (row) =>
-        row.package === "FIBERX" &&
-        filterMatches(row, filters)
-    );
-
-    const countByDate =
-      new Map<string, number>();
-
-    for (const row of fiberRows) {
-      const key = dateKey(row.closingDate);
-
-      countByDate.set(
-        key,
-        (countByDate.get(key) || 0) + 1
-      );
-    }
-
-    const chart = [];
-
-    let running = 0;
-
-    for (
-      let day = 1;
-      day <= totalDays;
-      day++
-    ) {
-      const date = new Date(
-        year,
-        monthNumber - 1,
-        day
-      );
-
-      const key = dateKey(date);
-
-      running +=
-        countByDate.get(key) || 0;
-
-      const runningTarget =
-        targets.fiberX *
-        (day / totalDays);
-
-      chart.push({
-        date: date.toLocaleDateString(
-          "en-US",
-          {
-            month: "short",
-            day: "numeric",
-          }
-        ),
-
-        fiberXRunning: running,
-
-        target:
-          Number(
-            runningTarget.toFixed(2)
-          ),
-      });
-    }
-
-    return chart;
-  }, [
-    monthRows,
-    filters,
-    targets.fiberX,
-  ]);
-
-  const fiberAchievement =
-    achievement(
-      packageMetrics.fiberX,
-      targets.fiberX
-    );
-
-  const smeAchievement =
-    achievement(
-      packageMetrics.smeMRC,
-      targets.sme
-    );
-
-  const bidaAchievement =
-    achievement(
-      packageMetrics.bida,
-      targets.bida
-    );
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
     <div className="min-h-screen bg-[#f7faf9] text-[#123b31]">
+
       <div className="max-w-[1500px] mx-auto px-6 py-6">
 
-        {/* HEADER */}
+        {/* ================================================
+            HEADER
+        ================================================= */}
+
         <header className="mb-5">
+
           <div className="flex items-start justify-between gap-5 flex-wrap">
 
             <div>
+
               <h1 className="text-3xl font-bold">
                 Sales performance
               </h1>
@@ -1078,48 +1768,71 @@ export default function App() {
                 against target across the
                 Almasor territory.
               </p>
+
             </div>
 
             <div className="flex gap-2 flex-wrap">
 
               <select
                 className="bg-white border border-[#cfe4da] rounded-xl px-4 py-2"
-                value={filters.month}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    month: e.target.value,
-                  })
+                value={
+                  filters.month
+                }
+                onChange={
+                  event =>
+                    setFilters(
+                      previous => ({
+                        ...previous,
+                        month:
+                          event
+                            .target
+                            .value,
+                      })
+                    )
                 }
               >
-                {MONTH_OPTIONS.map(
-                  (month) => (
+
+                {monthOptions.map(
+                  month => (
                     <option
                       key={month}
                       value={month}
                     >
-                      {monthDisplay(month)}
+                      {formatMonth(
+                        month
+                      )}
                     </option>
                   )
                 )}
+
               </select>
 
               <button
-                onClick={syncGoogleSheet}
-                className="px-4 py-2 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] font-semibold cursor-pointer hover:bg-[#c9f0df] transition-colors"
+                onClick={() =>
+                  refresh()
+                }
+                disabled={
+                  syncing
+                }
+                className="px-4 py-2 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] font-semibold disabled:opacity-50 cursor-pointer hover:bg-[#cbf1e0] transition-colors"
               >
-                {loading
-                  ? "Syncing..."
-                  : "Sync Google Sheet"}
+                {syncing
+                  ? "Updating..."
+                  : "Refresh now"}
               </button>
 
               <button
                 onClick={() =>
                   fileRef.current?.click()
                 }
-                className="px-4 py-2 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] font-semibold cursor-pointer hover:bg-[#c9f0df] transition-colors"
+                disabled={
+                  excelLoading
+                }
+                className="px-4 py-2 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] font-semibold disabled:opacity-50 cursor-pointer hover:bg-gray-50 transition-colors"
               >
-                Sync Excel
+                {excelLoading
+                  ? "Loading..."
+                  : "Load Excel"}
               </button>
 
               <input
@@ -1127,58 +1840,111 @@ export default function App() {
                 type="file"
                 accept=".xlsx,.xls,.csv"
                 className="hidden"
-                onChange={(e) => {
-                  const file =
-                    e.target.files?.[0];
+                onChange={
+                  event => {
 
-                  if (file) {
-                    syncExcel(file);
+                    const file =
+                      event
+                        .target
+                        .files?.[0];
+
+                    if (file) {
+                      loadExcel(
+                        file
+                      );
+                    }
                   }
-                }}
+                }
               />
+
             </div>
+
           </div>
 
-          {/* SOURCE STATUS */}
-          <div className="mt-5 rounded-xl border border-[#c9ebdd] bg-[#e8f8f0] px-4 py-3 flex justify-between items-center gap-3 flex-wrap">
+          {/* LIVE STATUS */}
 
-            <div className="text-sm">
+          <div className="mt-5 rounded-xl border border-[#c9ebdd] bg-[#e8f8f0] px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+
+            <div className="flex items-center gap-2 text-sm">
+
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  syncing
+                    ? "bg-yellow-500 animate-pulse"
+                    : error
+                    ? "bg-red-500"
+                    : "bg-green-500"
+                }`}
+              />
+
               <span className="font-semibold">
-                Dynamic Sheet Sync
+
+                {syncing
+                  ? "Updating live data..."
+                  : error
+                  ? "Live update issue"
+                  : sourceName}
+
               </span>
 
-              <span className="mx-2 text-gray-400">
-                •
-              </span>
+              {lastSynced && (
 
-              Source:
-              <strong className="ml-1">
-                {source}
-              </strong>
+                <span className="text-gray-500">
 
-              <span className="mx-2 text-gray-400">
-                •
-              </span>
+                  • Last updated{" "}
+
+                  {lastSynced.toLocaleTimeString(
+                    "en-PH",
+                    {
+                      hour:
+                        "2-digit",
+                      minute:
+                        "2-digit",
+                      second:
+                        "2-digit",
+                    }
+                  )}
+
+                </span>
+
+              )}
+
+            </div>
+
+            <div className="text-sm font-semibold">
 
               {formatCount(
                 monthRows.length
               )}{" "}
-              JOs in selected month
+              JOs in{" "}
+              {formatMonth(
+                filters.month
+              )}
+
             </div>
 
-            <div className="text-sm font-semibold">
-              {monthDisplay(filters.month)}
-            </div>
           </div>
 
+          {/* ERROR */}
+
           {error && (
-            <div className="mt-3 p-3 rounded-xl border border-yellow-300 bg-yellow-50 text-yellow-800 text-sm">
-              {error}
+
+            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+
+              Unable to refresh live
+              data. Showing the last
+              successful data.
+
             </div>
+
           )}
+
         </header>
 
-        {/* FILTERS */}
+        {/* ================================================
+            FILTERS
+        ================================================= */}
+
         <section className="bg-white rounded-2xl border border-[#dcece6] p-4 mb-5">
 
           <div className="flex items-center gap-3 flex-wrap">
@@ -1189,17 +1955,25 @@ export default function App() {
 
             <select
               className="rounded-xl border border-[#dcece6] px-4 py-2 bg-white"
-              value={filters.province}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  province:
-                    e.target.value,
-                })
+              value={
+                filters.province
+              }
+              onChange={
+                event =>
+                  setFilters(
+                    previous => ({
+                      ...previous,
+                      province:
+                        event
+                          .target
+                          .value,
+                    })
+                  )
               }
             >
+
               {PROVINCES.map(
-                (province) => (
+                province => (
                   <option
                     key={province}
                   >
@@ -1207,6 +1981,7 @@ export default function App() {
                   </option>
                 )
               )}
+
             </select>
 
             <label className="font-medium text-sm ml-2">
@@ -1215,20 +1990,33 @@ export default function App() {
 
             <select
               className="rounded-xl border border-[#dcece6] px-4 py-2 bg-white"
-              value={filters.sliType}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  sliType:
-                    e.target.value,
-                })
+              value={
+                filters.sliType
+              }
+              onChange={
+                event =>
+                  setFilters(
+                    previous => ({
+                      ...previous,
+                      sliType:
+                        event
+                          .target
+                          .value,
+                    })
+                  )
               }
             >
-              {SLI_TYPES.map((sli) => (
-                <option key={sli}>
-                  {sli}
-                </option>
-              ))}
+
+              {SLI_TYPES.map(
+                sli => (
+                  <option
+                    key={sli}
+                  >
+                    {sli}
+                  </option>
+                )
+              )}
+
             </select>
 
             <label className="font-medium text-sm ml-2">
@@ -1237,30 +2025,48 @@ export default function App() {
 
             <select
               className="rounded-xl border border-[#dcece6] px-4 py-2 bg-white"
-              value={filters.package}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  package:
-                    e.target.value,
-                })
+              value={
+                filters.package
+              }
+              onChange={
+                event =>
+                  setFilters(
+                    previous => ({
+                      ...previous,
+                      package:
+                        event
+                          .target
+                          .value,
+                    })
+                  )
               }
             >
-              {PACKAGES.map((pkg) => (
-                <option key={pkg}>
-                  {pkg}
-                </option>
-              ))}
+
+              {PACKAGES.map(
+                packageName => (
+                  <option
+                    key={packageName}
+                  >
+                    {packageName}
+                  </option>
+                )
+              )}
+
             </select>
 
             <button
-              className="ml-auto bg-gray-100 px-4 py-2 rounded-xl text-gray-600 cursor-pointer hover:bg-gray-200 transition-colors"
+              className="ml-auto bg-gray-100 px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
               onClick={() =>
                 setFilters({
-                  month: "2026-09",
-                  province: "All districts",
+                  month:
+                    DEFAULT_MONTH,
+
+                  province:
+                    "All districts",
+
                   sliType:
                     "All SLI Types",
+
                   package:
                     "All Packages",
                 })
@@ -1268,10 +2074,15 @@ export default function App() {
             >
               Reset
             </button>
+
           </div>
+
         </section>
 
-        {/* KPI CARDS */}
+        {/* ================================================
+            MAIN KPI
+        ================================================= */}
+
         <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
 
           <div className="bg-[#15553f] text-white rounded-3xl p-7">
@@ -1281,17 +2092,23 @@ export default function App() {
             </div>
 
             <div className="text-6xl font-bold mt-5">
+
               {formatCount(
-                kpis.activatedJoCount
+                metrics.activatedJO
               )}
+
             </div>
 
             <div className="text-sm opacity-80 mt-3">
+
               Total activated job orders
-              for {monthDisplay(
+              for{" "}
+              {formatMonth(
                 filters.month
               )}
+
             </div>
+
           </div>
 
           <div className="bg-white border border-[#dcece6] rounded-3xl p-7">
@@ -1301,28 +2118,45 @@ export default function App() {
             </div>
 
             <div className="text-5xl font-bold mt-5 text-[#073d2d]">
+
               {formatPeso(
-                kpis.totalMRC
+                metrics.totalMRC
               )}
+
             </div>
 
             <div className="text-sm text-gray-500 mt-3">
+
               Consolidated recurring revenue
               from activated subscriptions
               in scope.
+
             </div>
+
           </div>
+
         </section>
 
-        {/* PACKAGE BREAKDOWN */}
+        {/* ================================================
+            PACKAGE BREAKDOWN
+        ================================================= */}
+
         <h2 className="text-xl font-bold mb-3">
+
           Package breakdown
+
           <span className="font-normal text-sm text-gray-500 ml-2">
-            Respecting province and SLI filters
+
+            Respecting province and SLI
+            filters
+
           </span>
+
         </h2>
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-7">
+
+          {/* FIBERX */}
 
           <PackageCard
             title="FIBERX"
@@ -1334,13 +2168,17 @@ export default function App() {
               targets.fiberX
             }
             percentage={
-              fiberAchievement
+              fiberXAchievement
             }
             footerLabel="Total MRC:"
-            footerValue={formatPeso(
-              packageMetrics.fiberXMRC
-            )}
+            footerValue={
+              formatPeso(
+                packageMetrics.fiberXMRC
+              )
+            }
           />
+
+          {/* SME */}
 
           <PackageCard
             title="SME"
@@ -1348,7 +2186,6 @@ export default function App() {
             running={
               packageMetrics.smeMRC
             }
-            runningLabel="Running MRC"
             target={
               targets.sme
             }
@@ -1356,11 +2193,16 @@ export default function App() {
               smeAchievement
             }
             money
+            runningLabel="Running MRC"
             footerLabel="Activated JOs:"
-            footerValue={formatCount(
-              packageMetrics.sme
-            )}
+            footerValue={
+              formatCount(
+                packageMetrics.sme
+              )
+            }
           />
+
+          {/* BIDA */}
 
           <PackageCard
             title="BIDA"
@@ -1375,91 +2217,122 @@ export default function App() {
               bidaAchievement
             }
             footerLabel="Total MRC:"
-            footerValue={formatPeso(
-              packageMetrics.bidaMRC
-            )}
+            footerValue={
+              formatPeso(
+                packageMetrics.bidaMRC
+              )
+            }
           />
 
         </section>
 
-        {/* TARGET SUMMARY */}
+        {/* ================================================
+            TARGET SUMMARY
+        ================================================= */}
+
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
 
-          <TargetMini
+          <TargetCard
             title="FiberX Target"
-            value={formatCount(
-              targets.fiberX
-            )}
-            type="count"
+            value={
+              formatCount(
+                targets.fiberX
+              )
+            }
           />
 
-          <TargetMini
+          <TargetCard
             title="SME Target"
-            value={formatPeso(
-              targets.sme
-            )}
-            type="money"
+            value={
+              formatPeso(
+                targets.sme
+              )
+            }
           />
 
-          <TargetMini
+          <TargetCard
             title="BIDA Target"
-            value={formatCount(
-              targets.bida
-            )}
-            type="count"
+            value={
+              formatCount(
+                targets.bida
+              )
+            }
           />
 
         </section>
 
-        {/* SLI BREAKDOWN */}
+        {/* ================================================
+            SLI
+        ================================================= */}
+
         <h2 className="text-xl font-bold mb-3">
+
           SLI channel breakdown
+
           <span className="font-normal text-sm text-gray-500 ml-2">
-            Respecting active province and package filters
+
+            Respecting active package filter
+
           </span>
+
         </h2>
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-7">
 
           <ChannelCard
             title="INHOUSE"
-            value={sliMetrics.inhouse}
+            value={
+              sliMetrics.inhouse
+            }
           />
 
           <ChannelCard
             title="MSA"
-            value={sliMetrics.msa}
+            value={
+              sliMetrics.msa
+            }
           />
 
         </section>
 
-        {/* FIBERX GRAPH */}
-        <section className="bg-white border border-[#dcece6] rounded-2xl p-6">
+        {/* ================================================
+            FIBERX CHART
+        ================================================= */}
 
-          <div className="flex justify-between items-start gap-4 mb-5">
+        <section className="bg-white border border-[#dcece6] rounded-2xl p-6 shadow-sm">
+
+          <div className="flex justify-between items-start gap-5 mb-5">
 
             <div>
+
               <h2 className="text-xl font-bold">
                 FiberX Running vs Target
               </h2>
 
               <p className="text-sm text-gray-500 mt-1">
+
                 Monthly cumulative FiberX
                 activations compared with
                 the running target.
+
               </p>
+
             </div>
 
             <div className="text-right">
+
               <div className="text-xs text-gray-500">
                 Monthly FiberX target
               </div>
 
-              <div className="text-lg font-bold text-[#0a684d]">
+              <div className="text-xl font-bold text-[#0a684d]">
+
                 {formatCount(
                   targets.fiberX
                 )}
+
               </div>
+
             </div>
 
           </div>
@@ -1470,8 +2343,11 @@ export default function App() {
               width="100%"
               height="100%"
             >
+
               <LineChart
-                data={fiberChart}
+                data={
+                  fiberChart
+                }
                 margin={{
                   top: 15,
                   right: 20,
@@ -1495,24 +2371,35 @@ export default function App() {
                 <YAxis
                   allowDecimals={false}
                   label={{
-                    value: "Activated JOs",
-                    angle: -90,
+                    value:
+                      "Activated JOs",
+                    angle:
+                      -90,
                     position:
                       "insideLeft",
                   }}
                 />
 
                 <Tooltip
-                  formatter={(
-                    value: any,
-                    name: string
-                  ) => [
-                    Number(value).toLocaleString(),
-                    name ===
-                    "fiberXRunning"
-                      ? "FiberX Running"
-                      : "Target",
-                  ]}
+                  formatter={
+                    (
+                      value: any,
+                      name: string
+                    ) => [
+
+                      Number(
+                        value
+                      ).toLocaleString(
+                        "en-PH"
+                      ),
+
+                      name ===
+                        "fiberXRunning"
+                        ? "FiberX Running"
+                        : "Target",
+
+                    ]
+                  }
                 />
 
                 <Legend />
@@ -1540,7 +2427,9 @@ export default function App() {
                 />
 
               </LineChart>
+
             </ResponsiveContainer>
+
           </div>
 
         </section>
@@ -1550,9 +2439,9 @@ export default function App() {
   );
 }
 
-/* ---------------------------------------------
-   COMPONENTS
----------------------------------------------- */
+/* =========================================================
+   PACKAGE CARD
+========================================================= */
 
 function PackageCard({
   title,
@@ -1575,10 +2464,13 @@ function PackageCard({
   money?: boolean;
   runningLabel?: string;
 }) {
+
   return (
+
     <div className="bg-white border border-[#dcece6] rounded-2xl p-5">
 
       <div className="flex justify-between items-center">
+
         <h3 className="font-bold text-[#005e47]">
           {title}
         </h3>
@@ -1586,6 +2478,7 @@ function PackageCard({
         <span className="text-xs px-3 py-1 rounded border border-[#8bdcbb] text-[#087553]">
           {label}
         </span>
+
       </div>
 
       <div className="text-sm text-gray-500 mt-5">
@@ -1593,94 +2486,129 @@ function PackageCard({
       </div>
 
       <div className="text-3xl font-bold mt-1">
+
         {money
-          ? formatPeso(running)
-          : formatCount(running)}
+          ? formatPeso(
+              running
+            )
+          : formatCount(
+              running
+            )}
+
       </div>
 
       <div className="flex justify-between mt-5 text-sm">
-        <span>Target:</span>
+
+        <span>
+          Target:
+        </span>
 
         <strong>
+
           {money
-            ? formatPeso(target)
-            : formatCount(target)}
+            ? formatPeso(
+                target
+              )
+            : formatCount(
+                target
+              )}
+
         </strong>
+
       </div>
 
-      <ProgressBar value={percentage} />
+      <ProgressBar
+        value={
+          percentage
+        }
+      />
 
       <div className="flex justify-between mt-2 text-sm">
-        <span>Achievement:</span>
+
+        <span>
+          Achievement:
+        </span>
 
         <strong>
-          {percentage.toFixed(1)}%
+          {percentage.toFixed(
+            1
+          )}%
         </strong>
+
       </div>
 
       <div className="flex justify-between mt-5 pt-4 border-t border-[#f0f5f2] text-sm">
-        <span>{footerLabel}</span>
+
+        <span>
+          {footerLabel}
+        </span>
 
         <strong>
           {footerValue}
         </strong>
+
       </div>
 
     </div>
   );
 }
+
+/* =========================================================
+   PROGRESS BAR
+========================================================= */
 
 function ProgressBar({
   value,
 }: {
   value: number;
 }) {
+
+  /*
+    Visual bar is capped at 100%.
+
+    The actual displayed percentage
+    can still exceed 100%.
+  */
+
+  const width =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        value
+      )
+    );
+
   return (
+
     <div className="mt-3 h-2 bg-[#edf2f0] rounded-full overflow-hidden">
+
       <div
         className="h-full bg-[#0aa37a] rounded-full transition-all duration-300"
         style={{
-          width: `${Math.max(
-            0,
-            Math.min(100, value)
-          )}%`,
+          width:
+            `${width}%`,
         }}
       />
-    </div>
-  );
-}
-
-function ChannelCard({
-  title,
-  value,
-}: {
-  title: string;
-  value: number;
-}) {
-  return (
-    <div className="bg-white border border-[#dcece6] rounded-2xl p-6">
-
-      <div className="text-sm text-gray-500">
-        {title}
-      </div>
-
-      <div className="text-4xl font-bold mt-2 text-[#07563f]">
-        {formatCount(value)}
-      </div>
 
     </div>
   );
 }
 
-function TargetMini({
+/* =========================================================
+   TARGET CARD
+========================================================= */
+
+function TargetCard({
   title,
   value,
 }: {
   title: string;
   value: string;
-  type: "count" | "money";
 }) {
+
   return (
+
     <div className="bg-[#f1faf6] border border-[#dcece6] rounded-2xl p-5">
 
       <div className="text-sm text-gray-500">
@@ -1689,6 +2617,38 @@ function TargetMini({
 
       <div className="text-2xl font-bold mt-2 text-[#07563f]">
         {value}
+      </div>
+
+    </div>
+  );
+}
+
+/* =========================================================
+   SLI CARD
+========================================================= */
+
+function ChannelCard({
+  title,
+  value,
+}: {
+  title: string;
+  value: number;
+}) {
+
+  return (
+
+    <div className="bg-white border border-[#dcece6] rounded-2xl p-6">
+
+      <div className="text-sm text-gray-500">
+        {title}
+      </div>
+
+      <div className="text-4xl font-bold mt-2 text-[#07563f]">
+
+        {formatCount(
+          value
+        )}
+
       </div>
 
     </div>
