@@ -12,13 +12,23 @@ import { SalesDashboard } from './components/SalesDashboard';
 import { GroupingMatrixView } from './components/GroupingMatrixView';
 import { generateInitialRecords, INITIAL_DAILY_METRICS } from './data/initialData';
 import { computeDashboardMetrics } from './utils/calculations';
-import { JORecord, VendorSummary, SyncSourceInfo } from './types';
+import { JORecord, VendorSummary, SyncSourceInfo, SummarySheetTargets } from './types';
 import { DateFilterMode, getAvailableMonths, formatDateDisplay, normalizeDate } from './utils/dateCountingEngine';
+import { DEFAULT_SUMMARY_TARGETS } from './utils/summaryTargetService';
 import { Menu, X } from 'lucide-react';
 
 export default function App() {
   const [records, setRecords] = useState<JORecord[]>(() => generateInitialRecords());
   const [dailyMetrics, setDailyMetrics] = useState(INITIAL_DAILY_METRICS);
+  const [summaryTargets, setSummaryTargets] = useState<SummarySheetTargets>(() => {
+    const saved = localStorage.getItem('almasor_summary_targets');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return DEFAULT_SUMMARY_TARGETS;
+  });
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
   const [dateMode, setDateMode] = useState<DateFilterMode>('entire_month');
   const [selectedDate, setSelectedDate] = useState('September 15, 2026');
@@ -48,6 +58,10 @@ export default function App() {
           if (data.syncSourceInfo) {
             setSyncSourceInfo(data.syncSourceInfo);
           }
+          if (data.summaryTargets) {
+            setSummaryTargets(data.summaryTargets);
+            localStorage.setItem('almasor_summary_targets', JSON.stringify(data.summaryTargets));
+          }
         }
       }
     } catch (err) {
@@ -61,7 +75,11 @@ export default function App() {
     return () => clearInterval(interval);
   }, [fetchSharedRecords]);
 
-  const saveToServer = async (newRecords: JORecord[], sourceInfo?: SyncSourceInfo | null) => {
+  const saveToServer = async (
+    newRecords: JORecord[],
+    sourceInfo?: SyncSourceInfo | null,
+    newSummaryTargets?: SummarySheetTargets
+  ) => {
     try {
       await fetch('/api/records', {
         method: 'POST',
@@ -69,6 +87,7 @@ export default function App() {
         body: JSON.stringify({
           records: newRecords,
           syncSourceInfo: sourceInfo,
+          summaryTargets: newSummaryTargets || summaryTargets,
         }),
       });
     } catch (err) {
@@ -109,13 +128,22 @@ export default function App() {
     }, 600);
   };
 
-  const handleImportRecords = (newRecords: JORecord[], replaceAll: boolean, sourceInfo?: SyncSourceInfo) => {
+  const handleImportRecords = (
+    newRecords: JORecord[],
+    replaceAll: boolean,
+    sourceInfo?: SyncSourceInfo,
+    newSummaryTargets?: SummarySheetTargets
+  ) => {
     const updated = replaceAll ? newRecords : [...records, ...newRecords];
     setRecords(updated);
     if (sourceInfo) {
       setSyncSourceInfo(sourceInfo);
     }
-    saveToServer(updated, sourceInfo || syncSourceInfo);
+    if (newSummaryTargets) {
+      setSummaryTargets(newSummaryTargets);
+      localStorage.setItem('almasor_summary_targets', JSON.stringify(newSummaryTargets));
+    }
+    saveToServer(updated, sourceInfo || syncSourceInfo, newSummaryTargets || summaryTargets);
   };
 
   const handleResetToPhotoData = () => {
@@ -313,6 +341,7 @@ export default function App() {
           <OverviewTab
             metrics={metrics}
             records={records}
+            summaryTargets={summaryTargets}
             dateMode={dateMode}
             onChangeDateMode={setDateMode}
             selectedDate={selectedDate}

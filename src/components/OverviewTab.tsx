@@ -10,8 +10,9 @@ import {
   Calendar,
   Sparkles,
   TrendingUp,
+  Target,
 } from 'lucide-react';
-import { DashboardMetrics, JORecord } from '../types';
+import { DashboardMetrics, JORecord, SummarySheetTargets } from '../types';
 import {
   DateFilterMode,
   formatMonthDisplay,
@@ -19,7 +20,15 @@ import {
   countActivatedForMonth,
   sumAmountForDate,
   sumAmountForMonth,
+  normalizeDate,
 } from '../utils/dateCountingEngine';
+import {
+  getTargetsForProvince,
+  DEFAULT_SUMMARY_TARGETS,
+  calculateFiberXRunning,
+  calculateSmeRunningMrc,
+  calculateBidaRunning,
+} from '../utils/summaryTargetService';
 import { FiberXRunningVsTargetChart } from './FiberXRunningVsTargetChart';
 import { SummaryTables } from './SummaryTables';
 import { GroupingMatrixView } from './GroupingMatrixView';
@@ -27,6 +36,7 @@ import { GroupingMatrixView } from './GroupingMatrixView';
 interface OverviewTabProps {
   metrics: DashboardMetrics;
   records: JORecord[];
+  summaryTargets?: SummarySheetTargets;
   dateMode: DateFilterMode;
   onChangeDateMode: (mode: DateFilterMode) => void;
   selectedDate: string;
@@ -42,6 +52,7 @@ interface OverviewTabProps {
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   metrics,
   records,
+  summaryTargets,
   dateMode,
   onChangeDateMode,
   selectedDate,
@@ -141,6 +152,61 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     selectedSliType,
     selectedPackage,
   ]);
+
+  // -------------------------------------------------------------
+  // DYNAMIC TARGET SELECTION FROM SUMMARY SHEET
+  // Province filter maps to:
+  // "All districts" -> SUMMARY!D29, E29, F29
+  // "Albay"         -> SUMMARY!D11, E11, F11
+  // "Sorsogon"      -> SUMMARY!D17, E17, F17
+  // "Masbate"       -> SUMMARY!D23, E23, F23
+  // -------------------------------------------------------------
+  const activeTargets = useMemo(() => {
+    return getTargetsForProvince(summaryTargets || DEFAULT_SUMMARY_TARGETS, selectedProvince);
+  }, [summaryTargets, selectedProvince]);
+
+  // Current day cutoff when in specific_date mode
+  const currentDayLimit = useMemo(() => {
+    if (dateMode !== 'specific_date') return null;
+    const parsed = normalizeDate(selectedDate);
+    return parsed ? parsed.getDate() : null;
+  }, [dateMode, selectedDate]);
+
+  // FiberX Running: cumulative FIBERX JO count
+  const fiberXRunning = useMemo(() => {
+    return calculateFiberXRunning(
+      records,
+      selectedYear,
+      selectedMonth,
+      currentDayLimit,
+      selectedProvince,
+      selectedSliType
+    );
+  }, [records, selectedYear, selectedMonth, currentDayLimit, selectedProvince, selectedSliType]);
+
+  // SME Running MRC: cumulative SUM of MRC (Column AE) for SME rows
+  const smeRunningMrc = useMemo(() => {
+    return calculateSmeRunningMrc(
+      records,
+      selectedYear,
+      selectedMonth,
+      currentDayLimit,
+      selectedProvince,
+      selectedSliType
+    );
+  }, [records, selectedYear, selectedMonth, currentDayLimit, selectedProvince, selectedSliType]);
+
+  // BIDA Running: cumulative COUNT of activated JOs for BIDA rows
+  const bidaRunning = useMemo(() => {
+    return calculateBidaRunning(
+      records,
+      selectedYear,
+      selectedMonth,
+      currentDayLimit,
+      selectedProvince,
+      selectedSliType
+    );
+  }, [records, selectedYear, selectedMonth, currentDayLimit, selectedProvince, selectedSliType]);
 
   // -------------------------------------------------------------
   // PACKAGE CARDS (FiberX, SME, BIDA)
@@ -476,19 +542,55 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {/* FiberX Card */}
           <div
             id="card-package-fiberx"
-            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-2 hover:border-emerald-400 transition-colors"
+            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-3 hover:border-emerald-400 transition-colors"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
-                FiberX Activated
+                FiberX
               </span>
               <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                 Core Fiber
               </span>
             </div>
-            <div className="text-3xl font-black text-[#0f3023]">
-              {packageCards.fiberx.count.toLocaleString()}
+
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-[#527768]">Running</div>
+              <div className="text-3xl font-black text-[#0f3023]">
+                {fiberXRunning.toLocaleString()}
+              </div>
             </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-[#f0f5f2]">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#527768] font-medium">Target:</span>
+                <span className="font-bold text-[#0f3023]">
+                  {activeTargets.fiberXTarget.toLocaleString()}
+                </span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-emerald-600 h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      activeTargets.fiberXTarget > 0
+                        ? (fiberXRunning / activeTargets.fiberXTarget) * 100
+                        : 0
+                    )}%`,
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-[#618576] pt-0.5">
+                <span>Achievement:</span>
+                <span className="font-semibold text-emerald-800">
+                  {activeTargets.fiberXTarget > 0
+                    ? ((fiberXRunning / activeTargets.fiberXTarget) * 100).toFixed(1)
+                    : 0}
+                  %
+                </span>
+              </div>
+            </div>
+
             <div className="text-xs text-[#527768] font-medium flex items-center justify-between pt-1 border-t border-[#f0f5f2]">
               <span>Total MRC:</span>
               <span className="font-mono font-bold text-emerald-900">
@@ -500,23 +602,59 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {/* SME Card */}
           <div
             id="card-package-sme"
-            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-2 hover:border-emerald-400 transition-colors"
+            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-3 hover:border-teal-400 transition-colors"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-teal-800 uppercase tracking-wide">
-                SME Activated
+                SME
               </span>
               <span className="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                 Enterprise
               </span>
             </div>
-            <div className="text-3xl font-black text-[#0f3023]">
-              {packageCards.sme.count.toLocaleString()}
+
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-[#527768]">Running MRC</div>
+              <div className="text-3xl font-black text-[#0f3023]">
+                ₱{smeRunningMrc.toLocaleString()}
+              </div>
             </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-[#f0f5f2]">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#527768] font-medium">Target:</span>
+                <span className="font-bold text-[#0f3023]">
+                  ₱{activeTargets.smeMonthlyTarget.toLocaleString()}
+                </span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-teal-600 h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      activeTargets.smeMonthlyTarget > 0
+                        ? (smeRunningMrc / activeTargets.smeMonthlyTarget) * 100
+                        : 0
+                    )}%`,
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-[#618576] pt-0.5">
+                <span>Achievement:</span>
+                <span className="font-semibold text-teal-800">
+                  {activeTargets.smeMonthlyTarget > 0
+                    ? ((smeRunningMrc / activeTargets.smeMonthlyTarget) * 100).toFixed(1)
+                    : 0}
+                  %
+                </span>
+              </div>
+            </div>
+
             <div className="text-xs text-[#527768] font-medium flex items-center justify-between pt-1 border-t border-[#f0f5f2]">
-              <span>Total MRC:</span>
-              <span className="font-mono font-bold text-emerald-900">
-                ₱{packageCards.sme.mrc.toLocaleString()}
+              <span>Activated JOs:</span>
+              <span className="font-mono font-bold text-teal-900">
+                {packageCards.sme.count.toLocaleString()}
               </span>
             </div>
           </div>
@@ -524,19 +662,55 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {/* BIDA Card */}
           <div
             id="card-package-bida"
-            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-2 hover:border-emerald-400 transition-colors"
+            className="bg-white border border-[#dce7e1] rounded-2xl p-5 shadow-2xs space-y-3 hover:border-cyan-400 transition-colors"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-cyan-800 uppercase tracking-wide">
-                BIDA Activated
+                BIDA
               </span>
               <span className="text-[11px] font-semibold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
                 Affordable
               </span>
             </div>
-            <div className="text-3xl font-black text-[#0f3023]">
-              {packageCards.bida.count.toLocaleString()}
+
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-[#527768]">Running</div>
+              <div className="text-3xl font-black text-[#0f3023]">
+                {bidaRunning.toLocaleString()}
+              </div>
             </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-[#f0f5f2]">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#527768] font-medium">Target:</span>
+                <span className="font-bold text-[#0f3023]">
+                  {activeTargets.bidaMonthlyTarget.toLocaleString()}
+                </span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-cyan-600 h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      activeTargets.bidaMonthlyTarget > 0
+                        ? (bidaRunning / activeTargets.bidaMonthlyTarget) * 100
+                        : 0
+                    )}%`,
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-[#618576] pt-0.5">
+                <span>Achievement:</span>
+                <span className="font-semibold text-cyan-800">
+                  {activeTargets.bidaMonthlyTarget > 0
+                    ? ((bidaRunning / activeTargets.bidaMonthlyTarget) * 100).toFixed(1)
+                    : 0}
+                  %
+                </span>
+              </div>
+            </div>
+
             <div className="text-xs text-[#527768] font-medium flex items-center justify-between pt-1 border-t border-[#f0f5f2]">
               <span>Total MRC:</span>
               <span className="font-mono font-bold text-emerald-900">
@@ -624,6 +798,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         selectedMonth={selectedMonth}
         selectedProvince={selectedProvince}
         selectedSliType={selectedSliType}
+        summaryTargets={summaryTargets}
       />
 
       {/* Summary Tables: MRC Package Summary & Province Summary */}

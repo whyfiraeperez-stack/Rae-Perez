@@ -39,6 +39,22 @@ export interface VendorSummary {
   share: number; // percentage
 }
 
+export interface SummaryProvinceTargets {
+  fiberXTarget: number;
+  smeMonthlyTarget: number;
+  bidaMonthlyTarget: number;
+}
+
+export interface SummarySheetTargets {
+  monthKey?: string;
+  reportingMonth?: string;
+  albay: SummaryProvinceTargets;
+  sorsogon: SummaryProvinceTargets;
+  masbate: SummaryProvinceTargets;
+  overall: SummaryProvinceTargets;
+  rawCells?: Record<string, number | string>;
+}
+
 export interface TerritoryTarget {
   province: Province;
   sliType: SliType;

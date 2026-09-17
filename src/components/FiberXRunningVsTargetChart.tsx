@@ -10,13 +10,16 @@ import {
   Legend,
 } from 'recharts';
 import { TrendingUp, Target, Activity } from 'lucide-react';
-import { JORecord } from '../types';
-import { TARGET_CONFIGS } from '../data/initialData';
+import { JORecord, SummarySheetTargets } from '../types';
 import {
   getDatesInMonth,
   normalizeDate,
   MONTH_NAMES,
 } from '../utils/dateCountingEngine';
+import {
+  getTargetsForProvince,
+  DEFAULT_SUMMARY_TARGETS,
+} from '../utils/summaryTargetService';
 
 interface FiberXRunningVsTargetChartProps {
   records: JORecord[];
@@ -24,6 +27,7 @@ interface FiberXRunningVsTargetChartProps {
   selectedMonth: number; // 0-indexed (e.g. 8 for September)
   selectedProvince: string;
   selectedSliType: string;
+  summaryTargets?: SummarySheetTargets;
 }
 
 interface DailyPoint {
@@ -75,26 +79,13 @@ export const FiberXRunningVsTargetChart: React.FC<FiberXRunningVsTargetChartProp
   selectedMonth,
   selectedProvince,
   selectedSliType,
+  summaryTargets,
 }) => {
-  // 1. Determine Monthly FiberX Target dynamically based on existing dashboard target source
+  // 1. Determine Monthly FiberX Target dynamically from SUMMARY sheet
   const monthlyFiberXTarget = useMemo(() => {
-    const normProv = selectedProvince.trim().toUpperCase();
-    if (normProv === 'ALBAY') {
-      return TARGET_CONFIGS.ALBAY.fiberXTarget;
-    }
-    if (normProv === 'SORSOGON') {
-      return TARGET_CONFIGS.SORSOGON.fiberXTarget;
-    }
-    if (normProv === 'MASBATE') {
-      return TARGET_CONFIGS.MASBATE.fiberXTarget;
-    }
-    // All districts: sum of province targets (467 + 189 + 203 = 859)
-    return (
-      TARGET_CONFIGS.ALBAY.fiberXTarget +
-      TARGET_CONFIGS.SORSOGON.fiberXTarget +
-      TARGET_CONFIGS.MASBATE.fiberXTarget
-    );
-  }, [selectedProvince]);
+    const provTargets = getTargetsForProvince(summaryTargets || DEFAULT_SUMMARY_TARGETS, selectedProvince);
+    return provTargets.fiberXTarget;
+  }, [summaryTargets, selectedProvince]);
 
   // 2. Compute calendar days and cumulative FiberX activations vs running target
   const { chartData, totalDaysInMonth, monthShortName, finalRunningCount, completionRate } = useMemo(() => {
@@ -132,15 +123,21 @@ export const FiberXRunningVsTargetChart: React.FC<FiberXRunningVsTargetChartProp
 
       cumulative += dayActivations;
 
-      // Running Target: monthlyFiberXTarget * (elapsed days / total days)
-      const runningTarget = totalDays > 0 ? (monthlyFiberXTarget * dayNum) / totalDays : 0;
+      // Running Target: monthlyFiberXTarget * (dayOfMonth / totalDaysInMonth)
+      // The final day of the month must equal the monthly FiberX target from SUMMARY.
+      const isFinalDay = dayNum === totalDays;
+      const runningTarget = isFinalDay
+        ? monthlyFiberXTarget
+        : totalDays > 0
+        ? Number(((monthlyFiberXTarget * dayNum) / totalDays).toFixed(1))
+        : 0;
 
       return {
         dateKey: dateObj.toISOString(),
         displayDate: displayLabel,
         dayNumber: dayNum,
         fiberXRunning: cumulative,
-        runningTarget: Number(runningTarget.toFixed(1)),
+        runningTarget,
         dayCount: dayActivations,
       };
     });
@@ -253,7 +250,7 @@ export const FiberXRunningVsTargetChart: React.FC<FiberXRunningVsTargetChartProp
                       <div className="flex items-center justify-between gap-3 text-slate-700 font-medium">
                         <div className="flex items-center gap-1.5">
                           <span className="w-2.5 h-1 rounded-sm bg-slate-500"></span>
-                          <span>Target:</span>
+                          <span>FiberX Running Target:</span>
                         </div>
                         <span className="font-mono font-semibold">
                           {dataPoint.runningTarget.toLocaleString()}
@@ -277,7 +274,7 @@ export const FiberXRunningVsTargetChart: React.FC<FiberXRunningVsTargetChartProp
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-4 h-0.5 border-t-2 border-dashed border-slate-500 inline-block"></span>
-                    <span className="text-slate-600">Target</span>
+                    <span className="text-slate-600">FiberX Running Target</span>
                   </div>
                 </div>
               )}
@@ -296,7 +293,7 @@ export const FiberXRunningVsTargetChart: React.FC<FiberXRunningVsTargetChartProp
             <Line
               type="monotone"
               dataKey="runningTarget"
-              name="Target"
+              name="FiberX Running Target"
               stroke="#64748b"
               strokeWidth={2}
               strokeDasharray="5 5"

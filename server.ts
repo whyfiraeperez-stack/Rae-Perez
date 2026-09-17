@@ -20,6 +20,7 @@ try {
 let savedData: {
   records: any[];
   syncSourceInfo: any;
+  summaryTargets?: any;
   updatedAt: string;
 } | null = null;
 
@@ -53,6 +54,7 @@ async function startServer() {
       hasCustomData: Boolean(savedData && savedData.records && savedData.records.length > 0),
       records: savedData?.records || null,
       syncSourceInfo: savedData?.syncSourceInfo || null,
+      summaryTargets: savedData?.summaryTargets || null,
       updatedAt: savedData?.updatedAt || null,
     });
   });
@@ -60,7 +62,7 @@ async function startServer() {
   // Save updated records (from Excel import, Google Sheet sync, or manual edits)
   app.post('/api/records', (req, res) => {
     try {
-      const { records, syncSourceInfo } = req.body;
+      const { records, syncSourceInfo, summaryTargets } = req.body;
       if (!Array.isArray(records)) {
         return res.status(400).json({ success: false, error: 'Invalid records array' });
       }
@@ -75,6 +77,7 @@ async function startServer() {
           lastSyncTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           rowCount: records.length,
         },
+        summaryTargets: summaryTargets || savedData?.summaryTargets || null,
         updatedAt,
       };
 

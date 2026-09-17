@@ -16,10 +16,11 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { JORecord, Province, SliType, PackageCategory } from '../types';
+import { JORecord, Province, SliType, PackageCategory, SummarySheetTargets } from '../types';
 import { SCREENSHOT_SAMPLE_RECORDS } from '../data/screenshotData';
 import { normalizeVendorName } from '../utils/calculations';
 import { mapCsvRowsToJORecords } from '../utils/csvMapper';
+import { parseSummaryWorksheet } from '../utils/summaryTargetService';
 
 interface ImportExcelModalProps {
   isOpen: boolean;
@@ -31,7 +32,8 @@ interface ImportExcelModalProps {
       fileName: string;
       sheetName: string;
       isScreenshotSample?: boolean;
-    }
+    },
+    newSummaryTargets?: SummarySheetTargets
   ) => void;
   onResetToPhotoData: () => void;
   currentRecordsCount?: number;
@@ -56,6 +58,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const [availableSheets, setAvailableSheets] = useState<SheetInfo[]>([]);
   const [selectedSheet, setSelectedSheet] = useState<string>('');
   const [workbookRef, setWorkbookRef] = useState<XLSX.WorkBook | null>(null);
+  const [detectedSummaryTargets, setDetectedSummaryTargets] = useState<SummarySheetTargets | null>(null);
   const [error, setError] = useState<string>('');
   const [mode, setMode] = useState<'replace' | 'append'>('replace');
   const [detectedHeaderInfo, setDetectedHeaderInfo] = useState<string>('');
@@ -503,6 +506,19 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       targetSheet = exactMatch || recommended?.name || workbook.SheetNames[0];
     }
 
+    // Inspect workbook for "SUMMARY" sheet to retrieve targets dynamically
+    const summarySheetName = workbook.SheetNames.find(
+      (s) => s.trim().toUpperCase() === 'SUMMARY' || s.trim().toUpperCase().startsWith('SUMMARY')
+    );
+    if (summarySheetName && workbook.Sheets[summarySheetName]) {
+      const parsedTargets = parseSummaryWorksheet(workbook.Sheets[summarySheetName]);
+      if (parsedTargets) {
+        setDetectedSummaryTargets(parsedTargets);
+      }
+    } else {
+      setDetectedSummaryTargets(null);
+    }
+
     setSelectedSheet(targetSheet);
     parseWorksheet(workbook.Sheets[targetSheet], targetSheet);
   };
@@ -569,11 +585,16 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
   const handleConfirmImport = () => {
     if (parsedData.length > 0) {
-      onImportRecords(parsedData, mode === 'replace', {
-        fileName: fileName || 'Imported_Excel_Sheet.xlsx',
-        sheetName: selectedSheet || 'JO ACTIVATED',
-        isScreenshotSample: isSampleLoaded,
-      });
+      onImportRecords(
+        parsedData,
+        mode === 'replace',
+        {
+          fileName: fileName || 'Imported_Excel_Sheet.xlsx',
+          sheetName: selectedSheet || 'JO ACTIVATED',
+          isScreenshotSample: isSampleLoaded,
+        },
+        detectedSummaryTargets || undefined
+      );
       onClose();
     }
   };
@@ -830,6 +851,24 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
             <span className="font-bold text-emerald-900 bg-white px-2.5 py-1 rounded-xl border border-emerald-200 text-right shrink-0">
               {parsedData.length} records parsed
             </span>
+          </div>
+        )}
+
+        {/* SUMMARY Sheet Targets Auto-Detection Notice */}
+        {detectedSummaryTargets && (
+          <div className="bg-[#ecfdf5] border border-emerald-300 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-[#064e3b]">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <div className="font-bold flex items-center gap-2">
+                <span>&apos;SUMMARY&apos; Sheet Targets Detected:</span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono font-bold">
+                  Cells D11–F29
+                </span>
+              </div>
+              <p className="text-[11px] text-[#065f46]">
+                Targets for FiberX, SME (MRC), and BIDA dynamically extracted for Albay, Sorsogon, Masbate, and Overall.
+              </p>
+            </div>
           </div>
         )}
 
