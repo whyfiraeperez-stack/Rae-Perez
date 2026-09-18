@@ -106,6 +106,7 @@ export type DashboardMetrics = import('./utils/calculations').SummaryAggregates;
 export interface ParsedJO {
   joNumber: string;
   province: string;
+  sli: string;
   sliType: string;
   package: string;
   mrc: number;

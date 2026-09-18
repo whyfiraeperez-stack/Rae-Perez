@@ -25,6 +25,7 @@ import { MtdVsTargetProvince } from "./components/MtdVsTargetProvince";
 import { TotalClosedTables } from "./components/TotalClosedTables";
 import { SlaPerformanceSection } from "./components/SlaPerformanceSection";
 import { DailySLIReport } from "./components/DailySLIReport";
+import { TopPerformingSliSection } from "./components/TopPerformingSliSection";
 import { OperationalStatus, ParsedJO, Targets } from "./types";
 import liveCacheFallback from "./data/live_sheets_cache.json";
 
@@ -511,7 +512,7 @@ async function fetchGoogleSheet(sheetName: string, query: string): Promise<RawRo
 async function fetchJOActivated(): Promise<RawRow[]> {
   return fetchGoogleSheet(
     "JO ACTIVATED",
-    `select A,G,S,U,Y,AC,AE,AF,AU where A is not null`
+    `select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null`
   );
 }
 
@@ -694,12 +695,14 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
 
     const rawMrc = numberValue(getRowValue(row, "MRC", "AE", "AMOUNT"));
     const rawMrcVatEx = numberValue(getRowValue(row, "MRC VAT EX", "AU", "MRCVATEX"));
+    const sli = String(getRowValue(row, "SLI", "Q", "SLINAME", "SLI NAME")).trim();
 
     parsed.push({
       joNumber,
       province: normalizeProvince(
         getRowValue(row, "STATEORPROVINCE", "G", "PROVINCE")
       ),
+      sli,
       sliType: normalizeSLI(row),
       package: packageName,
       mrc: rawMrc,
@@ -1620,23 +1623,6 @@ export default function App() {
         </section>
 
         {/* ================================================
-            5. SLI CHANNEL BREAKDOWN (INHOUSE, MSA)
-        ================================================= */}
-        <div className="mb-3">
-          <h2 className="text-xl font-bold text-[#123b31]">
-            SLI channel breakdown
-            <span className="font-normal text-sm text-gray-500 ml-2">
-              (Respecting active package and province filters)
-            </span>
-          </h2>
-        </div>
-
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8" id="sli-breakdown">
-          <ChannelCard title="INHOUSE" value={sliMetrics.inhouse} />
-          <ChannelCard title="MSA" value={sliMetrics.msa} />
-        </section>
-
-        {/* ================================================
             6. MTD VS TARGET — ALMASOR (FIBERX, SME, BIDA)
         ================================================= */}
         <MtdVsTargetAlmasor
@@ -1655,7 +1641,32 @@ export default function App() {
         />
 
         {/* ================================================
-            8. FIBERX RUNNING VS TARGET CHART
+            8. SLI CHANNEL BREAKDOWN (INHOUSE, MSA)
+        ================================================= */}
+        <div className="mb-3">
+          <h2 className="text-xl font-bold text-[#123b31]">
+            SLI channel breakdown
+            <span className="font-normal text-sm text-gray-500 ml-2">
+              (Respecting active package and province filters)
+            </span>
+          </h2>
+        </div>
+
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8" id="sli-breakdown">
+          <ChannelCard title="INHOUSE" value={sliMetrics.inhouse} />
+          <ChannelCard title="MSA" value={sliMetrics.msa} />
+        </section>
+
+        {/* ================================================
+            9. TOP PERFORMING SLI
+        ================================================= */}
+        <TopPerformingSliSection
+          rows={filteredRows}
+          totalScopeJOs={filteredRows.length}
+        />
+
+        {/* ================================================
+            10. FIBERX RUNNING VS TARGET CHART
         ================================================= */}
         <section className="bg-white border border-[#dcece6] rounded-2xl p-6 shadow-sm mb-8" id="fiberx-chart">
           <div className="flex justify-between items-start gap-5 mb-5 flex-wrap">
