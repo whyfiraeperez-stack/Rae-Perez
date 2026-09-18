@@ -5,6 +5,10 @@ import { createServer as createViteServer } from 'vite';
 
 const PORT = 3000;
 const DATA_FILE = path.join(process.cwd(), 'data', 'saved_records.json');
+const CACHE_FILE = path.join(process.cwd(), 'data', 'live_sheets_cache.json');
+
+const GOOGLE_SHEET_ID = '17Vpc9LKVa2sD8FIUefqEQaM937dbTFIKnBeQ-5XCSNg';
+const GOOGLE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}`;
 
 // Ensure data directory exists
 try {
@@ -23,6 +27,237 @@ let savedData: {
   summaryTargets?: any;
   updatedAt: string;
 } | null = null;
+
+// Live Google Sheets cache
+let liveCache: {
+  joRows: any[];
+  summaryRows: any[];
+  targetsMap: Record<string, { fiberX: number; sme: number; bida: number; s2s?: number }>;
+  operationalStatus?: {
+    asOfText: string;
+    fsoi: number;
+    forCloseout: number;
+    forActivation: number;
+  };
+  lastSynced: string;
+  sourceName: string;
+} | null = null;
+
+const DEFAULT_TARGETS_MAP: Record<string, { fiberX: number; sme: number; bida: number; s2s: number }> = {
+  Albay: { fiberX: 467, sme: 71993, bida: 82, s2s: 572 },
+  Sorsogon: { fiberX: 189, sme: 59354, bida: 21, s2s: 169 },
+  Masbate: { fiberX: 203, sme: 5161, bida: 10, s2s: 41 },
+  'All districts': { fiberX: 859, sme: 136508, bida: 113, s2s: 782 },
+  ALBAY: { fiberX: 467, sme: 71993, bida: 82, s2s: 572 },
+  SORSOGON: { fiberX: 189, sme: 59354, bida: 21, s2s: 169 },
+  MASBATE: { fiberX: 203, sme: 5161, bida: 10, s2s: 41 },
+  ALMASOR: { fiberX: 859, sme: 136508, bida: 113, s2s: 782 },
+};
+
+// Attempt to load live cache from disk on boot
+try {
+  if (fs.existsSync(CACHE_FILE)) {
+    const raw = fs.readFileSync(CACHE_FILE, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.joRows) && parsed.joRows.length > 0) {
+      liveCache = {
+        joRows: parsed.joRows,
+        summaryRows: parsed.summaryRows || [],
+        targetsMap: parsed.targetsMap || DEFAULT_TARGETS_MAP,
+        operationalStatus: parsed.operationalStatus || {
+          asOfText: '18 Sep 2026 10:28 am',
+          fsoi: 14,
+          forCloseout: 2,
+          forActivation: 1,
+        },
+        lastSynced: parsed.updatedAt || new Date().toISOString(),
+        sourceName: 'Live Google Sheet',
+      };
+      console.log(`Loaded ${liveCache.joRows.length} live records from disk cache.`);
+    }
+  }
+} catch (e) {
+  console.error('Failed to read live cache file on startup:', e);
+}
+
+// Helper: fetch Google Sheet GViz
+async function fetchGoogleSheetGViz(sheetName: string, query?: string, range?: string): Promise<any[]> {
+  let url =
+    `${GOOGLE_SHEET_URL}/gviz/tq` +
+    `?sheet=${encodeURIComponent(sheetName)}` +
+    `&tqx=out:json` +
+    `&_=${Date.now()}`;
+
+  if (query) url += `&tq=${encodeURIComponent(query)}`;
+  if (range) url += `&range=${encodeURIComponent(range)}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { Accept: 'text/plain' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to read ${sheetName}: HTTP ${response.status}`);
+  }
+
+  const text = await response.text();
+  const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/);
+  if (!match) {
+    throw new Error(`Could not parse ${sheetName} from Google Sheets.`);
+  }
+
+  const json = JSON.parse(match[1]);
+  if (json.status === 'error') {
+    throw new Error(
+      json.errors?.[0]?.detailed_message ||
+      json.errors?.[0]?.message ||
+      `Google Sheets error: ${sheetName}`
+    );
+  }
+
+  const table = json.table;
+  const headers = table.cols.map(
+    (col: any, idx: number) => col.label || col.id || `Column${idx + 1}`
+  );
+
+  return table.rows.map((row: any) => {
+    const record: Record<string, any> = {};
+    headers.forEach((header: string, index: number) => {
+      record[header] = row.c?.[index]?.v ?? '';
+    });
+    return record;
+  });
+}
+
+// Helper: fetch target row with S2S (D:G)
+async function fetchSummaryTargetRow(rowNumber: number): Promise<{ fiberX: number; sme: number; bida: number; s2s: number }> {
+  const url =
+    `${GOOGLE_SHEET_URL}/gviz/tq` +
+    `?sheet=SUMMARY` +
+    `&range=D${rowNumber}:G${rowNumber}` +
+    `&tqx=out:json` +
+    `&_=${Date.now()}`;
+
+  const response = await fetch(url, { headers: { Accept: 'text/plain' } });
+  const text = await response.text();
+  const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/);
+  if (!match) throw new Error(`Could not parse target row ${rowNumber}`);
+
+  const json = JSON.parse(match[1]);
+  const firstRow = json.table?.rows?.[0]?.c || [];
+  return {
+    fiberX: Math.abs(Number(firstRow[0]?.v) || 0),
+    sme: Math.abs(Number(firstRow[1]?.v) || 0),
+    bida: Math.abs(Number(firstRow[2]?.v) || 0),
+    s2s: Math.abs(Number(firstRow[3]?.v) || 0),
+  };
+}
+
+let syncInProgress: Promise<any> | null = null;
+
+async function syncLiveGoogleSheets(): Promise<any> {
+  if (syncInProgress) return syncInProgress;
+
+  syncInProgress = (async () => {
+    try {
+      console.log('Syncing live data from Google Sheets...');
+      const [joRows, summaryRows, albay, sorsogon, masbate, overall] = await Promise.all([
+        fetchGoogleSheetGViz('JO ACTIVATED', 'select A,G,S,U,Y,AC,AE,AF,AU where A is not null'),
+        fetchGoogleSheetGViz('SUMMARY', 'select B,C,D,E,F,G').catch(() => []),
+        fetchSummaryTargetRow(11).catch(() => DEFAULT_TARGETS_MAP.Albay),
+        fetchSummaryTargetRow(17).catch(() => DEFAULT_TARGETS_MAP.Sorsogon),
+        fetchSummaryTargetRow(23).catch(() => DEFAULT_TARGETS_MAP.Masbate),
+        fetchSummaryTargetRow(29).catch(() => DEFAULT_TARGETS_MAP['All districts']),
+      ]);
+
+      const targetsMap = {
+        Albay: albay,
+        Sorsogon: sorsogon,
+        Masbate: masbate,
+        'All districts': overall,
+        ALBAY: albay,
+        SORSOGON: sorsogon,
+        MASBATE: masbate,
+        ALMASOR: overall,
+      };
+
+      // Fetch operational metrics from DAILY REPORT ALMASOR & FOR CLOSING
+      let fsoi = 14;
+      let draAsOf = '18 Sep 2026 10:28 am';
+      let forCloseout = 2;
+      let forActivation = 1;
+
+      try {
+        const draRes = await fetch(`${GOOGLE_SHEET_URL}/gviz/tq?sheet=DAILY%20REPORT%20ALMASOR&range=AJ1:AK20&tqx=out:json`);
+        const draText = await draRes.text();
+        const draMatch = draText.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/);
+        if (draMatch) {
+          const draJson = JSON.parse(draMatch[1]);
+          const r0 = draJson.table?.rows?.[0]?.c?.[0]?.v;
+          if (r0) draAsOf = String(r0);
+          const r8 = draJson.table?.rows?.[8]?.c?.[1]?.v;
+          if (r8 !== undefined) fsoi = Number(r8) || fsoi;
+          const r10 = draJson.table?.rows?.[10]?.c?.[1]?.v;
+          if (r10 !== undefined) forCloseout = Number(r10) || forCloseout;
+          const r11 = draJson.table?.rows?.[11]?.c?.[1]?.v;
+          if (r11 !== undefined) forActivation = Number(r11) || forActivation;
+        }
+      } catch (e: any) {
+        console.warn('Operational metrics fetch warning:', e.message);
+      }
+
+      const operationalStatus = {
+        asOfText: draAsOf,
+        fsoi,
+        forCloseout,
+        forActivation,
+      };
+
+      const now = new Date().toISOString();
+      liveCache = {
+        joRows,
+        summaryRows,
+        targetsMap,
+        operationalStatus,
+        lastSynced: now,
+        sourceName: 'Live Google Sheet',
+      };
+
+      // Persist to disk
+      fs.writeFile(CACHE_FILE, JSON.stringify({
+        joRows,
+        summaryRows,
+        targetsMap,
+        operationalStatus,
+        updatedAt: now,
+      }, null, 2), (err) => {
+        if (err) console.error('Error writing live cache file:', err);
+      });
+
+      console.log(`Successfully synced ${joRows.length} rows from Google Sheets.`);
+      return liveCache;
+    } catch (err) {
+      console.error('Failed to sync live Google Sheets:', err);
+      if (liveCache) {
+        console.log('Serving existing liveCache despite sync error.');
+        return liveCache;
+      }
+      throw err;
+    } finally {
+      syncInProgress = null;
+    }
+  })();
+
+  return syncInProgress;
+}
+
+// Initial sync on startup
+syncLiveGoogleSheets().catch((e) => console.warn('Startup live sync warning:', e.message));
+
+// Periodically sync every 60 seconds
+setInterval(() => {
+  syncLiveGoogleSheets().catch((e) => console.warn('Interval live sync warning:', e.message));
+}, 60_000);
 
 // Attempt to load from disk on boot
 try {
@@ -45,6 +280,60 @@ async function startServer() {
   // API Routes
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Get live data from Google Sheets (cached, automatic proxy)
+  app.get('/api/live-data', async (req, res) => {
+    try {
+      const force = req.query.force === '1' || req.query.force === 'true';
+      if (force || !liveCache) {
+        await syncLiveGoogleSheets();
+      }
+      if (!liveCache) {
+        return res.status(503).json({ success: false, error: 'Live data not yet ready' });
+      }
+      res.json({
+        success: true,
+        sourceName: liveCache.sourceName,
+        joRows: liveCache.joRows,
+        summaryRows: liveCache.summaryRows,
+        targetsMap: liveCache.targetsMap,
+        operationalStatus: liveCache.operationalStatus,
+        lastSynced: liveCache.lastSynced,
+      });
+    } catch (err: any) {
+      if (liveCache) {
+        return res.json({
+          success: true,
+          sourceName: liveCache.sourceName,
+          joRows: liveCache.joRows,
+          summaryRows: liveCache.summaryRows,
+          targetsMap: liveCache.targetsMap,
+          operationalStatus: liveCache.operationalStatus,
+          lastSynced: liveCache.lastSynced,
+          warning: err.message,
+        });
+      }
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Force refresh live data from Google Sheets
+  app.post('/api/live-data/refresh', async (req, res) => {
+    try {
+      const data = await syncLiveGoogleSheets();
+      res.json({
+        success: true,
+        sourceName: data.sourceName,
+        joRows: data.joRows,
+        summaryRows: data.summaryRows,
+        targetsMap: data.targetsMap,
+        operationalStatus: data.operationalStatus,
+        lastSynced: data.lastSynced,
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
   });
 
   // Get current shared records across all users

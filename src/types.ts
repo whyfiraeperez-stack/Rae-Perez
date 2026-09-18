@@ -109,6 +109,7 @@ export interface ParsedJO {
   sliType: string;
   package: string;
   mrc: number;
+  mrcVatEx?: number;
   closingDate: Date;
   sla: string;
 }
@@ -117,4 +118,12 @@ export interface Targets {
   fiberX: number;
   sme: number;
   bida: number;
+  s2s?: number;
+}
+
+export interface OperationalStatus {
+  asOfText: string;
+  fsoi: number;
+  forCloseout: number;
+  forActivation: number;
 }

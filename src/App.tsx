@@ -13,6 +13,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -23,7 +24,9 @@ import { MtdVsTargetAlmasor } from "./components/MtdVsTargetAlmasor";
 import { MtdVsTargetProvince } from "./components/MtdVsTargetProvince";
 import { TotalClosedTables } from "./components/TotalClosedTables";
 import { SlaPerformanceSection } from "./components/SlaPerformanceSection";
-import { ParsedJO, Targets } from "./types";
+import { DailySLIReport } from "./components/DailySLIReport";
+import { OperationalStatus, ParsedJO, Targets } from "./types";
+import liveCacheFallback from "./data/live_sheets_cache.json";
 
 /* =========================================================
    CONFIGURATION
@@ -34,6 +37,17 @@ const GOOGLE_SHEET_ID =
 
 const GOOGLE_SHEET_URL =
   `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}`;
+
+const DEFAULT_TARGETS_MAP: Record<string, Targets> = {
+  Albay: { fiberX: 467, sme: 71993, bida: 82, s2s: 572 },
+  Sorsogon: { fiberX: 189, sme: 59354, bida: 21, s2s: 169 },
+  Masbate: { fiberX: 203, sme: 5161, bida: 10, s2s: 41 },
+  "All districts": { fiberX: 859, sme: 136508, bida: 113, s2s: 782 },
+  ALBAY: { fiberX: 467, sme: 71993, bida: 82, s2s: 572 },
+  SORSOGON: { fiberX: 189, sme: 59354, bida: 21, s2s: 169 },
+  MASBATE: { fiberX: 203, sme: 5161, bida: 10, s2s: 41 },
+  ALMASOR: { fiberX: 859, sme: 136508, bida: 113, s2s: 782 },
+};
 
 /*
   Live refresh interval: 60 seconds.
@@ -105,6 +119,7 @@ type LiveState = {
   joRows: RawRow[];
   summaryRows: RawRow[];
   targetsMap: Record<string, Targets>;
+  operationalStatus?: OperationalStatus;
   lastSynced: Date | null;
   syncing: boolean;
   error: string;
@@ -146,6 +161,10 @@ function normalizePackage(value: any): string {
 
   if (valueText === "BIDA" || valueText.startsWith("BIDA")) {
     return "BIDA";
+  }
+
+  if (valueText === "S2S" || valueText.startsWith("S2S")) {
+    return "S2S";
   }
 
   return valueText;
@@ -487,11 +506,12 @@ async function fetchGoogleSheet(sheetName: string, query: string): Promise<RawRo
   AC = PACKAGE
   AE = MRC
   AF = CLOSING DATE
+  AU = MRC VAT EX
 */
 async function fetchJOActivated(): Promise<RawRow[]> {
   return fetchGoogleSheet(
     "JO ACTIVATED",
-    `select A,G,S,U,Y,AC,AE,AF where A is not null`
+    `select A,G,S,U,Y,AC,AE,AF,AU where A is not null`
   );
 }
 
@@ -499,7 +519,7 @@ async function fetchJOActivated(): Promise<RawRow[]> {
   Fetch SUMMARY rows for general matrix parsing and fallback.
 */
 async function fetchSummary(): Promise<RawRow[]> {
-  return fetchGoogleSheet("SUMMARY", `select B,C,D,E,F`);
+  return fetchGoogleSheet("SUMMARY", `select B,C,D,E,F,G`);
 }
 
 /*
@@ -508,13 +528,13 @@ async function fetchSummary(): Promise<RawRow[]> {
   Row 17 = Sorsogon
   Row 23 = Masbate
   Row 29 = Almasor / Overall
-  Columns: D = FIBERX, E = SME, F = BIDA
+  Columns: D = FIBERX, E = SME, F = BIDA, G = S2S
 */
 async function fetchSummaryTargetRow(rowNumber: number): Promise<Targets> {
   const url =
     `${GOOGLE_SHEET_URL}/gviz/tq` +
     `?sheet=SUMMARY` +
-    `&range=D${rowNumber}:F${rowNumber}` +
+    `&range=D${rowNumber}:G${rowNumber}` +
     `&tqx=out:json` +
     `&_=${Date.now()}`;
 
@@ -546,6 +566,7 @@ async function fetchSummaryTargetRow(rowNumber: number): Promise<Targets> {
     fiberX: Math.abs(numberValue(firstRow[0]?.v)),
     sme: Math.abs(numberValue(firstRow[1]?.v)),
     bida: Math.abs(numberValue(firstRow[2]?.v)),
+    s2s: Math.abs(numberValue(firstRow[3]?.v)),
   };
 }
 
@@ -594,6 +615,7 @@ function parseTargetsFromSummaryRows(summaryRows: RawRow[]): Record<string, Targ
             fiberX: Math.abs(numberValue(getRowValue(row, "FIBERX", "D"))),
             sme: Math.abs(numberValue(getRowValue(row, "SME", "E"))),
             bida: Math.abs(numberValue(getRowValue(row, "BIDA", "F"))),
+            s2s: Math.abs(numberValue(getRowValue(row, "S2S", "G"))),
           };
         }
       }
@@ -608,11 +630,12 @@ function parseTargetsFromSummaryRows(summaryRows: RawRow[]): Record<string, Targ
           fiberX: Math.abs(numberValue(getRowValue(candidate, "FIBERX", "D"))),
           sme: Math.abs(numberValue(getRowValue(candidate, "SME", "E"))),
           bida: Math.abs(numberValue(getRowValue(candidate, "BIDA", "F"))),
+          s2s: Math.abs(numberValue(getRowValue(candidate, "S2S", "G"))),
         };
       }
     }
 
-    return { fiberX: 0, sme: 0, bida: 0 };
+    return { fiberX: 0, sme: 0, bida: 0, s2s: 0 };
   };
 
   const albay = getProvinceTarget("Albay");
@@ -660,9 +683,17 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
       getRowValue(row, "PACKAGE", "AC", "PACKAGE NAME")
     );
 
-    if (packageName !== "FIBERX" && packageName !== "SME" && packageName !== "BIDA") {
+    if (
+      packageName !== "FIBERX" &&
+      packageName !== "SME" &&
+      packageName !== "BIDA" &&
+      packageName !== "S2S"
+    ) {
       continue;
     }
+
+    const rawMrc = numberValue(getRowValue(row, "MRC", "AE", "AMOUNT"));
+    const rawMrcVatEx = numberValue(getRowValue(row, "MRC VAT EX", "AU", "MRCVATEX"));
 
     parsed.push({
       joNumber,
@@ -671,7 +702,8 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
       ),
       sliType: normalizeSLI(row),
       package: packageName,
-      mrc: numberValue(getRowValue(row, "MRC", "AE", "AMOUNT")),
+      mrc: rawMrc,
+      mrcVatEx: rawMrcVatEx || (rawMrc > 0 ? rawMrc / 1.12 : 0),
       closingDate,
       sla: normalizeSLA(getRowValue(row, "SLA", "Y", "Ageing", "Aging")),
     });
@@ -712,23 +744,29 @@ function matchesPackage(row: ParsedJO, packageName: string): boolean {
 ========================================================= */
 
 function useLiveGoogleSheet() {
-  const [state, setState] = useState<LiveState>({
-    sourceName: "Live Google Sheet",
-    joRows: [],
-    summaryRows: [],
-    targetsMap: {
-      Albay: { fiberX: 0, sme: 0, bida: 0 },
-      Sorsogon: { fiberX: 0, sme: 0, bida: 0 },
-      Masbate: { fiberX: 0, sme: 0, bida: 0 },
-      "All districts": { fiberX: 0, sme: 0, bida: 0 },
-      ALBAY: { fiberX: 0, sme: 0, bida: 0 },
-      SORSOGON: { fiberX: 0, sme: 0, bida: 0 },
-      MASBATE: { fiberX: 0, sme: 0, bida: 0 },
-      ALMASOR: { fiberX: 0, sme: 0, bida: 0 },
-    },
-    lastSynced: null,
-    syncing: false,
-    error: "",
+  const [state, setState] = useState<LiveState>(() => {
+    const cachedJo = (liveCacheFallback as any)?.joRows || [];
+    const cachedSummary = (liveCacheFallback as any)?.summaryRows || [];
+    const cachedTargets =
+      (liveCacheFallback as any)?.targetsMap || DEFAULT_TARGETS_MAP;
+    const cachedOperational = (liveCacheFallback as any)?.operationalStatus || {
+      asOfText: "18 Sep 2026 10:28 am",
+      fsoi: 14,
+      forCloseout: 2,
+      forActivation: 1,
+    };
+    return {
+      sourceName: "Live Google Sheet",
+      joRows: cachedJo,
+      summaryRows: cachedSummary,
+      targetsMap: cachedTargets,
+      operationalStatus: cachedOperational,
+      lastSynced: (liveCacheFallback as any)?.updatedAt
+        ? new Date((liveCacheFallback as any).updatedAt)
+        : new Date(),
+      syncing: false,
+      error: "",
+    };
   });
 
   const mountedRef = useRef(true);
@@ -743,36 +781,73 @@ function useLiveGoogleSheet() {
     }));
 
     try {
-      // Fetch JO ACTIVATED and targets concurrently
-      const [joRows, summaryRows, liveTargets] = await Promise.all([
-        fetchJOActivated(),
-        fetchSummary().catch(() => []),
-        fetchAllTargets().catch((err) => {
-          console.warn("Direct range targets fallback:", err);
-          return null;
-        }),
-      ]);
+      let joRows: RawRow[] = [];
+      let summaryRows: RawRow[] = [];
+      let liveTargets: Record<string, Targets> | null = null;
+      let liveOperational: OperationalStatus | undefined = undefined;
+      let sourceName = "Live Google Sheet";
+
+      // 1. Fetch via backend proxy first (avoids browser iframe CORS/network blocks)
+      try {
+        const res = await fetch("/api/live-data?force=1", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.joRows) && data.joRows.length > 0) {
+            joRows = data.joRows;
+            summaryRows = data.summaryRows || [];
+            liveTargets = data.targetsMap || null;
+            if (data.operationalStatus) {
+              liveOperational = data.operationalStatus;
+            }
+            sourceName = data.sourceName || "Live Google Sheet";
+          }
+        }
+      } catch (proxyErr) {
+        console.warn(
+          "Backend proxy live-data fetch failed, trying direct Google Sheet GViz:",
+          proxyErr
+        );
+      }
+
+      // 2. Direct GViz fallback if proxy did not return rows
+      if (joRows.length === 0) {
+        const [directJo, directSummary, directTargets] = await Promise.all([
+          fetchJOActivated(),
+          fetchSummary().catch(() => []),
+          fetchAllTargets().catch(() => null),
+        ]);
+        joRows = directJo;
+        summaryRows = directSummary;
+        liveTargets = directTargets;
+      }
 
       if (!mountedRef.current) return;
 
       const finalTargets =
-        liveTargets || parseTargetsFromSummaryRows(summaryRows);
+        liveTargets ||
+        parseTargetsFromSummaryRows(summaryRows) ||
+        DEFAULT_TARGETS_MAP;
 
-      setState({
-        sourceName: "Live Google Sheet",
+      setState((prev) => ({
+        sourceName,
         joRows,
         summaryRows,
         targetsMap: finalTargets,
+        operationalStatus: liveOperational || prev.operationalStatus,
         lastSynced: new Date(),
         syncing: false,
         error: "",
-      });
+      }));
     } catch (err: any) {
       if (!mountedRef.current) return;
+      console.warn("Sync error:", err);
       setState((prev) => ({
         ...prev,
         syncing: false,
-        error: err?.message || "Unable to refresh Google Sheet.",
+        error:
+          prev.joRows.length === 0
+            ? err?.message || "Unable to refresh Google Sheet."
+            : "",
       }));
     }
   }, []);
@@ -780,15 +855,16 @@ function useLiveGoogleSheet() {
   const setManualExcel = useCallback(
     (excelJo: RawRow[], excelSummary: RawRow[], fileName: string) => {
       const parsedTargets = parseTargetsFromSummaryRows(excelSummary);
-      setState({
+      setState((prev) => ({
         sourceName: fileName,
         joRows: excelJo,
         summaryRows: excelSummary,
         targetsMap: parsedTargets,
+        operationalStatus: prev.operationalStatus,
         lastSynced: new Date(),
         syncing: false,
         error: "",
-      });
+      }));
     },
     []
   );
@@ -829,11 +905,23 @@ function useLiveGoogleSheet() {
    MAIN DASHBOARD APPLICATION
 ========================================================= */
 
+function formatDisplayDate(iso: string): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export default function App() {
   const {
     sourceName,
     joRows,
     targetsMap,
+    operationalStatus,
     lastSynced,
     syncing,
     error,
@@ -847,6 +935,8 @@ export default function App() {
     sliType: "All SLI Types",
     package: "All Packages",
   });
+
+  const [reportDate, setReportDate] = useState<string>("2026-09-18");
 
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [excelLoading, setExcelLoading] = useState(false);
@@ -864,39 +954,96 @@ export default function App() {
     return Array.from(set).sort().reverse();
   }, [rows]);
 
+  // Handle month change and date synchronization
+  const handleMonthChange = (newMonth: string) => {
+    const [, , oldD] = reportDate.split("-").map(Number);
+    const [newY, newM] = newMonth.split("-").map(Number);
+    const daysInNewMonth = new Date(newY, newM, 0).getDate();
+    const clampedDay = Math.min(oldD || 1, daysInNewMonth);
+    const newReportDate = `${newY}-${String(newM).padStart(2, "0")}-${String(clampedDay).padStart(2, "0")}`;
+
+    setFilters((prev) => ({ ...prev, month: newMonth }));
+    setReportDate(newReportDate);
+  };
+
+  // Generate calendar dates for selected month
+  const dateOptions = useMemo(() => {
+    const [year, monthNum] = filters.month.split("-").map(Number);
+    const daysInMonth = new Date(year, monthNum, 0).getDate();
+    const options: Array<{ value: string; label: string; day: number }> = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = `${year}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dObj = new Date(year, monthNum - 1, day);
+      const label = dObj.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+      options.push({ value: iso, label, day });
+    }
+    return options;
+  }, [filters.month]);
+
+  // Find latest recorded closing date in dataset
+  const latestAvailableDate = useMemo(() => {
+    let maxDate = "2026-09-18";
+    for (const r of rows) {
+      const k = dateKey(r.closingDate);
+      if (k > maxDate) maxDate = k;
+    }
+    return maxDate;
+  }, [rows]);
+
   // All unique records in selected month (unfiltered territory scope)
   const monthRows = useMemo(
     () => rows.filter((r) => monthKey(r.closingDate) === filters.month),
     [rows, filters.month]
   );
 
-  // Filtered records respecting all dropdown filters
+  // Cutoff date components
+  const [cutoffYear, cutoffMonth, cutoffDay] = useMemo(
+    () => reportDate.split("-").map(Number),
+    [reportDate]
+  );
+
+  // Records in selected month strictly up to reportDate cutoff (MTD)
+  const mtdRows = useMemo(() => {
+    return monthRows.filter((r) => {
+      const y = r.closingDate.getFullYear();
+      const m = r.closingDate.getMonth() + 1;
+      const d = r.closingDate.getDate();
+      return y === cutoffYear && m === cutoffMonth && d <= cutoffDay;
+    });
+  }, [monthRows, cutoffYear, cutoffMonth, cutoffDay]);
+
+  // Filtered MTD records respecting all dropdown filters
   const filteredRows = useMemo(
     () =>
-      monthRows.filter(
+      mtdRows.filter(
         (r) =>
           matchesProvince(r, filters.province) &&
           matchesSLI(r, filters.sliType) &&
           matchesPackage(r, filters.package)
       ),
-    [monthRows, filters.province, filters.sliType, filters.package]
+    [mtdRows, filters.province, filters.sliType, filters.package]
   );
 
-  // Package section scope: respects province and SLI filters
+  // Package section scope: respects province and SLI filters, MTD cutoff
   const packageRows = useMemo(
     () =>
-      monthRows.filter(
+      mtdRows.filter(
         (r) =>
           matchesProvince(r, filters.province) && matchesSLI(r, filters.sliType)
       ),
-    [monthRows, filters.province, filters.sliType]
+    [mtdRows, filters.province, filters.sliType]
   );
 
   // Active target for current province filter
   const activeTargets: Targets = useMemo(() => {
     return (
       targetsMap[filters.province] ||
-      targetsMap["All districts"] || { fiberX: 0, sme: 0, bida: 0 }
+      targetsMap["All districts"] || { fiberX: 0, sme: 0, bida: 0, s2s: 0 }
     );
   }, [targetsMap, filters.province]);
 
@@ -904,22 +1051,22 @@ export default function App() {
   const almasorTargets: Targets = useMemo(() => {
     return (
       targetsMap["All districts"] ||
-      targetsMap["ALMASOR"] || { fiberX: 0, sme: 0, bida: 0 }
+      targetsMap["ALMASOR"] || { fiberX: 0, sme: 0, bida: 0, s2s: 0 }
     );
   }, [targetsMap]);
 
   // Provincial targets mapping
   const provincialTargets = useMemo(
     () => ({
-      ALBAY: targetsMap["ALBAY"] || targetsMap["Albay"] || { fiberX: 0, sme: 0, bida: 0 },
-      MASBATE: targetsMap["MASBATE"] || targetsMap["Masbate"] || { fiberX: 0, sme: 0, bida: 0 },
-      SORSOGON: targetsMap["SORSOGON"] || targetsMap["Sorsogon"] || { fiberX: 0, sme: 0, bida: 0 },
+      ALBAY: targetsMap["ALBAY"] || targetsMap["Albay"] || { fiberX: 0, sme: 0, bida: 0, s2s: 0 },
+      MASBATE: targetsMap["MASBATE"] || targetsMap["Masbate"] || { fiberX: 0, sme: 0, bida: 0, s2s: 0 },
+      SORSOGON: targetsMap["SORSOGON"] || targetsMap["Sorsogon"] || { fiberX: 0, sme: 0, bida: 0, s2s: 0 },
     }),
     [targetsMap]
   );
 
   /*
-    1. MAIN KPI METRICS
+    1. MAIN KPI METRICS (MTD up to reportDate)
     Activated JO Count = Count of unique JOs in filteredRows
     Total MRC = Sum of Column AE in filteredRows
   */
@@ -936,7 +1083,7 @@ export default function App() {
   }, [filteredRows]);
 
   /*
-    2. PACKAGE BREAKDOWN METRICS
+    2. PACKAGE BREAKDOWN METRICS (MTD up to reportDate)
     FIBERX Running = Count of unique JOs where package = FIBERX
     SME Running = Sum of MRC where package = SME (Do NOT count SME JOs as running value)
     BIDA Running = Count of unique JOs where package = BIDA
@@ -977,7 +1124,7 @@ export default function App() {
   }, [packageRows]);
 
   /*
-    3. SLI CHANNEL METRICS
+    3. SLI CHANNEL METRICS (MTD up to reportDate)
   */
   const sliMetrics = useMemo(() => {
     let inhouse = 0;
@@ -992,29 +1139,29 @@ export default function App() {
   }, [filteredRows]);
 
   /*
-    4. MTD VS TARGET — ALMASOR SCOPE (Full month territory scope)
+    4. MTD VS TARGET — ALMASOR SCOPE (MTD up to reportDate)
   */
   const almasorRunning = useMemo(() => {
     let fiberX = 0;
     let smeMRC = 0;
     let bida = 0;
 
-    for (const r of monthRows) {
+    for (const r of mtdRows) {
       if (r.package === "FIBERX") fiberX++;
       if (r.package === "SME") smeMRC += r.mrc || 0;
       if (r.package === "BIDA") bida++;
     }
 
     return { fiberX, smeMRC, bida };
-  }, [monthRows]);
+  }, [mtdRows]);
 
   /*
-    5. MTD VS TARGET — PROVINCIAL SCOPE
+    5. MTD VS TARGET — PROVINCIAL SCOPE (MTD up to reportDate)
   */
   const provincialRunning = useMemo(() => {
-    const albayRows = monthRows.filter((r) => r.province === "ALBAY");
-    const masbateRows = monthRows.filter((r) => r.province === "MASBATE");
-    const sorsogonRows = monthRows.filter((r) => r.province === "SORSOGON");
+    const albayRows = mtdRows.filter((r) => r.province === "ALBAY");
+    const masbateRows = mtdRows.filter((r) => r.province === "MASBATE");
+    const sorsogonRows = mtdRows.filter((r) => r.province === "SORSOGON");
 
     return {
       ALBAY: {
@@ -1039,7 +1186,7 @@ export default function App() {
         bidaCount: sorsogonRows.filter((r) => r.package === "BIDA").length,
       },
     };
-  }, [monthRows]);
+  }, [mtdRows]);
 
   /*
     6. FIBERX RUNNING VS TARGET CHART
@@ -1070,19 +1217,34 @@ export default function App() {
       running += counts.get(key) || 0;
 
       const runningTarget = activeTargets.fiberX * (day / totalDays);
+      const isoDate = `${year}-${String(monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
       result.push({
         date: date.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
         }),
+        fullDate: isoDate,
+        day,
         fiberXRunning: running,
         target: Number(runningTarget.toFixed(2)),
+        isCutoff: isoDate === reportDate,
       });
     }
 
     return result;
-  }, [monthRows, filters.province, filters.sliType, filters.month, activeTargets.fiberX]);
+  }, [monthRows, filters.province, filters.sliType, filters.month, activeTargets.fiberX, reportDate]);
+
+  const selectedDayChartItem = useMemo(() => {
+    return fiberChart.find((item) => item.isCutoff) || fiberChart[fiberChart.length - 1];
+  }, [fiberChart]);
+
+  const selectedDateFiberXRunning = selectedDayChartItem?.fiberXRunning ?? 0;
+  const selectedDateTarget = selectedDayChartItem?.target ?? 0;
+  const selectedDateProgress = calculatePercentage(
+    selectedDateFiberXRunning,
+    selectedDateTarget
+  );
 
   const fiberXChartAchievement = calculatePercentage(
     packageMetrics.fiberX,
@@ -1157,22 +1319,37 @@ export default function App() {
               </p>
             </div>
 
-            <div className="flex gap-2.5 flex-wrap">
+            <div className="flex gap-2.5 flex-wrap items-center">
               <select
+                id="month-select"
+                aria-label="Month"
                 className="bg-white border border-[#cfe4da] rounded-xl px-4 py-2 font-medium text-gray-700 cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
                 value={filters.month}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, month: e.target.value }))
-                }
+                onChange={(e) => handleMonthChange(e.target.value)}
               >
                 {monthOptions.map((month) => (
                   <option key={month} value={month}>
-                    {formatMonth(month)}
+                    Month: {formatMonth(month)}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                id="date-select"
+                aria-label="Report Date"
+                className="bg-white border border-[#cfe4da] rounded-xl px-4 py-2 font-medium text-gray-700 cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
+              >
+                {dateOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    Date: {opt.label}
                   </option>
                 ))}
               </select>
 
               <button
+                id="refresh-button"
                 onClick={() => refresh()}
                 disabled={syncing}
                 className="px-4 py-2 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] font-semibold disabled:opacity-50 cursor-pointer hover:bg-[#cbf1e0] transition-colors shadow-sm"
@@ -1181,6 +1358,7 @@ export default function App() {
               </button>
 
               <button
+                id="load-excel-button"
                 onClick={() => fileRef.current?.click()}
                 disabled={excelLoading}
                 className="px-4 py-2 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] font-semibold disabled:opacity-50 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
@@ -1205,12 +1383,12 @@ export default function App() {
 
           {/* LIVE STATUS BAR */}
           <div className="mt-5 rounded-xl border border-[#c9ebdd] bg-[#e8f8f0] px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-2.5 text-sm">
+            <div className="flex items-center gap-2.5 text-sm flex-wrap">
               <span
                 className={`h-2.5 w-2.5 rounded-full ${
                   syncing
                     ? "bg-yellow-500 animate-pulse"
-                    : error
+                    : error && monthRows.length === 0
                     ? "bg-red-500"
                     : "bg-[#0aa37a]"
                 }`}
@@ -1219,7 +1397,7 @@ export default function App() {
               <span className="font-semibold text-gray-800">
                 {syncing
                   ? "Updating live data..."
-                  : error
+                  : error && monthRows.length === 0
                   ? "Live update issue"
                   : sourceName}
               </span>
@@ -1234,16 +1412,28 @@ export default function App() {
                   })}
                 </span>
               )}
+
+              <span className="text-gray-600 font-medium">
+                • Report date: <strong className="text-[#0a684d]">{formatDisplayDate(reportDate)}</strong>
+              </span>
             </div>
 
             <div className="text-sm font-semibold text-[#0a684d]">
-              {formatCount(monthRows.length)} unique JOs in {formatMonth(filters.month)}
+              {formatCount(mtdRows.length)} MTD JOs ({formatCount(monthRows.length)} total in {formatMonth(filters.month)})
             </div>
           </div>
 
-          {error && (
-            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              Unable to refresh live data. Displaying the most recent cached records.
+          {error && monthRows.length === 0 && (
+            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between gap-3">
+              <div>
+                Unable to load live data: {error}.
+              </div>
+              <button
+                onClick={() => refresh()}
+                className="px-3 py-1 bg-white border border-red-300 rounded-lg text-xs font-semibold text-red-800 hover:bg-red-100 transition-colors cursor-pointer"
+              >
+                Retry
+              </button>
             </div>
           )}
         </header>
@@ -1300,14 +1490,15 @@ export default function App() {
 
             <button
               className="ml-auto bg-gray-100 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
-              onClick={() =>
+              onClick={() => {
                 setFilters({
                   month: DEFAULT_MONTH,
                   province: "All districts",
                   sliType: "All SLI Types",
                   package: "All Packages",
-                })
-              }
+                });
+                setReportDate("2026-09-18");
+              }}
             >
               Reset filters
             </button>
@@ -1315,37 +1506,52 @@ export default function App() {
         </section>
 
         {/* ================================================
-            3. ACTIVATED JO COUNT & TOTAL MRC
+            3. MAIN KPIS & DAILY SLI REPORT ALMASOR
         ================================================= */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-7" id="main-kpi-cards">
-          {/* Activated JO Count */}
-          <div className="bg-[#15553f] text-white rounded-3xl p-7 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider opacity-80">
-                Activated JO Count
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-7 items-stretch" id="main-kpi-and-daily-sli">
+          {/* Left 2 Columns: Activated JO Count & Total MRC */}
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch">
+            {/* Activated JO Count */}
+            <div className="bg-[#15553f] text-white rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-activated-jo">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider opacity-80">
+                  Activated JO Count (MTD)
+                </div>
+                <div className="text-6xl font-black mt-4 tracking-tight">
+                  {formatCount(mainKpis.activatedJO)}
+                </div>
               </div>
-              <div className="text-6xl font-black mt-4 tracking-tight">
-                {formatCount(mainKpis.activatedJO)}
+              <div className="text-sm opacity-80 mt-4">
+                Total unique activated job orders up to {formatDisplayDate(reportDate)}
               </div>
             </div>
-            <div className="text-sm opacity-80 mt-4">
-              Total unique activated job orders for {formatMonth(filters.month)}
+
+            {/* Total MRC */}
+            <div className="bg-white border border-[#dcece6] rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-total-mrc">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  Total MRC (MTD)
+                </div>
+                <div className="text-5xl font-extrabold mt-4 text-[#073d2d] tracking-tight">
+                  {formatPeso(mainKpis.totalMRC)}
+                </div>
+              </div>
+              <div className="text-sm text-gray-500 mt-4">
+                Consolidated recurring revenue up to {formatDisplayDate(reportDate)}
+              </div>
             </div>
           </div>
 
-          {/* Total MRC */}
-          <div className="bg-white border border-[#dcece6] rounded-3xl p-7 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                Total MRC
-              </div>
-              <div className="text-5xl font-extrabold mt-4 text-[#073d2d] tracking-tight">
-                {formatPeso(mainKpis.totalMRC)}
-              </div>
-            </div>
-            <div className="text-sm text-gray-500 mt-4">
-              Consolidated recurring revenue from activated subscriptions in scope.
-            </div>
+          {/* Right 1 Column: DAILY SLI REPORT ALMASOR */}
+          <div className="lg:col-span-1 flex flex-col">
+            <DailySLIReport
+              reportDate={reportDate}
+              monthKey={filters.month}
+              allMonthRows={monthRows}
+              overallTargets={almasorTargets}
+              operationalStatus={operationalStatus}
+              latestDataDate={latestAvailableDate}
+            />
           </div>
         </section>
 
@@ -1463,16 +1669,23 @@ export default function App() {
               </p>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 flex-wrap">
               <div className="text-right">
-                <div className="text-xs text-gray-500 font-medium">Monthly FiberX Target</div>
+                <div className="text-xs text-gray-500 font-medium">Monthly Target</div>
                 <div className="text-xl font-bold text-[#0a684d]">
                   {formatCount(activeTargets.fiberX)}
                 </div>
               </div>
 
               <div className="text-right pl-4 border-l border-[#e2ece7]">
-                <div className="text-xs text-gray-500 font-medium">Progress</div>
+                <div className="text-xs text-gray-500 font-medium">As-of-Date Target</div>
+                <div className="text-xl font-bold text-gray-700">
+                  {formatCount(Math.round(selectedDateTarget))}
+                </div>
+              </div>
+
+              <div className="text-right pl-4 border-l border-[#e2ece7]">
+                <div className="text-xs text-gray-500 font-medium">MTD Progress</div>
                 <div className="text-xl font-extrabold text-[#0a8a64]">
                   {formatPercent(fiberXChartAchievement)}
                 </div>
