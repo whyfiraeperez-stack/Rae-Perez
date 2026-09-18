@@ -1506,57 +1506,56 @@ export default function App() {
         </section>
 
         {/* ================================================
-            3. MAIN KPIS & DAILY SLI REPORT ALMASOR
+            3. MAIN KPI CARDS (ACTIVATED JO COUNT & TOTAL MRC)
         ================================================= */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-7 items-stretch" id="main-kpi-and-daily-sli">
-          {/* Left 2 Columns: Activated JO Count & Total MRC */}
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch">
-            {/* Activated JO Count */}
-            <div className="bg-[#15553f] text-white rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-activated-jo">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider opacity-80">
-                  Activated JO Count (MTD)
-                </div>
-                <div className="text-6xl font-black mt-4 tracking-tight">
-                  {formatCount(mainKpis.activatedJO)}
-                </div>
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-7" id="main-kpi-cards">
+          {/* Activated JO Count */}
+          <div className="bg-[#15553f] text-white rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-activated-jo">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider opacity-80">
+                Activated JO Count (MTD)
               </div>
-              <div className="text-sm opacity-80 mt-4">
-                Total unique activated job orders up to {formatDisplayDate(reportDate)}
+              <div className="text-6xl font-black mt-4 tracking-tight">
+                {formatCount(mainKpis.activatedJO)}
               </div>
             </div>
-
-            {/* Total MRC */}
-            <div className="bg-white border border-[#dcece6] rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-total-mrc">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  Total MRC (MTD)
-                </div>
-                <div className="text-5xl font-extrabold mt-4 text-[#073d2d] tracking-tight">
-                  {formatPeso(mainKpis.totalMRC)}
-                </div>
-              </div>
-              <div className="text-sm text-gray-500 mt-4">
-                Consolidated recurring revenue up to {formatDisplayDate(reportDate)}
-              </div>
+            <div className="text-sm opacity-80 mt-4">
+              Total unique activated job orders up to {formatDisplayDate(reportDate)}
             </div>
           </div>
 
-          {/* Right 1 Column: DAILY SLI REPORT ALMASOR */}
-          <div className="lg:col-span-1 flex flex-col">
-            <DailySLIReport
-              reportDate={reportDate}
-              monthKey={filters.month}
-              allMonthRows={monthRows}
-              overallTargets={almasorTargets}
-              operationalStatus={operationalStatus}
-              latestDataDate={latestAvailableDate}
-            />
+          {/* Total MRC */}
+          <div className="bg-white border border-[#dcece6] rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-total-mrc">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                Total MRC (MTD)
+              </div>
+              <div className="text-5xl font-extrabold mt-4 text-[#073d2d] tracking-tight">
+                {formatPeso(mainKpis.totalMRC)}
+              </div>
+            </div>
+            <div className="text-sm text-gray-500 mt-4">
+              Consolidated recurring revenue up to {formatDisplayDate(reportDate)}
+            </div>
           </div>
         </section>
 
         {/* ================================================
-            4. PACKAGE BREAKDOWN (FIBERX, SME, BIDA)
+            4. DAILY SLI REPORT (FULL WIDTH)
+        ================================================= */}
+        <section className="mb-7" id="daily-sli-section">
+          <DailySLIReport
+            reportDate={reportDate}
+            monthKey={filters.month}
+            allMonthRows={monthRows}
+            overallTargets={almasorTargets}
+            operationalStatus={operationalStatus}
+            latestDataDate={latestAvailableDate}
+          />
+        </section>
+
+        {/* ================================================
+            5. PACKAGE BREAKDOWN (FIBERX, SME, BIDA)
         ================================================= */}
         <div className="mb-3">
           <h2 className="text-xl font-bold text-[#123b31]">

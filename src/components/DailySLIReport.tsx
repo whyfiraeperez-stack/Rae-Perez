@@ -15,8 +15,15 @@ function formatNumber(val: number): string {
   return Math.round(val).toLocaleString('en-PH');
 }
 
+function formatVal(val: number, isMoney: boolean): string {
+  if (!Number.isFinite(val) || isNaN(val)) return isMoney ? '₱0' : '0';
+  const rounded = Math.round(val);
+  const formatted = rounded.toLocaleString('en-PH');
+  return isMoney ? `₱${formatted}` : formatted;
+}
+
 function formatPercent(val: number): string {
-  if (!Number.isFinite(val) || isNaN(val) || val <= 0) return '0%';
+  if (!Number.isFinite(val) || isNaN(val) || val < 0) return '0%';
   return `${Math.round(val)}%`;
 }
 
@@ -28,7 +35,7 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
   operationalStatus,
   latestDataDate = '2026-09-18',
 }) => {
-  // Parse report date
+  // Parse report date and format header "As of:"
   const {
     year,
     monthNum,
@@ -45,13 +52,23 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
       day: '2-digit',
       month: 'short',
       year: 'numeric',
-    });
+    }); // e.g. "18 Sep 2026"
 
     const isToday = reportDate >= latestDataDate;
 
     let asOf = `As of: ${formattedDate}`;
-    if (isToday && operationalStatus?.asOfText) {
-      asOf = `As of: ${operationalStatus.asOfText}`;
+    if (isToday) {
+      if (operationalStatus?.asOfText) {
+        asOf = `As of: ${operationalStatus.asOfText}`;
+      } else {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+        asOf = `As of: ${formattedDate} ${timeStr}`;
+      }
     }
 
     return {
@@ -182,193 +199,308 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
   const forCloseout = operationalStatus?.forCloseout ?? 2;
   const forActivation = operationalStatus?.forActivation ?? 1;
 
+  // Row items for MTD
+  const mtdRows = [
+    {
+      name: 'FIBERX',
+      sublabel: 'JO Count',
+      runningFormatted: formatVal(mtdData.fiberX, false),
+      targetFormatted: formatVal(targets.fiberX, false),
+      progress: mtdProgress.fiberX,
+    },
+    {
+      name: 'SME (VAT INC)',
+      sublabel: 'MRC Inc',
+      runningFormatted: formatVal(mtdData.smeVatInc, true),
+      targetFormatted: formatVal(targets.sme, true),
+      progress: mtdProgress.smeVatInc,
+    },
+    {
+      name: 'SME (VAT EX)',
+      sublabel: 'MRC Ex',
+      runningFormatted: formatVal(mtdData.smeVatEx, true),
+      targetFormatted: formatVal(targets.sme, true),
+      progress: mtdProgress.smeVatEx,
+    },
+    {
+      name: 'BIDA',
+      sublabel: 'JO Count',
+      runningFormatted: formatVal(mtdData.bida, false),
+      targetFormatted: formatVal(targets.bida, false),
+      progress: mtdProgress.bida,
+    },
+    {
+      name: 'S2S',
+      sublabel: 'JO Count',
+      runningFormatted: formatVal(mtdData.s2s, false),
+      targetFormatted: formatVal(targets.s2s, false),
+      progress: mtdProgress.s2s,
+    },
+  ];
+
+  // Row items for Runrate
+  const runrateRows = [
+    {
+      name: 'FIBERX',
+      sublabel: 'JO Count',
+      runrateFormatted: formatVal(runrates.fiberX, false),
+      targetFormatted: formatVal(targets.fiberX, false),
+      progress: runrates.fiberXProgress,
+    },
+    {
+      name: 'SME (VAT INC)',
+      sublabel: 'MRC Inc',
+      runrateFormatted: formatVal(runrates.smeVatInc, true),
+      targetFormatted: formatVal(targets.sme, true),
+      progress: runrates.smeVatIncProgress,
+    },
+    {
+      name: 'SME (VAT EX)',
+      sublabel: 'MRC Ex',
+      runrateFormatted: formatVal(runrates.smeVatEx, true),
+      targetFormatted: formatVal(targets.sme, true),
+      progress: runrates.smeVatExProgress,
+    },
+    {
+      name: 'BIDA',
+      sublabel: 'JO Count',
+      runrateFormatted: formatVal(runrates.bida, false),
+      targetFormatted: formatVal(targets.bida, false),
+      progress: runrates.bidaProgress,
+    },
+    {
+      name: 'S2S',
+      sublabel: 'JO Count',
+      runrateFormatted: formatVal(runrates.s2s, false),
+      targetFormatted: formatVal(targets.s2s, false),
+      progress: runrates.s2sProgress,
+    },
+  ];
+
   return (
     <div
       id="daily-sli-report"
-      className="bg-white border border-[#dcece6] rounded-2xl p-5 shadow-sm flex flex-col justify-between"
+      className="bg-white border border-[#dcece6] rounded-[20px] p-6 shadow-sm"
     >
-      {/* Header */}
-      <div className="pb-3 border-b border-[#eef5f2] mb-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-extrabold tracking-wider text-[#0a684d] uppercase">
-            DAILY SLI REPORT
-          </h2>
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#e8f5f1] text-[#0a684d]">
-            ALMASOR
-          </span>
+      {/* 2. SECTION HEADER */}
+      <div className="flex items-center justify-between pb-5 border-b border-[#edf3f0] mb-6 flex-wrap gap-2">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-lg font-bold tracking-tight text-[#123b31]">
+              DAILY SLI REPORT
+            </h2>
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#e8f5f1] text-[#0a684d] border border-[#cfe4da]">
+              ALMASOR
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 font-medium mt-1">
+            {asOfDisplay}
+          </p>
         </div>
-        <p className="text-xs text-gray-500 font-medium mt-0.5">
-          {asOfDisplay}
-        </p>
       </div>
 
-      <div className="space-y-3.5 text-xs">
-        {/* Section 1: Daily Activations and FSOI */}
-        <div>
-          <div className="text-[11px] font-bold text-gray-700 tracking-wide uppercase mb-1.5 flex items-center justify-between">
-            <span>DAILY ACTIVATIONS AND FSOI</span>
+      {/* 4. TOP ROW — DAILY OPERATIONAL SNAPSHOT (3 Columns on Desktop, Stacked on Mobile) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+        {/* COLUMN 1: DAILY ACTIVATIONS */}
+        <div className="bg-[#f8faf9] rounded-2xl p-4 border border-[#e2eee8] flex flex-col justify-between">
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+            DAILY ACTIVATIONS
           </div>
-          <div className="bg-[#f9fbfb] rounded-xl p-2.5 border border-[#e8f0ed] space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Activated FIBERX Yesterday:</span>
-              <span className="font-bold text-[#123b31] bg-white px-2 py-0.5 rounded border border-[#e2ece7]">
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-white p-3 rounded-xl border border-[#e8f0ed] shadow-xs">
+              <div className="text-[11px] text-gray-500 font-medium leading-tight">
+                Activated FIBERX Yesterday
+              </div>
+              <div className="text-xl font-bold text-[#123b31] mt-1.5">
                 {formatNumber(fiberXYesterday)}
-              </span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Activated FIBERX Today:</span>
-              <span className="font-bold text-[#0a8a64] bg-white px-2 py-0.5 rounded border border-[#cbe4db]">
+            <div className="bg-white p-3 rounded-xl border border-[#cbe4db] shadow-xs">
+              <div className="text-[11px] text-gray-500 font-medium leading-tight">
+                Activated FIBERX Today
+              </div>
+              <div className="text-xl font-bold text-[#0a8a64] mt-1.5">
                 {formatNumber(fiberXToday)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 flex items-center gap-1.5">
-                FSOI:
-                {!isTodayOrLatest && (
-                  <span className="text-[10px] text-amber-700 bg-amber-50 px-1 rounded font-medium border border-amber-200">
-                    Live status
-                  </span>
-                )}
-              </span>
-              <span className="font-bold text-gray-800 bg-white px-2 py-0.5 rounded border border-[#e2ece7]">
-                {formatNumber(fsoi)}
-              </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Section 2: Open JOs for Closing */}
-        <div>
-          <div className="text-[11px] font-bold text-gray-700 tracking-wide uppercase mb-1.5 flex items-center justify-between">
-            <span>OPEN JOs FOR CLOSING</span>
-            {!isTodayOrLatest && (
-              <span className="text-[10px] text-amber-700 bg-amber-50 px-1 rounded font-medium border border-amber-200">
-                Live status
-              </span>
-            )}
+        {/* COLUMN 2: FSOI */}
+        <div className="bg-[#f8faf9] rounded-2xl p-4 border border-[#e2eee8] flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              FSOI
+            </div>
+            <span className="inline-flex items-center text-[10px] font-semibold text-[#0a684d] bg-[#e8f5f1] border border-[#cfe4da] px-2 py-0.5 rounded">
+              Live status
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-2 bg-[#f9fbfb] rounded-xl p-2.5 border border-[#e8f0ed]">
-            <div className="bg-white p-2 rounded-lg border border-[#e2ece7]">
-              <div className="text-[10px] text-gray-500 font-medium">For Closeout</div>
-              <div className="text-base font-bold text-[#123b31] mt-0.5">
+          <div className="bg-white rounded-xl p-3 border border-[#e8f0ed] shadow-xs flex flex-col items-center justify-center text-center my-auto">
+            <div className="text-3xl font-extrabold text-[#123b31]">
+              {formatNumber(fsoi)}
+            </div>
+            <div className="text-[11px] text-gray-400 font-medium mt-1">
+              Active operational pipeline
+            </div>
+          </div>
+        </div>
+
+        {/* COLUMN 3: OPEN JOs FOR CLOSING */}
+        <div className="bg-[#f8faf9] rounded-2xl p-4 border border-[#e2eee8] flex flex-col justify-between">
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+            OPEN JOs FOR CLOSING
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-white p-3 rounded-xl border border-[#e8f0ed] shadow-xs">
+              <div className="text-[11px] text-gray-500 font-medium leading-tight">
+                For Closeout
+              </div>
+              <div className="text-xl font-bold text-[#123b31] mt-1.5">
                 {formatNumber(forCloseout)}
               </div>
             </div>
-            <div className="bg-white p-2 rounded-lg border border-[#e2ece7]">
-              <div className="text-[10px] text-gray-500 font-medium">For Activation</div>
-              <div className="text-base font-bold text-[#0a684d] mt-0.5">
+            <div className="bg-white p-3 rounded-xl border border-[#e8f0ed] shadow-xs">
+              <div className="text-[11px] text-gray-500 font-medium leading-tight">
+                For Activation
+              </div>
+              <div className="text-xl font-bold text-[#0a684d] mt-1.5">
                 {formatNumber(forActivation)}
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Section 3: MTD Activations vs Target */}
-        <div>
-          <div className="text-[11px] font-bold text-gray-700 tracking-wide uppercase mb-1.5">
+      {/* 5. MTD ACTIVATIONS VS TARGET */}
+      <div className="bg-[#f8faf9] rounded-2xl p-4 md:p-5 border border-[#e2eee8] mb-6">
+        <div className="flex items-center justify-between mb-3.5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">
             MTD ACTIVATIONS VS TARGET
-          </div>
-          <div className="bg-[#f9fbfb] rounded-xl p-2.5 border border-[#e8f0ed] space-y-1">
-            <div className="flex justify-between items-center py-0.5 border-b border-[#edf3f0]">
-              <span className="text-gray-600 font-medium">FIBERX:</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(mtdData.fiberX)}{' '}
-                <span className="text-[#0a8a64] font-bold">
-                  ({formatPercent(mtdProgress.fiberX)})
-                </span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-0.5 border-b border-[#edf3f0]">
-              <span className="text-gray-600 font-medium">SME (VAT INC):</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(mtdData.smeVatInc)}{' '}
-                <span className="text-[#0a8a64] font-bold">
-                  ({formatPercent(mtdProgress.smeVatInc)})
-                </span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-0.5 border-b border-[#edf3f0]">
-              <span className="text-gray-600 font-medium">SME (VAT EX):</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(mtdData.smeVatEx)}{' '}
-                <span className="text-[#0a8a64] font-bold">
-                  ({formatPercent(mtdProgress.smeVatEx)})
-                </span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-0.5 border-b border-[#edf3f0]">
-              <span className="text-gray-600 font-medium">BIDA:</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(mtdData.bida)}{' '}
-                <span className="text-[#0a8a64] font-bold">
-                  ({formatPercent(mtdProgress.bida)})
-                </span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-0.5">
-              <span className="text-gray-600 font-medium">S2S:</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(mtdData.s2s)}{' '}
-                <span className="text-gray-500 font-bold">
-                  ({formatPercent(mtdProgress.s2s)})
-                </span>
-              </span>
-            </div>
-          </div>
+          </h3>
+          <span className="text-xs text-gray-400 font-medium hidden sm:inline">
+            MTD Cutoff: {reportDate}
+          </span>
         </div>
 
-        {/* Section 4: Runrate vs Target */}
-        <div>
-          <div className="text-[11px] font-bold text-gray-700 tracking-wide uppercase mb-1.5">
+        {/* Table Header (Desktop) */}
+        <div className="hidden sm:grid grid-cols-12 gap-3 text-xs font-semibold uppercase tracking-wider text-gray-500 pb-2 border-b border-[#e2eee8]">
+          <div className="col-span-4">METRIC</div>
+          <div className="col-span-3 text-right">RUNNING (MTD)</div>
+          <div className="col-span-3 text-right">TARGET</div>
+          <div className="col-span-2 text-right">PROGRESS</div>
+        </div>
+
+        {/* Rows */}
+        <div className="divide-y divide-[#edf3f0]">
+          {mtdRows.map((row) => (
+            <div key={row.name} className="py-3">
+              {/* Desktop view */}
+              <div className="hidden sm:grid grid-cols-12 gap-3 items-center text-sm">
+                <div className="col-span-4 font-semibold text-[#123b31] flex items-center gap-1.5">
+                  <span>{row.name}</span>
+                  <span className="text-[11px] text-gray-400 font-normal hidden lg:inline">
+                    ({row.sublabel})
+                  </span>
+                </div>
+                <div className="col-span-3 text-right font-medium text-gray-900">
+                  {row.runningFormatted}
+                </div>
+                <div className="col-span-3 text-right font-medium text-gray-500">
+                  {row.targetFormatted}
+                </div>
+                <div className="col-span-2 text-right font-bold text-[#0a8a64]">
+                  {formatPercent(row.progress)}
+                </div>
+              </div>
+
+              {/* Mobile view */}
+              <div className="sm:hidden space-y-1 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-[#123b31]">{row.name}</span>
+                  <span className="font-bold text-[#0a8a64]">{formatPercent(row.progress)}</span>
+                </div>
+                <div className="flex justify-between text-gray-500">
+                  <span>Running: <strong className="text-gray-800">{row.runningFormatted}</strong></span>
+                  <span>Target: {row.targetFormatted}</span>
+                </div>
+              </div>
+
+              {/* 6. Thin Progress Bar */}
+              <div className="w-full bg-[#e8f3ee] h-1.5 rounded-full overflow-hidden mt-2">
+                <div
+                  className="bg-[#0aa37a] h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(Math.max(row.progress, 0), 100)}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 7. RUNRATE VS TARGET */}
+      <div className="bg-[#f8faf9] rounded-2xl p-4 md:p-5 border border-[#e2eee8]">
+        <div className="flex items-center justify-between mb-3.5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">
             RUNRATE VS TARGET
-          </div>
-          <div className="bg-[#f9fbfb] rounded-xl p-2.5 border border-[#e8f0ed] space-y-1">
-            <div className="flex justify-between items-center py-0.5 border-b border-[#edf3f0]">
-              <span className="text-gray-600 font-medium">FIBERX:</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(runrates.fiberX)} / {formatNumber(targets.fiberX)}{' '}
-                <span className="text-[#0a8a64] font-bold">
-                  ({formatPercent(runrates.fiberXProgress)})
-                </span>
-              </span>
+          </h3>
+          <span className="text-xs text-gray-400 font-medium hidden sm:inline">
+            Projected to month end ({daysInMonth} days)
+          </span>
+        </div>
+
+        {/* Table Header (Desktop) */}
+        <div className="hidden sm:grid grid-cols-12 gap-3 text-xs font-semibold uppercase tracking-wider text-gray-500 pb-2 border-b border-[#e2eee8]">
+          <div className="col-span-4">METRIC</div>
+          <div className="col-span-3 text-right">RUNRATE</div>
+          <div className="col-span-3 text-right">TARGET</div>
+          <div className="col-span-2 text-right">PROGRESS</div>
+        </div>
+
+        {/* Rows */}
+        <div className="divide-y divide-[#edf3f0]">
+          {runrateRows.map((row) => (
+            <div key={row.name} className="py-3">
+              {/* Desktop view */}
+              <div className="hidden sm:grid grid-cols-12 gap-3 items-center text-sm">
+                <div className="col-span-4 font-semibold text-[#123b31] flex items-center gap-1.5">
+                  <span>{row.name}</span>
+                  <span className="text-[11px] text-gray-400 font-normal hidden lg:inline">
+                    ({row.sublabel})
+                  </span>
+                </div>
+                <div className="col-span-3 text-right font-medium text-gray-900">
+                  {row.runrateFormatted}
+                </div>
+                <div className="col-span-3 text-right font-medium text-gray-500">
+                  {row.targetFormatted}
+                </div>
+                <div className="col-span-2 text-right font-bold text-[#0a8a64]">
+                  {formatPercent(row.progress)}
+                </div>
+              </div>
+
+              {/* Mobile view */}
+              <div className="sm:hidden space-y-1 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-[#123b31]">{row.name}</span>
+                  <span className="font-bold text-[#0a8a64]">{formatPercent(row.progress)}</span>
+                </div>
+                <div className="flex justify-between text-gray-500">
+                  <span>Runrate: <strong className="text-gray-800">{row.runrateFormatted}</strong></span>
+                  <span>Target: {row.targetFormatted}</span>
+                </div>
+              </div>
+
+              {/* Thin Progress Bar */}
+              <div className="w-full bg-[#e8f3ee] h-1.5 rounded-full overflow-hidden mt-2">
+                <div
+                  className="bg-[#0aa37a] h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(Math.max(row.progress, 0), 100)}%` }}
+                />
+              </div>
             </div>
-            <div className="flex justify-between items-center py-0.5 border-b border-[#edf3f0]">
-              <span className="text-gray-600 font-medium">SME (VAT INC):</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(runrates.smeVatInc)} / {formatNumber(targets.sme)}{' '}
-                <span className="text-[#0a8a64] font-bold">
-                  ({formatPercent(runrates.smeVatIncProgress)})
-                </span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-0.5 border-b border-[#edf3f0]">
-              <span className="text-gray-600 font-medium">SME (VAT EX):</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(runrates.smeVatEx)} / {formatNumber(targets.sme)}{' '}
-                <span className="text-[#0a8a64] font-bold">
-                  ({formatPercent(runrates.smeVatExProgress)})
-                </span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-0.5 border-b border-[#edf3f0]">
-              <span className="text-gray-600 font-medium">BIDA:</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(runrates.bida)} / {formatNumber(targets.bida)}{' '}
-                <span className="text-[#0a8a64] font-bold">
-                  ({formatPercent(runrates.bidaProgress)})
-                </span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-0.5">
-              <span className="text-gray-600 font-medium">S2S:</span>
-              <span className="font-semibold text-gray-900">
-                {formatNumber(runrates.s2s)} / {formatNumber(targets.s2s)}{' '}
-                <span className="text-gray-500 font-bold">
-                  ({formatPercent(runrates.s2sProgress)})
-                </span>
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>
