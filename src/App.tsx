@@ -20,6 +20,13 @@ import {
   YAxis,
 } from "recharts";
 
+import {
+  ChevronDown,
+  Download,
+  FileSpreadsheet,
+  FileText,
+} from "lucide-react";
+
 import { MtdVsTargetAlmasor } from "./components/MtdVsTargetAlmasor";
 import { MtdVsTargetProvince } from "./components/MtdVsTargetProvince";
 import { TotalClosedTables } from "./components/TotalClosedTables";
@@ -501,19 +508,65 @@ async function fetchGoogleSheet(sheetName: string, query: string): Promise<RawRo
   Fetch JO ACTIVATED with columns:
   A  = JO NUMBER
   G  = STATEORPROVINCE
+  Q  = SLI
   S  = SLI TYPE
   U  = VENDOR TYPE
   Y  = SLA
   AC = PACKAGE
   AE = MRC
   AF = CLOSING DATE
-  AU = MRC VAT EX
 */
 async function fetchJOActivated(): Promise<RawRow[]> {
-  return fetchGoogleSheet(
-    "JO ACTIVATED",
-    `select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null`
-  );
+  const sheetName = "JO ACTIVATED";
+  const query = "select A,G,Q,S,U,Y,AC,AE,AF where A is not null";
+  const url =
+    `${GOOGLE_SHEET_URL}/gviz/tq` +
+    `?sheet=${encodeURIComponent(sheetName)}` +
+    `&tq=${encodeURIComponent(query)}` +
+    `&tqx=out:json` +
+    `&_=${Date.now()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+    headers: { Accept: "text/plain" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to read ${sheetName}: HTTP ${response.status}`);
+  }
+
+  const text = await response.text();
+  const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/);
+  if (!match) {
+    throw new Error(`Could not parse ${sheetName} from Google Sheets.`);
+  }
+
+  const json = JSON.parse(match[1]);
+  if (json.status === "error") {
+    throw new Error(
+      json.errors?.[0]?.detailed_message ||
+      json.errors?.[0]?.message ||
+      `Google Sheets error: ${sheetName}`
+    );
+  }
+
+  const table = json.table;
+  return table.rows.map((row: any) => {
+    const values = row.c || [];
+
+    return {
+      "JO NUMBER": values[0]?.v ?? "",
+      "STATEORPROVINCE": values[1]?.v ?? "",
+      "SLI": values[2]?.v ?? "",
+      "SLI TYPE": values[3]?.v ?? "",
+      "VENDOR TYPE": values[4]?.v ?? "",
+      "SLA": values[5]?.v ?? "",
+      "PACKAGE": values[6]?.v ?? "",
+      "MRC": values[7]?.v ?? "",
+      "CLOSING DATE": values[8]?.v ?? "",
+    };
+  });
 }
 
 /*
@@ -665,7 +718,7 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
 
   for (const row of rawRows) {
     const joNumber = String(
-      getRowValue(row, "JO NUMBER", "A", "JO NO", "JONUMBER")
+      row["JO NUMBER"] ?? getRowValue(row, "JO NUMBER", "A", "JO NO", "JONUMBER")
     ).trim();
 
     if (!joNumber || joNumber === "JO NUMBER") {
@@ -673,7 +726,7 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
     }
 
     const closingDate = parseDate(
-      getRowValue(row, "CLOSING DATE", "AF", "ACTIVATION DATE")
+      row["CLOSING DATE"] ?? getRowValue(row, "CLOSING DATE", "AF", "ACTIVATION DATE")
     );
 
     if (!closingDate) {
@@ -681,7 +734,7 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
     }
 
     const packageName = normalizePackage(
-      getRowValue(row, "PACKAGE", "AC", "PACKAGE NAME")
+      row["PACKAGE"] ?? getRowValue(row, "PACKAGE", "AC", "PACKAGE NAME")
     );
 
     if (
@@ -693,22 +746,31 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
       continue;
     }
 
-    const rawMrc = numberValue(getRowValue(row, "MRC", "AE", "AMOUNT"));
-    const rawMrcVatEx = numberValue(getRowValue(row, "MRC VAT EX", "AU", "MRCVATEX"));
-    const sli = String(getRowValue(row, "SLI", "Q", "SLINAME", "SLI NAME")).trim();
+    const rawSli = row["SLI"] ?? getRowValue(row, "SLI", "Q", "SLINAME");
+    const normSli = normalizeText(rawSli);
+    const sli = normSli === "ONEMSA" ? "OneMSA" : normSli;
+
+    const rawMrc = numberValue(row["MRC"] ?? getRowValue(row, "MRC", "AE", "AMOUNT"));
+    const rawMrcVatEx = numberValue(row["MRC VAT EX"] ?? getRowValue(row, "MRC VAT EX", "AU", "MRCVATEX"));
+
+    const rawSla = String(row["SLA"] ?? getRowValue(row, "SLA", "Y", "Ageing", "Aging") ?? "").trim();
+    const sla = normalizeSLA(rawSla);
 
     parsed.push({
       joNumber,
       province: normalizeProvince(
-        getRowValue(row, "STATEORPROVINCE", "G", "PROVINCE")
+        row["STATEORPROVINCE"] ?? getRowValue(row, "STATEORPROVINCE", "G", "PROVINCE")
       ),
       sli,
       sliType: normalizeSLI(row),
+      vendorType: normalizeText(
+        row["VENDOR TYPE"] ?? getRowValue(row, "VENDOR TYPE", "U", "VENDORTYPE")
+      ),
       package: packageName,
       mrc: rawMrc,
-      mrcVatEx: rawMrcVatEx || (rawMrc > 0 ? rawMrc / 1.12 : 0),
+      sla,
       closingDate,
-      sla: normalizeSLA(getRowValue(row, "SLA", "Y", "Ageing", "Aging")),
+      mrcVatEx: rawMrcVatEx || (rawMrc > 0 ? rawMrc / 1.12 : 0),
     });
   }
 
@@ -944,6 +1006,36 @@ export default function App() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [excelLoading, setExcelLoading] = useState(false);
 
+  // Download Data dropdown & toast feedback state
+  const [downloadDropdownOpen, setDownloadDropdownOpen] = useState(false);
+  const downloadMenuRef = useRef<HTMLDivElement | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  }, []);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        downloadMenuRef.current &&
+        !downloadMenuRef.current.contains(event.target as Node)
+      ) {
+        setDownloadDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // Parse JO records with unique de-duplication
   const rows = useMemo(() => parseJORows(joRows), [joRows]);
 
@@ -1031,6 +1123,98 @@ export default function App() {
       ),
     [mtdRows, filters.province, filters.sliType, filters.package]
   );
+
+  // Download uses filtered unique JO rows respecting Month, Date, Province, SLI Type, Package
+  const filteredDownloadRows = filteredRows;
+
+  function formatExportDate(d: Date): string {
+    if (!d || isNaN(d.getTime())) return "";
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = d.toLocaleDateString("en-US", { month: "short" });
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  function createExportFilename(extension: "xlsx" | "csv") {
+    const province = filters.province.replace(/\s+/g, "-");
+    const sli = filters.sliType.replace(/\s+/g, "-");
+    const pkg = filters.package.replace(/\s+/g, "-");
+
+    return (
+      `ALMASOR_Sales_Data_` +
+      `${reportDate}_` +
+      `${province}_` +
+      `${sli}_` +
+      `${pkg}.` +
+      extension
+    );
+  }
+
+  const exportToExcel = () => {
+    setDownloadDropdownOpen(false);
+
+    if (!filteredDownloadRows.length) {
+      showToast("No data available for the selected filters.");
+      return;
+    }
+
+    const exportRows = filteredDownloadRows.map((row) => ({
+      "JO NUMBER": row.joNumber,
+      "STATEORPROVINCE": row.province,
+      "SLI": row.sli,
+      "SLI TYPE": row.sliType,
+      "VENDOR TYPE": row.vendorType,
+      "PACKAGE": row.package,
+      "MRC": row.mrc,
+      "CLOSING DATE": formatExportDate(row.closingDate),
+      "SLA": row.sla,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Data");
+    XLSX.writeFile(workbook, createExportFilename("xlsx"));
+  };
+
+  const exportToCSV = () => {
+    setDownloadDropdownOpen(false);
+
+    if (!filteredDownloadRows.length) {
+      showToast("No data available for the selected filters.");
+      return;
+    }
+
+    const exportRows = filteredDownloadRows.map((row) => ({
+      "JO NUMBER": row.joNumber,
+      "STATEORPROVINCE": row.province,
+      "SLI": row.sli,
+      "SLI TYPE": row.sliType,
+      "VENDOR TYPE": row.vendorType,
+      "PACKAGE": row.package,
+      "MRC": row.mrc,
+      "CLOSING DATE": formatExportDate(row.closingDate),
+      "SLA": row.sla,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = createExportFilename("csv");
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   // Package section scope: respects province and SLI filters, MTD cutoff
   const packageRows = useMemo(
@@ -1359,6 +1543,47 @@ export default function App() {
               >
                 {syncing ? "Updating..." : "Refresh now"}
               </button>
+
+              {/* DOWNLOAD DATA DROPDOWN */}
+              <div className="relative" ref={downloadMenuRef}>
+                <button
+                  id="download-data-button"
+                  type="button"
+                  onClick={() => setDownloadDropdownOpen((prev) => !prev)}
+                  className="px-3.5 py-2 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm text-sm"
+                  aria-expanded={downloadDropdownOpen}
+                >
+                  <Download className="w-4 h-4 text-[#0b684e]" />
+                  <span>Download Data</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#0b684e]" />
+                </button>
+
+                {downloadDropdownOpen && (
+                  <div className="absolute right-0 mt-1.5 w-44 bg-white border border-[#dcece6] rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-[#f0f5f2]">
+                      Download Data
+                    </div>
+                    <button
+                      type="button"
+                      id="download-excel-option"
+                      onClick={exportToExcel}
+                      className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                      <span>Excel (.xlsx)</span>
+                    </button>
+                    <button
+                      type="button"
+                      id="download-csv-option"
+                      onClick={exportToCSV}
+                      className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      <span>CSV (.csv)</span>
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <button
                 id="load-excel-button"
@@ -1770,6 +1995,13 @@ export default function App() {
             10. SLA PERFORMANCE (TABLE & PROGRESS VISUALIZATION)
         ================================================= */}
         <SlaPerformanceSection rows={filteredRows} />
+
+        {/* TOAST NOTIFICATION */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 bg-[#123b31] text-white px-4 py-3 rounded-xl shadow-xl text-sm font-medium border border-[#215a4c] animate-in slide-in-from-bottom-3 duration-200">
+            {toastMessage}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -103,17 +103,18 @@ export interface SyncSourceInfo {
 
 export type DashboardMetrics = import('./utils/calculations').SummaryAggregates;
 
-export interface ParsedJO {
+export type ParsedJO = {
   joNumber: string;
   province: string;
   sli: string;
   sliType: string;
+  vendorType: string;
   package: string;
   mrc: number;
-  mrcVatEx?: number;
-  closingDate: Date;
   sla: string;
-}
+  closingDate: Date;
+  mrcVatEx?: number;
+};
 
 export interface Targets {
   fiberX: number;
