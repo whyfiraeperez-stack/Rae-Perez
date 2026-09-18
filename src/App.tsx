@@ -172,19 +172,19 @@ function normalizePackage(value: any): string {
 }
 
 /*
-  SLI TYPE is the primary source.
-  VENDOR TYPE is used as fallback when SLI TYPE is blank.
+  SLI TYPE (Column S) is the primary source.
+  VENDOR TYPE (Column U) is used as fallback when SLI TYPE is blank.
 */
 function normalizeSLI(row: RawRow): string {
-  const sli = normalizeText(getRowValue(row, "SLI TYPE", "S", "SLI"));
+  const sliType = normalizeText(getRowValue(row, "SLI TYPE", "S", "SLITYPE"));
 
-  if (sli === "INHOUSE") return "INHOUSE";
-  if (sli === "MSA") return "MSA";
+  if (sliType === "INHOUSE") return "INHOUSE";
+  if (sliType === "MSA") return "MSA";
 
-  const vendor = normalizeText(getRowValue(row, "VENDOR TYPE", "U", "VENDOR"));
+  const vendorType = normalizeText(getRowValue(row, "VENDOR TYPE", "U", "VENDORTYPE"));
 
-  if (vendor === "INHOUSE") return "INHOUSE";
-  if (vendor === "MSA") return "MSA";
+  if (vendorType === "INHOUSE") return "INHOUSE";
+  if (vendorType === "MSA") return "MSA";
 
   return "";
 }
