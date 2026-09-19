@@ -129,3 +129,22 @@ export interface OperationalStatus {
   forCloseout: number;
   forActivation: number;
 }
+
+export interface DailyReportAlmasor {
+  reportLabel: string;
+  fiberYesterday: string;
+  fiberToday: string;
+  fsoi: string;
+  forCloseout: string;
+  forActivation: string;
+  fiberMTD: string;
+  smeVatIncMTD: string;
+  smeVatExMTD: string;
+  bidaMTD: string;
+  s2sMTD: string;
+  fiberRunrate: string;
+  smeVatIncRunrate: string;
+  smeVatExRunrate: string;
+  bidaRunrate: string;
+  s2sRunrate: string;
+}

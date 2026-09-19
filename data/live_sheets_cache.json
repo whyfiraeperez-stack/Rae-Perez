@@ -3,6 +3,7 @@
     {
       "A": "JO NUMBER",
       "G": "STATEORPROVINCE",
+      "Q": "SLI",
       "S": "SLI TYPE",
       "U": "VENDOR TYPE",
       "Y": "SLA",
@@ -14,7 +15,8 @@
     {
       "A": "R3768001",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -25,7 +27,8 @@
     {
       "A": "14242",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -36,7 +39,8 @@
     {
       "A": "14212",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -47,7 +51,8 @@
     {
       "A": "R3759242",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -58,7 +63,8 @@
     {
       "A": "14173",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -69,7 +75,8 @@
     {
       "A": "14175",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -80,7 +87,8 @@
     {
       "A": "14245",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -91,7 +99,8 @@
     {
       "A": "R3764558[WO-05092026-0175]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -102,7 +111,8 @@
     {
       "A": "00014226[WO-05092026-0305]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "SME",
@@ -113,7 +123,8 @@
     {
       "A": "R3757356[WO-03092026-0027]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -124,7 +135,8 @@
     {
       "A": "R3768839",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -135,7 +147,8 @@
     {
       "A": "R3745544[WO-29082026-0183]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -146,7 +159,8 @@
     {
       "A": "R3794436[WO-16092026-0217]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -157,7 +171,8 @@
     {
       "A": "R3789245[WO-14092026-0321]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -168,7 +183,8 @@
     {
       "A": "R3792240[WO-15092026-0339]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -179,7 +195,8 @@
     {
       "A": "R3792015[WO-15092026-0312]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -190,7 +207,8 @@
     {
       "A": "R3754099[WO-02092026-0005]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -201,7 +219,8 @@
     {
       "A": "R3767991",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -212,7 +231,8 @@
     {
       "A": "R3751455[WO-01092026-0058]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -223,7 +243,8 @@
     {
       "A": "R3755715[WO-02092026-0187]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -234,7 +255,8 @@
     {
       "A": "R3750765[WO-31082026-0312]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -245,7 +267,8 @@
     {
       "A": "R3758127[WO-03092026-0111]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -254,9 +277,22 @@
       "AU": 1407.1200000000001
     },
     {
+      "A": "R3800978[WO-18092026-0297]",
+      "G": "ALBAY",
+      "Q": "SBAS",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1250,
+      "AF": "19-Sep-2026",
+      "AU": 1100
+    },
+    {
       "A": "R3788666[WO-14092026-0263]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -267,7 +303,8 @@
     {
       "A": "R3796684[WO-17092026-0144]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -278,7 +315,8 @@
     {
       "A": "R3792355[WO-15092026-0363]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -289,7 +327,8 @@
     {
       "A": "R3792012[WO-15092026-0313]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -300,7 +339,8 @@
     {
       "A": "R3788506[WO-14092026-0240]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -311,7 +351,8 @@
     {
       "A": "R3780992[WO-11092026-0207]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -322,7 +363,8 @@
     {
       "A": "R3789027[WO-14092026-0303]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -331,9 +373,22 @@
       "AU": 1100
     },
     {
+      "A": "R3797013[WO-17092026-0185]",
+      "G": "ALBAY",
+      "Q": "RAVENOUS SLR",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1250,
+      "AF": "18-Sep-2026",
+      "AU": 1100
+    },
+    {
       "A": "R3781875[WO-11092026-0308]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "SME",
@@ -342,9 +397,22 @@
       "AU": 2199.12
     },
     {
+      "A": "R3797694[WO-17092026-0271]",
+      "G": "ALBAY",
+      "Q": "SBAS",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 48 hrs",
+      "AC": "FIBERX",
+      "AE": 1500,
+      "AF": "19-Sep-2026",
+      "AU": 1320
+    },
+    {
       "A": "R3776536[WO-10092026-0030]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -355,7 +423,8 @@
     {
       "A": "R3776614[WO-10092026-0044]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -366,7 +435,8 @@
     {
       "A": "R3787997[WO-14092026-0172]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -375,9 +445,22 @@
       "AU": 1100
     },
     {
+      "A": "R3787681[WO-14092026-0131]",
+      "G": "ALBAY",
+      "Q": "RAVENOUS SLR",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 5 days",
+      "AC": "FIBERX",
+      "AE": 1599,
+      "AF": "18-Sep-2026",
+      "AU": 1407.1200000000001
+    },
+    {
       "A": "R3787002[WO-14092026-0025]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -388,7 +471,8 @@
     {
       "A": "R3789201[WO-14092026-0315]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -399,7 +483,8 @@
     {
       "A": "R3788859[WO-14092026-0287]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -410,7 +495,8 @@
     {
       "A": "R3776618[WO-10092026-0046]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -421,7 +507,8 @@
     {
       "A": "R3793960",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -432,7 +519,8 @@
     {
       "A": "R3795310[WO-16092026-0323]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -443,7 +531,8 @@
     {
       "A": "R3790513",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -454,7 +543,8 @@
     {
       "A": "R3768905",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -465,7 +555,8 @@
     {
       "A": "R3788491[WO-14092026-0236]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -476,7 +567,8 @@
     {
       "A": "R3787627[WO-14092026-0124]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -487,7 +579,8 @@
     {
       "A": "R3769501",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -498,7 +591,8 @@
     {
       "A": "R3791635[WO-15092026-0252]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -509,7 +603,8 @@
     {
       "A": "R3771532[WO-08092026-0145]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -520,7 +615,8 @@
     {
       "A": "R3762802[WO-04092026-0263]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -531,7 +627,8 @@
     {
       "A": "R3782376[WO-12092026-0004]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -542,7 +639,8 @@
     {
       "A": "R3764652[WO-05092026-0192]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -553,7 +651,8 @@
     {
       "A": "R3755379[WO-02092026-0144]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -564,7 +663,8 @@
     {
       "A": "R3764332[WO-05092026-0145]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -575,7 +675,8 @@
     {
       "A": "R3761872[WO-04092026-0155]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -586,7 +687,8 @@
     {
       "A": "R3763621[WO-05092026-0066]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -597,7 +699,8 @@
     {
       "A": "R3751484[WO-01092026-0062]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -608,7 +711,8 @@
     {
       "A": "R3757547[WO-03092026-0055]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -619,7 +723,8 @@
     {
       "A": "R3768147[WO-07092026-0010]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -630,7 +735,8 @@
     {
       "A": "R3765512[WO-05092026-0293]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -641,7 +747,8 @@
     {
       "A": "R3756754[WO-02092026-0298]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -652,7 +759,8 @@
     {
       "A": "R3764668[WO-05092026-0195]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -663,7 +771,8 @@
     {
       "A": "R3748983[WO-31082026-0107]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -674,7 +783,8 @@
     {
       "A": "R3762408[WO-04092026-0211]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -685,7 +795,8 @@
     {
       "A": "R3755694[WO-02092026-0182]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -696,7 +807,8 @@
     {
       "A": "R3750786[WO-31082026-0315]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -707,7 +819,8 @@
     {
       "A": "R3758864[WO-03092026-0193]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -718,7 +831,8 @@
     {
       "A": "R3762117[WO-04092026-0183]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -729,7 +843,8 @@
     {
       "A": "R3763574[WO-05092026-0059]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -740,7 +855,8 @@
     {
       "A": "R3749631[WO-31082026-0182]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -751,7 +867,8 @@
     {
       "A": "R3761046[WO-04092026-0083]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -762,7 +879,8 @@
     {
       "A": "R3749671[WO-31082026-0189]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -773,7 +891,8 @@
     {
       "A": "R3749973[WO-31082026-0230]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -784,7 +903,8 @@
     {
       "A": "R3755954[WO-02092026-0214]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -795,7 +915,8 @@
     {
       "A": "R3745281[WO-29082026-0155]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -806,7 +927,8 @@
     {
       "A": "R3714960[WO-18082026-0262]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -817,7 +939,8 @@
     {
       "A": "R3742547[WO-28082026-0114]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -828,7 +951,8 @@
     {
       "A": "R3745851[WO-29082026-0212]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -839,7 +963,8 @@
     {
       "A": "R3797609[WO-17092026-0261]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -850,7 +975,8 @@
     {
       "A": "R3793325[WO-16092026-0087]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -861,7 +987,8 @@
     {
       "A": "R3791751[WO-15092026-0269]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -872,7 +999,8 @@
     {
       "A": "R3796625[WO-17092026-0136]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -883,7 +1011,8 @@
     {
       "A": "R3796354[WO-17092026-0098]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -894,7 +1023,8 @@
     {
       "A": "R3796003[WO-17092026-0041]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -905,7 +1035,8 @@
     {
       "A": "R3796074[WO-17092026-0056]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -916,7 +1047,8 @@
     {
       "A": "R3788754[WO-14092026-0273]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -927,7 +1059,8 @@
     {
       "A": "R3790548[WO-15092026-0109]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -938,7 +1071,8 @@
     {
       "A": "R3789346[WO-14092026-0342]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -949,7 +1083,8 @@
     {
       "A": "R3792854[WO-16092026-0009]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -960,7 +1095,8 @@
     {
       "A": "R3782627[WO-12092026-0059]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -971,7 +1107,8 @@
     {
       "A": "R3790633[WO-15092026-0120]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -982,7 +1119,8 @@
     {
       "A": "R3791344[WO-15092026-0207]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -993,7 +1131,8 @@
     {
       "A": "R3788817[WO-14092026-0285]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -1004,7 +1143,8 @@
     {
       "A": "R3780850[WO-11092026-0187]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -1015,7 +1155,8 @@
     {
       "A": "R3788982[WO-14092026-0298]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -1026,7 +1167,8 @@
     {
       "A": "R3791411[WO-15092026-0220]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1037,7 +1179,8 @@
     {
       "A": "R3775839[WO-09092026-0269]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1048,7 +1191,8 @@
     {
       "A": "R3774336[WO-09092026-0126]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1059,7 +1203,8 @@
     {
       "A": "R3788440[WO-14092026-0229]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1070,7 +1215,8 @@
     {
       "A": "R3783968[WO-12092026-0233]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -1081,7 +1227,8 @@
     {
       "A": "R3796129[WO-17092026-0060]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1092,7 +1239,8 @@
     {
       "A": "R3790095[WO-15092026-0041]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1103,7 +1251,8 @@
     {
       "A": "R3780036[WO-11092026-0099]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1114,7 +1263,8 @@
     {
       "A": "R3787675[WO-14092026-0129]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1123,9 +1273,22 @@
       "AU": 1320
     },
     {
+      "A": "R3799489[WO-18092026-0126]",
+      "G": "ALBAY",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1349,
+      "AF": "18-Sep-2026",
+      "AU": 1187.1200000000001
+    },
+    {
       "A": "R3797578[WO-17092026-0256]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1136,7 +1299,8 @@
     {
       "A": "R3790799[WO-15092026-0139]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1147,7 +1311,8 @@
     {
       "A": "R3797385[WO-17092026-0233]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1158,7 +1323,8 @@
     {
       "A": "R3789524[WO-14092026-0363]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1169,7 +1335,8 @@
     {
       "A": "R3786481[WO-13092026-0164]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -1180,7 +1347,8 @@
     {
       "A": "R3771544[WO-08092026-0149]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -1191,7 +1359,8 @@
     {
       "A": "R3777342[WO-10092026-0130]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1202,7 +1371,8 @@
     {
       "A": "R3775190[WO-09092026-0200]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1213,7 +1383,8 @@
     {
       "A": "R3790378[WO-15092026-0086]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1224,7 +1395,8 @@
     {
       "A": "R3782967[WO-12092026-0107]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1235,7 +1407,8 @@
     {
       "A": "R3782676[WO-12092026-0065]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -1246,7 +1419,8 @@
     {
       "A": "R3790392[WO-15092026-0089]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1257,7 +1431,8 @@
     {
       "A": "R3780047[WO-11092026-0100]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1266,9 +1441,22 @@
       "AU": 1100
     },
     {
+      "A": "R3792002[WO-15092026-0308]",
+      "G": "ALBAY",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 3 days",
+      "AC": "FIBERX",
+      "AE": 1500,
+      "AF": "18-Sep-2026",
+      "AU": 1320
+    },
+    {
       "A": "R3788517[WO-14092026-0239]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1279,7 +1467,8 @@
     {
       "A": "R3791215[WO-15092026-0197]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1290,7 +1479,8 @@
     {
       "A": "R3782890[WO-12092026-0099]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1301,7 +1491,8 @@
     {
       "A": "R3777376[WO-10092026-0139]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1312,7 +1503,8 @@
     {
       "A": "R3790787[WO-15092026-0137]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -1323,7 +1515,8 @@
     {
       "A": "R3771036[WO-08092026-0063]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1334,7 +1527,8 @@
     {
       "A": "R3780466[WO-11092026-0146]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -1343,9 +1537,22 @@
       "AU": 1407.1200000000001
     },
     {
+      "A": "R3799716[WO-18092026-0154]",
+      "G": "ALBAY",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1250,
+      "AF": "18-Sep-2026",
+      "AU": 1100
+    },
+    {
       "A": "R3797007[WO-17092026-0183]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1356,7 +1563,8 @@
     {
       "A": "R3796783[WO-17092026-0159]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -1367,7 +1575,8 @@
     {
       "A": "R3783492[WO-12092026-0170]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -1378,7 +1587,8 @@
     {
       "A": "R3779520[WO-11092026-0019]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1389,7 +1599,8 @@
     {
       "A": "R3778005[WO-10092026-0215]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1400,7 +1611,8 @@
     {
       "A": "R3780430[WO-11092026-0142]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -1411,7 +1623,8 @@
     {
       "A": "R3772456[WO-08092026-0284]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1422,7 +1635,8 @@
     {
       "A": "R3786672[WO-13092026-0177]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1433,7 +1647,8 @@
     {
       "A": "R3794754[WO-16092026-0257]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1444,7 +1659,8 @@
     {
       "A": "R3771698[WO-08092026-0175]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1453,9 +1669,22 @@
       "AU": 1320
     },
     {
+      "A": "R3792915[WO-16092026-0019]",
+      "G": "ALBAY",
+      "Q": "SBAS",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 3 days",
+      "AC": "FIBERX",
+      "AE": 1500,
+      "AF": "19-Sep-2026",
+      "AU": 1320
+    },
+    {
       "A": "R3772485[WO-08092026-0292]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1466,7 +1695,8 @@
     {
       "A": "R3784152[WO-12092026-0260]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1477,7 +1707,8 @@
     {
       "A": "R3790795[WO-15092026-0138]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1488,7 +1719,8 @@
     {
       "A": "R3777903[WO-10092026-0200]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1499,7 +1731,8 @@
     {
       "A": "R3783748[WO-12092026-0205]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1510,7 +1743,8 @@
     {
       "A": "R3790576[WO-15092026-0113]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1521,7 +1755,8 @@
     {
       "A": "R3777215[WO-10092026-0114]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1530,9 +1765,22 @@
       "AU": 1187.1200000000001
     },
     {
+      "A": "R3799247[WO-18092026-0098]",
+      "G": "ALBAY",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1250,
+      "AF": "18-Sep-2026",
+      "AU": 1100
+    },
+    {
       "A": "R3766964[WO-06092026-0112]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1543,7 +1791,8 @@
     {
       "A": "R3788783[WO-14092026-0280]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1554,7 +1803,8 @@
     {
       "A": "R3790433[WO-15092026-0096]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1565,7 +1815,8 @@
     {
       "A": "R3773849[WO-09092026-0055]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1576,7 +1827,8 @@
     {
       "A": "R3788072[WO-14092026-0187]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1587,7 +1839,8 @@
     {
       "A": "R3778653[WO-10092026-0330]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1598,7 +1851,8 @@
     {
       "A": "R3795390[WO-16092026-0335]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1609,7 +1863,8 @@
     {
       "A": "R3781376[WO-11092026-0255]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1620,7 +1875,8 @@
     {
       "A": "R3771361[WO-08092026-0116]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -1631,7 +1887,8 @@
     {
       "A": "R3772497[WO-08092026-0295]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1642,7 +1899,8 @@
     {
       "A": "R3794791[WO-16092026-0261]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1653,7 +1911,8 @@
     {
       "A": "R3791418[WO-15092026-0219]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1664,7 +1923,8 @@
     {
       "A": "R3765183[WO-05092026-0254]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1675,7 +1935,8 @@
     {
       "A": "R3767306[WO-06092026-0146]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1686,7 +1947,8 @@
     {
       "A": "R3767242[WO-06092026-0138]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1697,7 +1959,8 @@
     {
       "A": "R3765232[WO-05092026-0259]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1708,7 +1971,8 @@
     {
       "A": "R3788446[WO-14092026-0230]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1719,7 +1983,8 @@
     {
       "A": "R3786680[WO-13092026-0178]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1730,7 +1995,8 @@
     {
       "A": "R3759628[WO-03092026-0275]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -1741,7 +2007,8 @@
     {
       "A": "R3777363[WO-10092026-0133]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1752,7 +2019,8 @@
     {
       "A": "R3755922[WO-02092026-0211]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1763,7 +2031,8 @@
     {
       "A": "R3772492[WO-08092026-0294]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -1774,7 +2043,8 @@
     {
       "A": "R3758184[WO-03092026-0115]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1785,7 +2055,8 @@
     {
       "A": "R3757405[WO-03092026-0037]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1796,7 +2067,8 @@
     {
       "A": "R3758008[WO-03092026-0101]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1807,7 +2079,8 @@
     {
       "A": "R3762352[WO-04092026-0205]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1818,7 +2091,8 @@
     {
       "A": "R3758873[WO-03092026-0191]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -1829,7 +2103,8 @@
     {
       "A": "R3751980[WO-01092026-0131]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1840,7 +2115,8 @@
     {
       "A": "R3752536[WO-01092026-0179]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -1851,7 +2127,8 @@
     {
       "A": "R3777992[WO-10092026-0210]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -1862,7 +2139,8 @@
     {
       "A": "R3757398[WO-03092026-0035]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1873,7 +2151,8 @@
     {
       "A": "R3780546[WO-11092026-0163]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1884,7 +2163,8 @@
     {
       "A": "R3770917[WO-08092026-0037]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1895,7 +2175,8 @@
     {
       "A": "R3755756[WO-02092026-0191]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1906,7 +2187,8 @@
     {
       "A": "R3755979[WO-02092026-0216]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1917,7 +2199,8 @@
     {
       "A": "R3758157[WO-03092026-0114]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1928,7 +2211,8 @@
     {
       "A": "R3757968[WO-03092026-0098]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1939,7 +2223,8 @@
     {
       "A": "R3766946[WO-06092026-0107]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1950,7 +2235,8 @@
     {
       "A": "R3785509[WO-13092026-0055]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1961,7 +2247,8 @@
     {
       "A": "R3785433[WO-13092026-0050]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1972,7 +2259,8 @@
     {
       "A": "R3772329[WO-08092026-0260]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -1983,7 +2271,8 @@
     {
       "A": "R3783113[WO-12092026-0123]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "SBAS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -1994,7 +2283,8 @@
     {
       "A": "R3752971[WO-01092026-0213]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2005,7 +2295,8 @@
     {
       "A": "R3761653[WO-04092026-0138]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -2016,7 +2307,8 @@
     {
       "A": "R3784466[WO-12092026-0301]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2027,7 +2319,8 @@
     {
       "A": "R3764974[WO-05092026-0230]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2038,7 +2331,8 @@
     {
       "A": "R3757981[WO-03092026-0099]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2049,7 +2343,8 @@
     {
       "A": "R3755264[WO-02092026-0134]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2060,7 +2355,8 @@
     {
       "A": "R3759741[WO-03092026-0290]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2071,7 +2367,8 @@
     {
       "A": "R3754094[WO-02092026-0004]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -2082,7 +2379,8 @@
     {
       "A": "R3749965[WO-31082026-0224]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -2093,7 +2391,8 @@
     {
       "A": "R3756710[WO-02092026-0293]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -2104,7 +2403,8 @@
     {
       "A": "R3759191[WO-03092026-0233]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2115,7 +2415,8 @@
     {
       "A": "R3759565[WO-03092026-0268]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "SME",
@@ -2126,7 +2427,8 @@
     {
       "A": "R3752232[WO-01092026-0152]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2137,7 +2439,8 @@
     {
       "A": "R3755768[WO-02092026-0194]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2148,7 +2451,8 @@
     {
       "A": "R3761909[WO-04092026-0161]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2159,7 +2463,8 @@
     {
       "A": "R3748231[WO-31082026-0026]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -2170,7 +2475,8 @@
     {
       "A": "R3753654[WO-01092026-0278]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2181,7 +2487,8 @@
     {
       "A": "R3753059[WO-01092026-0224]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2192,7 +2499,8 @@
     {
       "A": "R3760556[WO-04092026-0040]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2203,7 +2511,8 @@
     {
       "A": "R3759173[WO-03092026-0227]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -2214,7 +2523,8 @@
     {
       "A": "R3771655[WO-08092026-0169]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2225,7 +2535,8 @@
     {
       "A": "R3763173[WO-05092026-0007]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2236,7 +2547,8 @@
     {
       "A": "R3751148[WO-01092026-0012]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -2247,7 +2559,8 @@
     {
       "A": "R3765459[WO-05092026-0287]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2258,7 +2571,8 @@
     {
       "A": "R3766997[WO-06092026-0116]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2269,7 +2583,8 @@
     {
       "A": "R3754119[WO-02092026-0010]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -2280,7 +2595,8 @@
     {
       "A": "R3750340[WO-31082026-0268]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2291,7 +2607,8 @@
     {
       "A": "R3745523[WO-29082026-0177]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -2302,7 +2619,8 @@
     {
       "A": "R3751137[WO-01092026-0009]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2313,7 +2631,8 @@
     {
       "A": "R3746042[WO-29082026-0218]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -2322,9 +2641,46 @@
       "AU": 1100
     },
     {
+      "A": "R3799079[WO-18092026-0069]",
+      "G": "MASBATE",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1599,
+      "AF": "18-Sep-2026",
+      "AU": 1407.1200000000001
+    },
+    {
+      "A": "R3798678[WO-18092026-0011]",
+      "G": "MASBATE",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1349,
+      "AF": "18-Sep-2026",
+      "AU": 1187.1200000000001
+    },
+    {
+      "A": "R3798684[WO-18092026-0010]",
+      "G": "MASBATE",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1500,
+      "AF": "18-Sep-2026",
+      "AU": 1320
+    },
+    {
       "A": "R3793023[WO-16092026-0033]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2335,7 +2691,8 @@
     {
       "A": "R3790484[WO-15092026-0104]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2346,7 +2703,8 @@
     {
       "A": "R3791599[WO-15092026-0248]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2357,7 +2715,8 @@
     {
       "A": "R3782092[WO-11092026-0336]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2368,7 +2727,8 @@
     {
       "A": "R3778906[WO-10092026-0356]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2379,7 +2739,8 @@
     {
       "A": "R3778892[WO-10092026-0353]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2390,7 +2751,8 @@
     {
       "A": "R3791488[WO-15092026-0229]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2401,7 +2763,8 @@
     {
       "A": "R3795869[WO-17092026-0025]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2412,7 +2775,8 @@
     {
       "A": "R3773751[WO-09092026-0042]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2423,7 +2787,8 @@
     {
       "A": "R3775978[WO-09092026-0282]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2434,7 +2799,8 @@
     {
       "A": "R3791759[WO-15092026-0272]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2445,7 +2811,8 @@
     {
       "A": "R3772627[WO-08092026-0314]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2454,9 +2821,22 @@
       "AU": 1100
     },
     {
+      "A": "R3798242[WO-17092026-0327]",
+      "G": "MASBATE",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1349,
+      "AF": "18-Sep-2026",
+      "AU": 1187.1200000000001
+    },
+    {
       "A": "R3794984[WO-16092026-0289]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2467,7 +2847,8 @@
     {
       "A": "R3795844[WO-17092026-0021]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2478,7 +2859,8 @@
     {
       "A": "R3772830[WO-08092026-0339]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -2489,7 +2871,8 @@
     {
       "A": "R3768017[WO-07092026-0127]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2500,7 +2883,8 @@
     {
       "A": "R3777672[WO-10092026-0178]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2511,7 +2895,8 @@
     {
       "A": "R3772548[WO-08092026-0304]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2522,7 +2907,8 @@
     {
       "A": "R3773631[WO-09092026-0020]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2531,9 +2917,22 @@
       "AU": 1320
     },
     {
+      "A": "R3799814[WO-18092026-0159]",
+      "G": "MASBATE",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1599,
+      "AF": "18-Sep-2026",
+      "AU": 1407.1200000000001
+    },
+    {
       "A": "R3779658[WO-11092026-0041]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2544,7 +2943,8 @@
     {
       "A": "R3779545[WO-11092026-0022]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2555,7 +2955,8 @@
     {
       "A": "R3769301[WO-07092026-0035]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2566,7 +2967,8 @@
     {
       "A": "R3765451[WO-05092026-0284]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2577,7 +2979,8 @@
     {
       "A": "R3784721[WO-12092026-0331]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -2588,7 +2991,8 @@
     {
       "A": "R3763764[WO-05092026-0080]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -2599,7 +3003,8 @@
     {
       "A": "R3784720[WO-12092026-0330]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -2610,7 +3015,8 @@
     {
       "A": "R3768024[WO-07092026-0167]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2621,7 +3027,8 @@
     {
       "A": "R3748151[WO-31082026-0009]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -2632,7 +3039,8 @@
     {
       "A": "R3750343[WO-31082026-0267]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2643,7 +3051,8 @@
     {
       "A": "R3776540[WO-10092026-0032]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2654,7 +3063,8 @@
     {
       "A": "R3779657[WO-11092026-0040]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2665,7 +3075,8 @@
     {
       "A": "R3781810[WO-11092026-0298]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2676,7 +3087,8 @@
     {
       "A": "R3757376[WO-03092026-0032]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2687,7 +3099,8 @@
     {
       "A": "R3758974[WO-03092026-0204]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2698,7 +3111,8 @@
     {
       "A": "R3744927[WO-29082026-0106]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "OneMSA",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -2709,7 +3123,8 @@
     {
       "A": "R3762907[WO-04092026-0273]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2720,7 +3135,8 @@
     {
       "A": "R3768598",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2731,7 +3147,8 @@
     {
       "A": "R3769485",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2742,7 +3159,8 @@
     {
       "A": "R3756120[WO-02092026-0224]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2753,7 +3171,8 @@
     {
       "A": "R3792359[WO-15092026-0364]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2764,7 +3183,8 @@
     {
       "A": "R3790405[WO-15092026-0090]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2775,7 +3195,8 @@
     {
       "A": "R3787971[WO-14092026-0169]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2786,7 +3207,8 @@
     {
       "A": "R3772708[WO-08092026-0323]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2797,7 +3219,8 @@
     {
       "A": "R3768402",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2808,7 +3231,8 @@
     {
       "A": "R3768549",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2819,7 +3243,8 @@
     {
       "A": "R3770109",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2830,7 +3255,8 @@
     {
       "A": "R3768156",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2841,7 +3267,8 @@
     {
       "A": "R3777898[WO-10092026-0203]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2852,7 +3279,8 @@
     {
       "A": "R3769452",
       "G": "ALBAY",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2863,7 +3291,8 @@
     {
       "A": "R3772522[WO-08092026-0301]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2874,7 +3303,8 @@
     {
       "A": "R3756099[WO-02092026-0223]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "SME",
@@ -2885,7 +3315,8 @@
     {
       "A": "R3758829[WO-03092026-0188]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2896,7 +3327,8 @@
     {
       "A": "R3744614[WO-29082026-0068]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -2907,7 +3339,8 @@
     {
       "A": "R3793695[WO-16092026-0132]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2918,7 +3351,8 @@
     {
       "A": "R3795432[WO-16092026-0339]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2929,7 +3363,8 @@
     {
       "A": "R3793517[WO-16092026-0109]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2938,9 +3373,22 @@
       "AU": 1320
     },
     {
+      "A": "R3794953[WO-16092026-0282]",
+      "G": "SORSOGON",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 48 hrs",
+      "AC": "FIBERX",
+      "AE": 1500,
+      "AF": "18-Sep-2026",
+      "AU": 1320
+    },
+    {
       "A": "R3790589[WO-15092026-0118]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2951,7 +3399,8 @@
     {
       "A": "R3796943[WO-17092026-0175]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2962,7 +3411,8 @@
     {
       "A": "R3790771[WO-15092026-0133]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2973,7 +3423,8 @@
     {
       "A": "R3787610[WO-14092026-0122]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2984,7 +3435,8 @@
     {
       "A": "R3791399[WO-15092026-0217]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -2995,7 +3447,8 @@
     {
       "A": "R3779111[WO-10092026-0378]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3006,7 +3459,8 @@
     {
       "A": "R3775297[WO-09092026-0213]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -3017,7 +3471,8 @@
     {
       "A": "R3775338[WO-09092026-0215]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3028,7 +3483,8 @@
     {
       "A": "R3788119[WO-14092026-0190]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3039,7 +3495,8 @@
     {
       "A": "R3791237[WO-15092026-0201]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3050,7 +3507,8 @@
     {
       "A": "R3781417[WO-11092026-0259]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3061,7 +3519,8 @@
     {
       "A": "R3793506[WO-16092026-0106]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3072,7 +3531,8 @@
     {
       "A": "R3790488[WO-15092026-0103]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3083,7 +3543,8 @@
     {
       "A": "R3775162[WO-09092026-0197]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -3094,7 +3555,8 @@
     {
       "A": "R3772505[WO-08092026-0298]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3105,7 +3567,8 @@
     {
       "A": "R3782875[WO-12092026-0098]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3116,7 +3579,8 @@
     {
       "A": "R3778104[WO-10092026-0230]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -3127,7 +3591,8 @@
     {
       "A": "R3782657[WO-12092026-0062]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3138,7 +3603,8 @@
     {
       "A": "R3785523[WO-13092026-0057]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3149,7 +3615,8 @@
     {
       "A": "R3790449[WO-15092026-0099]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3160,7 +3627,8 @@
     {
       "A": "R3781701[WO-11092026-0290]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3171,7 +3639,8 @@
     {
       "A": "R3778116[WO-10092026-0233]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3182,7 +3651,8 @@
     {
       "A": "R3762037[WO-04092026-0172]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3193,7 +3663,8 @@
     {
       "A": "R3773993[WO-09092026-0081]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3204,7 +3675,8 @@
     {
       "A": "R3774173[WO-09092026-0101]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3215,7 +3687,8 @@
     {
       "A": "R3774318[WO-09092026-0123]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -3226,7 +3699,8 @@
     {
       "A": "R3775608[WO-09092026-0247]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3237,7 +3711,8 @@
     {
       "A": "R3787233[WO-14092026-0072]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3248,7 +3723,8 @@
     {
       "A": "R3779027[WO-10092026-0373]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3259,7 +3735,8 @@
     {
       "A": "R3751784[WO-01092026-0107]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -3270,7 +3747,8 @@
     {
       "A": "R3757477[WO-03092026-0046]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3281,7 +3759,8 @@
     {
       "A": "R3751112[WO-01092026-0006]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3292,7 +3771,8 @@
     {
       "A": "R3751806[WO-01092026-0109]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3303,7 +3783,8 @@
     {
       "A": "R3772295[WO-08092026-0251]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3314,7 +3795,8 @@
     {
       "A": "R3754945[WO-02092026-0105]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3325,7 +3807,8 @@
     {
       "A": "R3761987[WO-04092026-0167]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -3336,7 +3819,8 @@
     {
       "A": "R3762050[WO-04092026-0174]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3347,7 +3831,8 @@
     {
       "A": "R3751094[WO-01092026-0004]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3358,7 +3843,8 @@
     {
       "A": "R3780999[WO-11092026-0209]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3369,7 +3855,8 @@
     {
       "A": "R3776061[WO-09092026-0287]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -3380,7 +3867,8 @@
     {
       "A": "R3783479[WO-12092026-0168]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -3391,7 +3879,8 @@
     {
       "A": "R3755784[WO-02092026-0197]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "DOMINGUIANO",
+      "S": "MSA",
       "U": "MSA",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -3402,7 +3891,8 @@
     {
       "A": "R3763287[WO-05092026-0031]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -3413,7 +3903,8 @@
     {
       "A": "R3751739[WO-01092026-0104]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3424,7 +3915,8 @@
     {
       "A": "R3751910[WO-01092026-0122]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3433,9 +3925,22 @@
       "AU": 1320
     },
     {
+      "A": "R3799353[WO-18092026-0111]",
+      "G": "MASBATE",
+      "Q": "SERAPHTS",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1250,
+      "AF": "18-Sep-2026",
+      "AU": 1100
+    },
+    {
       "A": "R3761220[WO-04092026-0098]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3446,7 +3951,8 @@
     {
       "A": "R3755403",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3457,7 +3963,8 @@
     {
       "A": "14174",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -3468,7 +3975,8 @@
     {
       "A": "14241",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3479,7 +3987,8 @@
     {
       "A": "R3768558",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3490,7 +3999,8 @@
     {
       "A": "R3781682",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -3501,7 +4011,8 @@
     {
       "A": "14240",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3510,9 +4021,22 @@
       "AU": 1187.1200000000001
     },
     {
+      "A": "R3796052[WO-17092026-0048]",
+      "G": "SORSOGON",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "BIDA",
+      "AE": 888,
+      "AF": "18-Sep-2026",
+      "AU": 781.44
+    },
+    {
       "A": "R3781976[WO-11092026-0320]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "BIDA",
@@ -3523,7 +4047,8 @@
     {
       "A": "R3751606[WO-01092026-0079]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "BIDA",
@@ -3534,7 +4059,8 @@
     {
       "A": "R3751525",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3545,7 +4071,8 @@
     {
       "A": "R3768863",
       "G": "ALBAY",
-      "S": "",
+      "Q": "TOUKON CABLE INSTALLATION SERVICES",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3556,7 +4083,8 @@
     {
       "A": "10694",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3567,7 +4095,8 @@
     {
       "A": "10695",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3576,9 +4105,22 @@
       "AU": 3080
     },
     {
+      "A": "10731",
+      "G": "MASBATE",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 48 hrs",
+      "AC": "SME",
+      "AE": 2499,
+      "AF": "18-Sep-2026",
+      "AU": 2199.12
+    },
+    {
       "A": "10693",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "SME",
@@ -3589,7 +4131,8 @@
     {
       "A": "R3762055[WO-04092026-0175]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "",
+      "S": "MSA",
       "U": "MSA",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -3600,7 +4143,8 @@
     {
       "A": "R3777941",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3611,7 +4155,8 @@
     {
       "A": "R3768765",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3622,7 +4167,8 @@
     {
       "A": "R3753573[WO-01092026-0265]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3631,9 +4177,22 @@
       "AU": 1407.1200000000001
     },
     {
+      "A": "R3799169[WO-18092026-0083]",
+      "G": "SORSOGON",
+      "Q": "A. NARVAEZ STORE",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "SME",
+      "AE": 1449,
+      "AF": "18-Sep-2026",
+      "AU": 1275.1200000000001
+    },
+    {
       "A": "14262",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3644,7 +4203,8 @@
     {
       "A": "14247",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -3655,7 +4215,8 @@
     {
       "A": "R3790710",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3666,7 +4227,8 @@
     {
       "A": "14248",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -3677,7 +4239,8 @@
     {
       "A": "R3772500",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -3688,7 +4251,8 @@
     {
       "A": "14237",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3699,7 +4263,8 @@
     {
       "A": "R3785979[WO-13092026-0102]",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3708,9 +4273,22 @@
       "AU": 1100
     },
     {
+      "A": "14263",
+      "G": "SORSOGON",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 3500,
+      "AF": "18-Sep-2026",
+      "AU": 3080
+    },
+    {
       "A": "14243",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3721,7 +4299,8 @@
     {
       "A": "14224",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -3732,7 +4311,8 @@
     {
       "A": "R3765012",
       "G": "SORSOGON",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -3743,7 +4323,8 @@
     {
       "A": "00201557[WO-03092026-0152]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 3 days",
       "AC": "SME",
@@ -3754,7 +4335,8 @@
     {
       "A": "201547",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3765,7 +4347,8 @@
     {
       "A": "R3770498[WO-07092026-0031]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3776,7 +4359,8 @@
     {
       "A": "201528",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3787,7 +4371,8 @@
     {
       "A": "201700",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "SME",
@@ -3798,7 +4383,8 @@
     {
       "A": "201568",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -3809,7 +4395,8 @@
     {
       "A": "R3750185[WO-31082026-0250]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3820,7 +4407,8 @@
     {
       "A": "201543",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3831,7 +4419,8 @@
     {
       "A": "R3743625[WO-28082026-0194]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -3842,7 +4431,8 @@
     {
       "A": "R3758938[WO-03092026-0200]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -3853,7 +4443,8 @@
     {
       "A": "R3759892[WO-03092026-0309]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3864,7 +4455,8 @@
     {
       "A": "R3745765",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -3875,7 +4467,8 @@
     {
       "A": "R3749976[WO-31082026-0228]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -3886,7 +4479,8 @@
     {
       "A": "R3744776[WO-29082026-0091]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "beyond 5 days",
       "AC": "FIBERX",
@@ -3895,9 +4489,34 @@
       "AU": 1320
     },
     {
+      "A": "R3798700[WO-18092026-0014]",
+      "G": "ALBAY",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1349,
+      "AF": "18-Sep-2026",
+      "AU": 1187.1200000000001
+    },
+    {
+      "A": "R3796027[WO-17092026-0045]",
+      "G": "ALBAY",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1599,
+      "AF": "18-Sep-2026",
+      "AU": 1407.1200000000001
+    },
+    {
       "A": "R3793103[WO-16092026-0050]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3908,7 +4527,8 @@
     {
       "A": "R3789012[WO-14092026-0300]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3919,7 +4539,8 @@
     {
       "A": "R3793137[WO-16092026-0055]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3928,9 +4549,22 @@
       "AU": 1187.1200000000001
     },
     {
+      "A": "R3797026[WO-17092026-0188]",
+      "G": "ALBAY",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1250,
+      "AF": "18-Sep-2026",
+      "AU": 1100
+    },
+    {
       "A": "R3791860[WO-15092026-0291]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3941,7 +4575,8 @@
     {
       "A": "201899",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3952,7 +4587,8 @@
     {
       "A": "R3781204[WO-11092026-0234]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3963,7 +4599,8 @@
     {
       "A": "R3793347[WO-16092026-0091]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3974,7 +4611,8 @@
     {
       "A": "R3788174[WO-14092026-0200]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3985,7 +4623,8 @@
     {
       "A": "R3782643[WO-12092026-0060]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -3996,7 +4635,8 @@
     {
       "A": "R3788635",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -4007,7 +4647,8 @@
     {
       "A": "R3790374[WO-15092026-0083]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4018,7 +4659,8 @@
     {
       "A": "R3779829",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4029,7 +4671,8 @@
     {
       "A": "R3779884[WO-11092026-0080]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4038,9 +4681,22 @@
       "AU": 1100
     },
     {
+      "A": "201915",
+      "G": "ALBAY",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1500,
+      "AF": "18-Sep-2026",
+      "AU": 1320
+    },
+    {
       "A": "R3788631[WO-14092026-0259]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4051,7 +4707,8 @@
     {
       "A": "R3770450[WO-07092026-0020]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -4062,7 +4719,8 @@
     {
       "A": "R3795234[WO-16092026-0314]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4073,7 +4731,8 @@
     {
       "A": "R3792276[WO-15092026-0345]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4084,7 +4743,8 @@
     {
       "A": "R3792249[WO-15092026-0340]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4095,7 +4755,8 @@
     {
       "A": "201796",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4106,7 +4767,8 @@
     {
       "A": "R3770932[WO-08092026-0041]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4117,7 +4779,8 @@
     {
       "A": "R3770925[WO-08092026-0040]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4128,7 +4791,8 @@
     {
       "A": "R3771410[WO-08092026-0126]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4139,7 +4803,8 @@
     {
       "A": "201780",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4148,9 +4813,22 @@
       "AU": 1407.1200000000001
     },
     {
+      "A": "R3800285",
+      "G": "ALBAY",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
+      "U": "INHOUSE",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1798,
+      "AF": "18-Sep-2026",
+      "AU": 1582.24
+    },
+    {
       "A": "R3768159",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4161,7 +4839,8 @@
     {
       "A": "R3778599[WO-10092026-0318]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4172,7 +4851,8 @@
     {
       "A": "201801",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4183,7 +4863,8 @@
     {
       "A": "201717",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4194,7 +4875,8 @@
     {
       "A": "R3771191[WO-08092026-0086]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4205,7 +4887,8 @@
     {
       "A": "201783",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4216,7 +4899,8 @@
     {
       "A": "R3770349[WO-07092026-0072]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4227,7 +4911,8 @@
     {
       "A": "R3768165[WO-07092026-0005]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4238,7 +4923,8 @@
     {
       "A": "201784",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4249,7 +4935,8 @@
     {
       "A": "R3749637[WO-31082026-0183]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4260,7 +4947,8 @@
     {
       "A": "201662",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4271,7 +4959,8 @@
     {
       "A": "R3771851[WO-08092026-0198]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 3 days",
       "AC": "FIBERX",
@@ -4282,7 +4971,8 @@
     {
       "A": "R3754408",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4293,7 +4983,8 @@
     {
       "A": "201549",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4304,7 +4995,8 @@
     {
       "A": "201399",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4315,7 +5007,8 @@
     {
       "A": "201800",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4326,7 +5019,8 @@
     {
       "A": "R3770050[WO-07092026-0162]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4337,7 +5031,8 @@
     {
       "A": "R3763979[WO-05092026-0109]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "SME",
@@ -4348,7 +5043,8 @@
     {
       "A": "R3761208",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -4359,7 +5055,8 @@
     {
       "A": "R3770939[WO-08092026-0044]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4370,7 +5067,8 @@
     {
       "A": "201574",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4381,7 +5079,8 @@
     {
       "A": "R3757523",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -4392,7 +5091,8 @@
     {
       "A": "201658",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4403,7 +5103,8 @@
     {
       "A": "R3758884[WO-03092026-0194]",
       "G": "ALBAY",
-      "S": "",
+      "Q": "RAVENOUS SLR",
+      "S": "INHOUSE",
       "U": "INHOUSE",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -4414,7 +5115,8 @@
     {
       "A": "R3768545",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4425,7 +5127,8 @@
     {
       "A": "R3781797",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4436,7 +5139,8 @@
     {
       "A": "R3769454",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4447,7 +5151,8 @@
     {
       "A": "R3769937",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4458,7 +5163,8 @@
     {
       "A": "R3752598",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4469,7 +5175,8 @@
     {
       "A": "R3774142",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4480,7 +5187,8 @@
     {
       "A": "R3779679",
       "G": "ALBAY",
-      "S": "",
+      "Q": "BRYTH",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4491,7 +5199,8 @@
     {
       "A": "10720",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "INHOUSE",
       "U": "",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4502,7 +5211,8 @@
     {
       "A": "R3759483[WO-03092026-0262]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4513,7 +5223,8 @@
     {
       "A": "R3753164[WO-01092026-0236]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4524,7 +5235,8 @@
     {
       "A": "R3754103[WO-02092026-0006]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4535,7 +5247,8 @@
     {
       "A": "R3758397[WO-03092026-0139]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4546,7 +5259,8 @@
     {
       "A": "R3764697",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 5 days",
       "AC": "FIBERX",
@@ -4557,7 +5271,8 @@
     {
       "A": "R3759865[WO-03092026-0303]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -4568,7 +5283,8 @@
     {
       "A": "R3759651[WO-03092026-0280]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4579,7 +5295,8 @@
     {
       "A": "R3752370[WO-01092026-0164]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4590,7 +5307,8 @@
     {
       "A": "R3797748[WO-17092026-0278]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4599,9 +5317,22 @@
       "AU": 1320
     },
     {
+      "A": "R3800786[WO-18092026-0277]",
+      "G": "MASBATE",
+      "Q": "SERAPHTS",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1250,
+      "AF": "18-Sep-2026",
+      "AU": 1100
+    },
+    {
       "A": "R3796279[WO-17092026-0087]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4612,7 +5343,8 @@
     {
       "A": "R3797736[WO-17092026-0276]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4623,7 +5355,8 @@
     {
       "A": "R3789070[WO-14092026-0305]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4634,7 +5367,8 @@
     {
       "A": "R3792385[WO-15092026-0366]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4645,7 +5379,8 @@
     {
       "A": "R3794250[WO-16092026-0196]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4656,7 +5391,8 @@
     {
       "A": "R3789037[WO-14092026-0302]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4667,7 +5403,8 @@
     {
       "A": "R3775253[WO-09092026-0206]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4678,7 +5415,8 @@
     {
       "A": "R3787091[WO-14092026-0040]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4689,7 +5427,8 @@
     {
       "A": "R3783507[WO-12092026-0173]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4700,7 +5439,8 @@
     {
       "A": "R3791495[WO-15092026-0230]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4711,7 +5451,8 @@
     {
       "A": "R3775124[WO-09092026-0193]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4722,7 +5463,8 @@
     {
       "A": "R3787604[WO-14092026-0119]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4733,7 +5475,8 @@
     {
       "A": "R3783788[WO-12092026-0214]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4744,7 +5487,8 @@
     {
       "A": "R3778205[WO-10092026-0252]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -4755,7 +5499,8 @@
     {
       "A": "R3796731[WO-17092026-0153]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4766,7 +5511,8 @@
     {
       "A": "R3793916[WO-16092026-0154]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4777,7 +5523,8 @@
     {
       "A": "R3781219[WO-11092026-0235]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4788,7 +5535,8 @@
     {
       "A": "R3783216[WO-12092026-0138]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4799,7 +5547,8 @@
     {
       "A": "R3791468[WO-15092026-0226]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4810,7 +5559,8 @@
     {
       "A": "R3772563[WO-08092026-0308]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4821,7 +5571,8 @@
     {
       "A": "R3793479[WO-16092026-0102]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4832,7 +5583,8 @@
     {
       "A": "R3778645[WO-10092026-0329]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 48 hrs",
       "AC": "FIBERX",
@@ -4843,7 +5595,8 @@
     {
       "A": "R3792038[WO-15092026-0317]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4852,9 +5605,22 @@
       "AU": 1100
     },
     {
+      "A": "R3800524[WO-18092026-0248]",
+      "G": "MASBATE",
+      "Q": "SERAPHTS",
+      "S": "MSA",
+      "U": "MSA",
+      "Y": "within 24 hrs",
+      "AC": "FIBERX",
+      "AE": 1250,
+      "AF": "18-Sep-2026",
+      "AU": 1100
+    },
+    {
       "A": "R3768291",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4865,7 +5631,8 @@
     {
       "A": "R3783779[WO-12092026-0213]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4876,7 +5643,8 @@
     {
       "A": "R3790733[WO-15092026-0130]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SLR MASBATE",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4887,7 +5655,8 @@
     {
       "A": "R3772460[WO-08092026-0285]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4898,7 +5667,8 @@
     {
       "A": "R3777667[WO-10092026-0177]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4909,7 +5679,8 @@
     {
       "A": "R3755795[WO-02092026-0198]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4920,7 +5691,8 @@
     {
       "A": "R3772781[WO-08092026-0332]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4931,7 +5703,8 @@
     {
       "A": "R3773816[WO-09092026-0049]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4942,7 +5715,8 @@
     {
       "A": "R3750577[WO-31082026-0293]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4953,7 +5727,8 @@
     {
       "A": "R3775130[WO-09092026-0192]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4964,7 +5739,8 @@
     {
       "A": "R3771650[WO-08092026-0168]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4975,7 +5751,8 @@
     {
       "A": "R3755389[WO-02092026-0146]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4986,7 +5763,8 @@
     {
       "A": "R3751753[WO-01092026-0102]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -4997,7 +5775,8 @@
     {
       "A": "R3758426[WO-03092026-0144]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -5008,7 +5787,8 @@
     {
       "A": "R3761241[WO-04092026-0103]",
       "G": "MASBATE",
-      "S": "",
+      "Q": "SERAPHTS",
+      "S": "MSA",
       "U": "MSA",
       "Y": "within 24 hrs",
       "AC": "FIBERX",
@@ -5024,7 +5804,7 @@
       "D": "",
       "E": "",
       "F": "",
-      "G": 46283.43736521991
+      "G": 46284.55632560185
     },
     {
       "B": "",
@@ -5061,24 +5841,24 @@
     {
       "B": "ALBAY",
       "C": "INHOUSE",
-      "D": 0,
-      "E": 0,
+      "D": 79,
+      "E": 18747,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "MSA",
-      "D": 0,
-      "E": 0,
+      "D": 185,
+      "E": 16293,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "SubTotal",
-      "D": 0,
-      "E": 0,
+      "D": 264,
+      "E": 35040,
       "F": 0,
       "G": 0
     },
@@ -5093,41 +5873,41 @@
     {
       "B": "",
       "C": "%Share",
-      "D": 0,
-      "E": 0,
+      "D": 0.5653104925053534,
+      "E": 0.4867139860819802,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "Var",
-      "D": -467,
-      "E": -71993,
+      "D": -203,
+      "E": -36953,
       "F": -82,
       "G": -572
     },
     {
       "B": "SORSOGON",
       "C": "INHOUSE",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 53,
+      "E": 9599,
+      "F": 3,
       "G": 0
     },
     {
       "B": "",
       "C": "MSA",
-      "D": 0,
-      "E": 0,
+      "D": 33,
+      "E": 23898,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "SubTotal",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 86,
+      "E": 33497,
+      "F": 3,
       "G": 0
     },
     {
@@ -5141,31 +5921,31 @@
     {
       "B": "",
       "C": "%Share",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 0.455026455026455,
+      "E": 0.5643596050813762,
+      "F": 0.14285714285714285,
       "G": 0
     },
     {
       "B": "",
       "C": "Var",
-      "D": -189,
-      "E": -59354,
-      "F": -21,
+      "D": -103,
+      "E": -25857,
+      "F": -18,
       "G": -169
     },
     {
       "B": "MASBATE",
       "C": "INHOUSE",
-      "D": 0,
-      "E": 0,
+      "D": 53,
+      "E": 10598,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "MSA",
-      "D": 0,
+      "D": 53,
       "E": 0,
       "F": 0,
       "G": 0
@@ -5173,8 +5953,8 @@
     {
       "B": "",
       "C": "SubTotal",
-      "D": 0,
-      "E": 0,
+      "D": 106,
+      "E": 10598,
       "F": 0,
       "G": 0
     },
@@ -5189,41 +5969,41 @@
     {
       "B": "",
       "C": "%Share",
-      "D": 0,
-      "E": 0,
+      "D": 0.5221674876847291,
+      "E": 2.0534780081379576,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "Var",
-      "D": -203,
-      "E": -5161,
+      "D": -97,
+      "E": 5437,
       "F": -10,
       "G": -41
     },
     {
       "B": "OVERALL",
       "C": "RAV INHOUSE",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 185,
+      "E": 38944,
+      "F": 3,
       "G": 0
     },
     {
       "B": "",
       "C": "MSA SLI",
-      "D": 0,
-      "E": 0,
+      "D": 271,
+      "E": 40191,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "Grand Total",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 456,
+      "E": 79135,
+      "F": 3,
       "G": 0
     },
     {
@@ -5237,80 +6017,80 @@
     {
       "B": "",
       "C": "%Share",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 0.5308498253783469,
+      "E": 0.5797096140885516,
+      "F": 0.02654867256637168,
       "G": 0
     },
     {
       "B": "",
       "C": "Var",
-      "D": -859,
-      "E": -136508,
-      "F": -113,
+      "D": -403,
+      "E": -57373,
+      "F": -110,
       "G": -782
     },
     {
       "B": "",
       "C": "Runrate",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 699.5179093717692,
+      "E": 121395.5038555591,
+      "F": 4.602091509024797,
       "G": 0
     },
     {
       "B": "",
       "C": "%Share",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 0.8143398246469955,
+      "E": 0.8892922308989883,
+      "F": 0.040726473531192894,
       "G": 0
     },
     {
       "B": "",
       "C": "ALBAY Runrate",
-      "D": 0,
-      "E": 0,
+      "D": 404.98405279418216,
+      "E": 53752.42882540963,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "",
-      "D": 0,
-      "E": 0,
+      "D": 0.8672035391738376,
+      "E": 0.7466341008904981,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "SORSOGON Runrate",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 131.92662325871086,
+      "E": 51385.419759267876,
+      "F": 3,
       "G": 0
     },
     {
       "B": "",
       "C": "",
-      "D": 0,
-      "E": 0,
-      "F": 0,
+      "D": 0.6980244616863008,
+      "E": 0.8657448488605296,
+      "F": 0.14285714285714285,
       "G": 0
     },
     {
       "B": "",
       "C": "MASBATE Runrate",
-      "D": 0,
-      "E": 0,
+      "D": 106,
+      "E": 16257.6552708816,
       "F": 0,
       "G": 0
     },
     {
       "B": "",
       "C": "",
-      "D": 0,
-      "E": 0,
+      "D": 0.5221674876847291,
+      "E": 3.150097901740283,
       "F": 0,
       "G": 0
     },
@@ -5357,7 +6137,7 @@
     {
       "B": "",
       "C": "SME (12% VAT):",
-      "D": 66164.56,
+      "D": 69638.8,
       "E": "",
       "F": "",
       "G": ""
@@ -5373,7 +6153,7 @@
     {
       "B": "",
       "C": "%",
-      "D": 0.4846936443285375,
+      "D": 0.5101444603979254,
       "E": "",
       "F": "",
       "G": ""
@@ -5381,7 +6161,7 @@
     {
       "B": "",
       "C": "Runrate",
-      "D": 107658.37614676628,
+      "D": 106828.04339289202,
       "E": "",
       "F": "",
       "G": ""
@@ -5389,7 +6169,7 @@
     {
       "B": "",
       "C": "%Share",
-      "D": 0.7886598305356923,
+      "D": 0.7825771631911098,
       "E": "",
       "F": "",
       "G": ""
@@ -5437,7 +6217,7 @@
     {
       "B": "",
       "C": "Runrate",
-      "D": 50172.89558278282,
+      "D": 47302.13736636048,
       "E": "",
       "F": "",
       "G": ""
@@ -5445,7 +6225,7 @@
     {
       "B": "",
       "C": "%Share",
-      "D": 0.6969135274649315,
+      "D": 0.6570380087836385,
       "E": "",
       "F": "",
       "G": ""
@@ -5461,7 +6241,7 @@
     {
       "B": "",
       "C": "SME (12% VAT):",
-      "D": 28202.239999999998,
+      "D": 29477.359999999997,
       "E": "",
       "F": "",
       "G": ""
@@ -5477,7 +6257,7 @@
     {
       "B": "",
       "C": "%",
-      "D": 0.475153148903191,
+      "D": 0.496636452471611,
       "E": "",
       "F": "",
       "G": ""
@@ -5485,7 +6265,7 @@
     {
       "B": "",
       "C": "Runrate",
-      "D": 45888.725959960706,
+      "D": 45219.16938815573,
       "E": "",
       "F": "",
       "G": ""
@@ -5493,7 +6273,7 @@
     {
       "B": "",
       "C": "%Share",
-      "D": 0.773136199076064,
+      "D": 0.761855466997266,
       "E": "",
       "F": "",
       "G": ""
@@ -5509,7 +6289,7 @@
     {
       "B": "",
       "C": "SME (12% VAT):",
-      "D": 7127.12,
+      "D": 9326.24,
       "E": "",
       "F": "",
       "G": ""
@@ -5525,7 +6305,7 @@
     {
       "B": "",
       "C": "%",
-      "D": 1.3809571788413098,
+      "D": 1.8070606471614028,
       "E": "",
       "F": "",
       "G": ""
@@ -5533,7 +6313,7 @@
     {
       "B": "",
       "C": "Runrate",
-      "D": 11596.754604022772,
+      "D": 14306.736638375807,
       "E": "",
       "F": "",
       "G": ""
@@ -5541,7 +6321,7 @@
     {
       "B": "",
       "C": "%Share",
-      "D": 2.2469975981443078,
+      "D": 2.7720861535314487,
       "E": "",
       "F": "",
       "G": ""
@@ -5597,11 +6377,29 @@
       "s2s": 782
     }
   },
-  "operationalStatus": {
-    "asOfText": "18 Sep 2026 10:29 am",
-    "fsoi": 14,
-    "forCloseout": 2,
-    "forActivation": 1
+  "dailyReport": {
+    "reportLabel": "*Daily SLI Report as of: 19 Sep 2026 1:21 pm*",
+    "fiberYesterday": "23",
+    "fiberToday": "3",
+    "fsoi": "16",
+    "forCloseout": "1",
+    "forActivation": "2",
+    "fiberMTD": "456 (53%)",
+    "smeVatIncMTD": "79,135 (58%)",
+    "smeVatExMTD": "69,639 (51%)",
+    "bidaMTD": "3 (3%)",
+    "s2sMTD": "0 (0%)",
+    "fiberRunrate": "700 / 859 (81%)",
+    "smeVatIncRunrate": "121,396 / 136,508 (89%)",
+    "smeVatExRunrate": "69,639 / 136,508 (78%)",
+    "bidaRunrate": "5 / 113 (4%)",
+    "s2sRunrate": "0 / 782 (0%)"
   },
-  "updatedAt": "2026-09-18T02:29:51.755Z"
+  "operationalStatus": {
+    "asOfText": "*Daily SLI Report as of: 19 Sep 2026 1:21 pm*",
+    "fsoi": 16,
+    "forCloseout": 1,
+    "forActivation": 2
+  },
+  "updatedAt": "2026-09-19T05:26:31.040Z"
 }

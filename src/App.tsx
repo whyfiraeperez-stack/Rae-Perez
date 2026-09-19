@@ -33,7 +33,8 @@ import { TotalClosedTables } from "./components/TotalClosedTables";
 import { SlaPerformanceSection } from "./components/SlaPerformanceSection";
 import { DailySLIReport } from "./components/DailySLIReport";
 import { TopPerformingSliSection } from "./components/TopPerformingSliSection";
-import { OperationalStatus, ParsedJO, Targets } from "./types";
+import { DailyReportAlmasor, OperationalStatus, ParsedJO, Targets } from "./types";
+import { DEFAULT_DAILY_REPORT, fetchDailyReportAlmasor } from "./utils/dailyReport";
 import liveCacheFallback from "./data/live_sheets_cache.json";
 
 /* =========================================================
@@ -127,6 +128,8 @@ type LiveState = {
   joRows: RawRow[];
   summaryRows: RawRow[];
   targetsMap: Record<string, Targets>;
+  dailyReport: DailyReportAlmasor;
+  dailyReportError: string;
   operationalStatus?: OperationalStatus;
   lastSynced: Date | null;
   syncing: boolean;
@@ -814,17 +817,21 @@ function useLiveGoogleSheet() {
     const cachedSummary = (liveCacheFallback as any)?.summaryRows || [];
     const cachedTargets =
       (liveCacheFallback as any)?.targetsMap || DEFAULT_TARGETS_MAP;
+    const cachedDailyReport =
+      (liveCacheFallback as any)?.dailyReport || DEFAULT_DAILY_REPORT;
     const cachedOperational = (liveCacheFallback as any)?.operationalStatus || {
-      asOfText: "18 Sep 2026 10:28 am",
-      fsoi: 14,
-      forCloseout: 2,
-      forActivation: 1,
+      asOfText: "19 Sep 2026",
+      fsoi: 16,
+      forCloseout: 1,
+      forActivation: 2,
     };
     return {
       sourceName: "Live Google Sheet",
       joRows: cachedJo,
       summaryRows: cachedSummary,
       targetsMap: cachedTargets,
+      dailyReport: cachedDailyReport,
+      dailyReportError: "",
       operationalStatus: cachedOperational,
       lastSynced: (liveCacheFallback as any)?.updatedAt
         ? new Date((liveCacheFallback as any).updatedAt)
@@ -849,6 +856,8 @@ function useLiveGoogleSheet() {
       let joRows: RawRow[] = [];
       let summaryRows: RawRow[] = [];
       let liveTargets: Record<string, Targets> | null = null;
+      let liveDailyReport: DailyReportAlmasor | null = null;
+      let draError = "";
       let liveOperational: OperationalStatus | undefined = undefined;
       let sourceName = "Live Google Sheet";
 
@@ -861,6 +870,9 @@ function useLiveGoogleSheet() {
             joRows = data.joRows;
             summaryRows = data.summaryRows || [];
             liveTargets = data.targetsMap || null;
+            if (data.dailyReport) {
+              liveDailyReport = data.dailyReport;
+            }
             if (data.operationalStatus) {
               liveOperational = data.operationalStatus;
             }
@@ -886,6 +898,16 @@ function useLiveGoogleSheet() {
         liveTargets = directTargets;
       }
 
+      // 3. Ensure fresh DAILY REPORT ALMASOR is retrieved
+      if (!liveDailyReport) {
+        try {
+          liveDailyReport = await fetchDailyReportAlmasor();
+        } catch (draErr: any) {
+          console.warn("fetchDailyReportAlmasor direct error:", draErr);
+          draError = "Daily Report temporarily unavailable";
+        }
+      }
+
       if (!mountedRef.current) return;
 
       const finalTargets =
@@ -898,6 +920,8 @@ function useLiveGoogleSheet() {
         joRows,
         summaryRows,
         targetsMap: finalTargets,
+        dailyReport: liveDailyReport || prev.dailyReport || DEFAULT_DAILY_REPORT,
+        dailyReportError: draError,
         operationalStatus: liveOperational || prev.operationalStatus,
         lastSynced: new Date(),
         syncing: false,
@@ -925,6 +949,8 @@ function useLiveGoogleSheet() {
         joRows: excelJo,
         summaryRows: excelSummary,
         targetsMap: parsedTargets,
+        dailyReport: prev.dailyReport,
+        dailyReportError: prev.dailyReportError,
         operationalStatus: prev.operationalStatus,
         lastSynced: new Date(),
         syncing: false,
@@ -986,6 +1012,8 @@ export default function App() {
     sourceName,
     joRows,
     targetsMap,
+    dailyReport,
+    dailyReportError,
     operationalStatus,
     lastSynced,
     syncing,
@@ -1001,7 +1029,7 @@ export default function App() {
     package: "All Packages",
   });
 
-  const [reportDate, setReportDate] = useState<string>("2026-09-18");
+  const [reportDate, setReportDate] = useState<string>("2026-09-19");
 
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [excelLoading, setExcelLoading] = useState(false);
@@ -1725,7 +1753,7 @@ export default function App() {
                   sliType: "All SLI Types",
                   package: "All Packages",
                 });
-                setReportDate("2026-09-18");
+                setReportDate("2026-09-19");
               }}
             >
               Reset filters
@@ -1777,7 +1805,8 @@ export default function App() {
             monthKey={filters.month}
             allMonthRows={monthRows}
             overallTargets={almasorTargets}
-            operationalStatus={operationalStatus}
+            dailyReport={dailyReport}
+            dailyReportError={dailyReportError}
             latestDataDate={latestAvailableDate}
           />
         </section>

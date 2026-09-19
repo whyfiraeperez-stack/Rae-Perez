@@ -29,10 +29,30 @@ let savedData: {
 } | null = null;
 
 // Live Google Sheets cache
+const DEFAULT_DAILY_REPORT = {
+  reportLabel: '19 Sep 2026',
+  fiberYesterday: '23',
+  fiberToday: '3',
+  fsoi: '16',
+  forCloseout: '1',
+  forActivation: '2',
+  fiberMTD: '456 (53%)',
+  smeVatIncMTD: '79,135 (58%)',
+  smeVatExMTD: '69,639 (51%)',
+  bidaMTD: '3 (2%)',
+  s2sMTD: '0 (0%)',
+  fiberRunrate: '700 / 859 (81%)',
+  smeVatIncRunrate: '121,436 / 136,508 (89%)',
+  smeVatExRunrate: '69,639 / 136,508 (51%)',
+  bidaRunrate: '5 / 113 (4%)',
+  s2sRunrate: '0 / 782 (0%)',
+};
+
 let liveCache: {
   joRows: any[];
   summaryRows: any[];
   targetsMap: Record<string, { fiberX: number; sme: number; bida: number; s2s?: number }>;
+  dailyReport?: typeof DEFAULT_DAILY_REPORT;
   operationalStatus?: {
     asOfText: string;
     fsoi: number;
@@ -153,6 +173,98 @@ async function fetchSummaryTargetRow(rowNumber: number): Promise<{ fiberX: numbe
   };
 }
 
+// Helper: fetch single cell from DAILY REPORT ALMASOR
+async function fetchDailyReportCell(cell: string): Promise<{ value: any; formatted: string }> {
+  const url =
+    `${GOOGLE_SHEET_URL}/gviz/tq` +
+    `?sheet=${encodeURIComponent('DAILY REPORT ALMASOR')}` +
+    `&range=${encodeURIComponent(cell)}` +
+    `&tqx=out:json` +
+    `&_=${Date.now()}`;
+
+  const response = await fetch(url, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `DAILY REPORT ALMASOR ${cell} failed: HTTP ${response.status}`
+    );
+  }
+
+  const text = await response.text();
+
+  const match = text.match(
+    /google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/
+  );
+
+  if (!match) {
+    throw new Error(
+      `Could not parse DAILY REPORT ALMASOR ${cell}`
+    );
+  }
+
+  const json = JSON.parse(match[1]);
+
+  if (json.status === 'error') {
+    throw new Error(
+      json.errors?.[0]?.detailed_message ||
+      json.errors?.[0]?.message ||
+      `Google Sheet error at ${cell}`
+    );
+  }
+
+  const cellData = json.table?.rows?.[0]?.c?.[0];
+
+  return {
+    value: cellData?.v ?? '',
+    formatted: cellData?.f ?? (cellData?.v !== undefined && cellData?.v !== null ? String(cellData.v) : ''),
+  };
+}
+
+async function fetchDailyReportAlmasor(): Promise<typeof DEFAULT_DAILY_REPORT> {
+  const cells = await Promise.all([
+    fetchDailyReportCell('AJ9'),
+
+    fetchDailyReportCell('AK11'),
+    fetchDailyReportCell('AK12'),
+    fetchDailyReportCell('AK14'),
+    fetchDailyReportCell('AK17'),
+    fetchDailyReportCell('AK18'),
+
+    fetchDailyReportCell('AK21'),
+    fetchDailyReportCell('AK22'),
+    fetchDailyReportCell('AK23'),
+    fetchDailyReportCell('AK24'),
+    fetchDailyReportCell('AK25'),
+
+    fetchDailyReportCell('AK29'),
+    fetchDailyReportCell('AK30'),
+    fetchDailyReportCell('AK31'),
+    fetchDailyReportCell('AK32'),
+    fetchDailyReportCell('AK33'),
+  ]);
+
+  return {
+    reportLabel: cells[0].formatted,
+    fiberYesterday: cells[1].formatted,
+    fiberToday: cells[2].formatted,
+    fsoi: cells[3].formatted,
+    forCloseout: cells[4].formatted,
+    forActivation: cells[5].formatted,
+    fiberMTD: cells[6].formatted,
+    smeVatIncMTD: cells[7].formatted,
+    smeVatExMTD: cells[8].formatted,
+    bidaMTD: cells[9].formatted,
+    s2sMTD: cells[10].formatted,
+    fiberRunrate: cells[11].formatted,
+    smeVatIncRunrate: cells[12].formatted,
+    smeVatExRunrate: cells[13].formatted,
+    bidaRunrate: cells[14].formatted,
+    s2sRunrate: cells[15].formatted,
+  };
+}
+
 let syncInProgress: Promise<any> | null = null;
 
 async function syncLiveGoogleSheets(): Promise<any> {
@@ -161,13 +273,17 @@ async function syncLiveGoogleSheets(): Promise<any> {
   syncInProgress = (async () => {
     try {
       console.log('Syncing live data from Google Sheets...');
-      const [joRows, summaryRows, albay, sorsogon, masbate, overall] = await Promise.all([
-        fetchGoogleSheetGViz('JO ACTIVATED', 'select A,G,S,U,Y,AC,AE,AF,AU where A is not null'),
+      const [joRows, summaryRows, albay, sorsogon, masbate, overall, draReport] = await Promise.all([
+        fetchGoogleSheetGViz('JO ACTIVATED', 'select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null'),
         fetchGoogleSheetGViz('SUMMARY', 'select B,C,D,E,F,G').catch(() => []),
         fetchSummaryTargetRow(11).catch(() => DEFAULT_TARGETS_MAP.Albay),
         fetchSummaryTargetRow(17).catch(() => DEFAULT_TARGETS_MAP.Sorsogon),
         fetchSummaryTargetRow(23).catch(() => DEFAULT_TARGETS_MAP.Masbate),
         fetchSummaryTargetRow(29).catch(() => DEFAULT_TARGETS_MAP['All districts']),
+        fetchDailyReportAlmasor().catch((err) => {
+          console.warn('DAILY REPORT ALMASOR live sync warning:', err.message);
+          return liveCache?.dailyReport || DEFAULT_DAILY_REPORT;
+        }),
       ]);
 
       const targetsMap = {
@@ -181,36 +297,13 @@ async function syncLiveGoogleSheets(): Promise<any> {
         ALMASOR: overall,
       };
 
-      // Fetch operational metrics from DAILY REPORT ALMASOR & FOR CLOSING
-      let fsoi = 14;
-      let draAsOf = '18 Sep 2026 10:28 am';
-      let forCloseout = 2;
-      let forActivation = 1;
-
-      try {
-        const draRes = await fetch(`${GOOGLE_SHEET_URL}/gviz/tq?sheet=DAILY%20REPORT%20ALMASOR&range=AJ1:AK20&tqx=out:json`);
-        const draText = await draRes.text();
-        const draMatch = draText.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/);
-        if (draMatch) {
-          const draJson = JSON.parse(draMatch[1]);
-          const r0 = draJson.table?.rows?.[0]?.c?.[0]?.v;
-          if (r0) draAsOf = String(r0);
-          const r8 = draJson.table?.rows?.[8]?.c?.[1]?.v;
-          if (r8 !== undefined) fsoi = Number(r8) || fsoi;
-          const r10 = draJson.table?.rows?.[10]?.c?.[1]?.v;
-          if (r10 !== undefined) forCloseout = Number(r10) || forCloseout;
-          const r11 = draJson.table?.rows?.[11]?.c?.[1]?.v;
-          if (r11 !== undefined) forActivation = Number(r11) || forActivation;
-        }
-      } catch (e: any) {
-        console.warn('Operational metrics fetch warning:', e.message);
-      }
+      const dailyReport = draReport || DEFAULT_DAILY_REPORT;
 
       const operationalStatus = {
-        asOfText: draAsOf,
-        fsoi,
-        forCloseout,
-        forActivation,
+        asOfText: dailyReport.reportLabel || '19 Sep 2026',
+        fsoi: Number(dailyReport.fsoi) || 16,
+        forCloseout: Number(dailyReport.forCloseout) || 1,
+        forActivation: Number(dailyReport.forActivation) || 2,
       };
 
       const now = new Date().toISOString();
@@ -218,6 +311,7 @@ async function syncLiveGoogleSheets(): Promise<any> {
         joRows,
         summaryRows,
         targetsMap,
+        dailyReport,
         operationalStatus,
         lastSynced: now,
         sourceName: 'Live Google Sheet',
@@ -228,6 +322,7 @@ async function syncLiveGoogleSheets(): Promise<any> {
         joRows,
         summaryRows,
         targetsMap,
+        dailyReport,
         operationalStatus,
         updatedAt: now,
       }, null, 2), (err) => {
@@ -298,6 +393,7 @@ async function startServer() {
         joRows: liveCache.joRows,
         summaryRows: liveCache.summaryRows,
         targetsMap: liveCache.targetsMap,
+        dailyReport: liveCache.dailyReport,
         operationalStatus: liveCache.operationalStatus,
         lastSynced: liveCache.lastSynced,
       });
@@ -309,6 +405,7 @@ async function startServer() {
           joRows: liveCache.joRows,
           summaryRows: liveCache.summaryRows,
           targetsMap: liveCache.targetsMap,
+          dailyReport: liveCache.dailyReport,
           operationalStatus: liveCache.operationalStatus,
           lastSynced: liveCache.lastSynced,
           warning: err.message,
@@ -328,6 +425,7 @@ async function startServer() {
         joRows: data.joRows,
         summaryRows: data.summaryRows,
         targetsMap: data.targetsMap,
+        dailyReport: data.dailyReport,
         operationalStatus: data.operationalStatus,
         lastSynced: data.lastSynced,
       });

@@ -6053,11 +6053,29 @@
       "s2s": 782
     }
   },
+  "dailyReport": {
+    "reportLabel": "19 Sep 2026",
+    "fiberYesterday": "23",
+    "fiberToday": "3",
+    "fsoi": "16",
+    "forCloseout": "1",
+    "forActivation": "2",
+    "fiberMTD": "456 (53%)",
+    "smeVatIncMTD": "79,135 (58%)",
+    "smeVatExMTD": "69,639 (51%)",
+    "bidaMTD": "3 (2%)",
+    "s2sMTD": "0 (0%)",
+    "fiberRunrate": "700 / 859 (81%)",
+    "smeVatIncRunrate": "121,436 / 136,508 (89%)",
+    "smeVatExRunrate": "69,639 / 136,508 (51%)",
+    "bidaRunrate": "5 / 113 (4%)",
+    "s2sRunrate": "0 / 782 (0%)"
+  },
   "operationalStatus": {
-    "asOfText": "18 Sep 2026 10:29 am",
-    "fsoi": 14,
-    "forCloseout": 2,
-    "forActivation": 1
+    "asOfText": "19 Sep 2026",
+    "fsoi": 16,
+    "forCloseout": 1,
+    "forActivation": 2
   },
   "updatedAt": "2026-09-18T02:29:51.755Z"
 }
