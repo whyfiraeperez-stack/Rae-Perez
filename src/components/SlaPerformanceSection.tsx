@@ -56,9 +56,9 @@ export const SlaPerformanceSection: React.FC<SlaPerformanceSectionProps> = ({
   return (
     <section className="mb-10" id="sla-performance-section">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-[#123b31]">SLA PERFORMANCE</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Monthly closed JO distribution by SLA ageing.
+        <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">SLA PERFORMANCE</h2>
+        <p className="text-sm text-gray-500 mt-0.5 font-medium">
+          Distribution + cumulative % • Monthly closed JO turnaround time distribution
         </p>
       </div>
 

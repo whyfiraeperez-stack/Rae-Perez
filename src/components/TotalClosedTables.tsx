@@ -123,9 +123,9 @@ export const TotalClosedTables: React.FC<TotalClosedTablesProps> = ({
   return (
     <section className="mb-8" id="total-closed-section">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-[#123b31]">TOTAL CLOSED</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Monthly closed JO details from the TOTAL CLOSED worksheet.
+        <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">TOTAL CLOSED</h2>
+        <p className="text-sm text-gray-500 mt-0.5 font-medium">
+          Compact tables • Monthly closed JO details from the TOTAL CLOSED worksheet
         </p>
       </div>
 

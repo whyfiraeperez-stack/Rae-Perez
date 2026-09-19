@@ -54,11 +54,11 @@ export const MtdVsTargetProvince: React.FC<MtdVsTargetProvinceProps> = ({
   return (
     <section className="mb-7" id="mtd-vs-target-by-province">
       <div className="mb-3">
-        <h2 className="text-xl font-bold text-[#123b31]">
+        <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
           MTD VS TARGET — BY PROVINCE
         </h2>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Monthly running performance against target across provincial districts.
+        <p className="text-sm text-gray-500 mt-0.5 font-medium">
+          Albay | Masbate | Sorsogon • Provincial performance against target
         </p>
       </div>
 

@@ -218,11 +218,11 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
       {/* SECTION HEADER */}
       <div className="flex items-center justify-between pb-5 border-b border-[#edf3f0] mb-5 flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-[#123b31]">
+          <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
             TOP PERFORMING SLI
           </h2>
           <p className="text-sm text-gray-500 mt-0.5 font-medium">
-            Activated JO performance by SLI partner.
+            Ranking + bars • Activated JO performance by SLI partner
           </p>
         </div>
 

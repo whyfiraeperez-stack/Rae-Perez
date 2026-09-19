@@ -1521,161 +1521,294 @@ export default function App() {
     <div className="min-h-screen bg-[#f7faf9] text-[#123b31]">
       <div className="max-w-[1500px] mx-auto px-6 py-6">
         {/* ================================================
-            1. HEADER & LIVE STATUS
+            1. SALES PERFORMANCE & CONTROLS TOOLBAR
+            Month | Report Date | Province | SLI Type | Package | Refresh | Download
         ================================================= */}
-        <header className="mb-5" id="dashboard-header">
-          <div className="flex items-start justify-between gap-5 flex-wrap">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-[#123b31]">
-                Sales performance
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Monthly view of MTD progress against target across the Almasor territory.
-              </p>
-            </div>
-
-            <div className="flex gap-2.5 flex-wrap items-center">
-              <select
-                id="month-select"
-                aria-label="Month"
-                className="bg-white border border-[#cfe4da] rounded-xl px-4 py-2 font-medium text-gray-700 cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
-                value={filters.month}
-                onChange={(e) => handleMonthChange(e.target.value)}
-              >
-                {monthOptions.map((month) => (
-                  <option key={month} value={month}>
-                    Month: {formatMonth(month)}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                id="date-select"
-                aria-label="Report Date"
-                className="bg-white border border-[#cfe4da] rounded-xl px-4 py-2 font-medium text-gray-700 cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
-                value={reportDate}
-                onChange={(e) => setReportDate(e.target.value)}
-              >
-                {dateOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    Date: {opt.label}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                id="refresh-button"
-                onClick={() => refresh()}
-                disabled={syncing}
-                className="px-4 py-2 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] font-semibold disabled:opacity-50 cursor-pointer hover:bg-[#cbf1e0] transition-colors shadow-sm"
-              >
-                {syncing ? "Updating..." : "Refresh now"}
-              </button>
-
-              {/* DOWNLOAD DATA DROPDOWN */}
-              <div className="relative" ref={downloadMenuRef}>
-                <button
-                  id="download-data-button"
-                  type="button"
-                  onClick={() => setDownloadDropdownOpen((prev) => !prev)}
-                  className="px-3.5 py-2 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm text-sm"
-                  aria-expanded={downloadDropdownOpen}
-                >
-                  <Download className="w-4 h-4 text-[#0b684e]" />
-                  <span>Download Data</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-[#0b684e]" />
-                </button>
-
-                {downloadDropdownOpen && (
-                  <div className="absolute right-0 mt-1.5 w-44 bg-white border border-[#dcece6] rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-                    <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-[#f0f5f2]">
-                      Download Data
-                    </div>
-                    <button
-                      type="button"
-                      id="download-excel-option"
-                      onClick={exportToExcel}
-                      className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                      <span>Excel (.xlsx)</span>
-                    </button>
-                    <button
-                      type="button"
-                      id="download-csv-option"
-                      onClick={exportToCSV}
-                      className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <FileText className="w-4 h-4 text-blue-600" />
-                      <span>CSV (.csv)</span>
-                    </button>
-                  </div>
-                )}
+        <header className="mb-6" id="dashboard-header">
+          <div className="flex flex-col gap-4">
+            {/* TITLE BAR */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[#123b31] uppercase">
+                  SALES PERFORMANCE
+                </h1>
+                <p className="text-xs md:text-sm text-gray-500 mt-0.5">
+                  Monthly view of MTD progress against target across the Almasor territory.
+                </p>
               </div>
 
-              <button
-                id="load-excel-button"
-                onClick={() => fileRef.current?.click()}
-                disabled={excelLoading}
-                className="px-4 py-2 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] font-semibold disabled:opacity-50 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
-              >
-                {excelLoading ? "Loading..." : "Load Excel"}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  id="reset-filters-button"
+                  className="text-xs font-semibold text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  onClick={() => {
+                    setFilters({
+                      month: DEFAULT_MONTH,
+                      province: "All districts",
+                      sliType: "All SLI Types",
+                      package: "All Packages",
+                    });
+                    setReportDate("2026-09-19");
+                  }}
+                >
+                  Reset filters
+                </button>
 
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    loadExcel(file);
+                <button
+                  id="load-excel-button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={excelLoading}
+                  className="text-xs font-semibold text-gray-600 hover:text-gray-900 bg-white border border-[#cfe4da] px-3 py-1.5 rounded-lg shadow-xs hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Upload an offline .xlsx or .csv workbook"
+                >
+                  {excelLoading ? "Loading..." : "Load Excel"}
+                </button>
+
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      loadExcel(file);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* UNIFIED CONTROLS TOOLBAR: Month | Report Date | Province | SLI Type | Package | Refresh | Download */}
+            <div className="bg-white border border-[#dcece6] rounded-2xl p-3 md:p-3.5 shadow-sm flex items-center gap-3 flex-wrap">
+              {/* Month */}
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="month-select" className="text-xs font-bold text-gray-500 uppercase">Month:</label>
+                <select
+                  id="month-select"
+                  aria-label="Month"
+                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+                  value={filters.month}
+                  onChange={(e) => handleMonthChange(e.target.value)}
+                >
+                  {monthOptions.map((month) => (
+                    <option key={month} value={month}>
+                      {formatMonth(month)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <span className="text-gray-200 hidden sm:inline">|</span>
+
+              {/* Report Date */}
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="date-select" className="text-xs font-bold text-gray-500 uppercase">Report Date:</label>
+                <select
+                  id="date-select"
+                  aria-label="Report Date"
+                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+                  value={reportDate}
+                  onChange={(e) => setReportDate(e.target.value)}
+                >
+                  {dateOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <span className="text-gray-200 hidden sm:inline">|</span>
+
+              {/* Province */}
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="province-select" className="text-xs font-bold text-gray-500 uppercase">Province:</label>
+                <select
+                  id="province-select"
+                  aria-label="Province"
+                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+                  value={filters.province}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, province: e.target.value }))
                   }
-                }}
-              />
+                >
+                  {PROVINCES.map((province) => (
+                    <option key={province} value={province}>
+                      {province}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <span className="text-gray-200 hidden sm:inline">|</span>
+
+              {/* SLI Type */}
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="sli-type-select" className="text-xs font-bold text-gray-500 uppercase">SLI Type:</label>
+                <select
+                  id="sli-type-select"
+                  aria-label="SLI Type"
+                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+                  value={filters.sliType}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, sliType: e.target.value }))
+                  }
+                >
+                  {SLI_TYPES.map((sli) => (
+                    <option key={sli} value={sli}>
+                      {sli}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <span className="text-gray-200 hidden sm:inline">|</span>
+
+              {/* Package */}
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="package-select" className="text-xs font-bold text-gray-500 uppercase">Package:</label>
+                <select
+                  id="package-select"
+                  aria-label="Package"
+                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+                  value={filters.package}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, package: e.target.value }))
+                  }
+                >
+                  {PACKAGES.map((pkg) => (
+                    <option key={pkg} value={pkg}>
+                      {pkg}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="ml-auto flex items-center gap-2">
+                {/* Refresh */}
+                <button
+                  id="refresh-button"
+                  onClick={() => refresh()}
+                  disabled={syncing}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] text-xs md:text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-[#cbf1e0] transition-colors shadow-xs"
+                >
+                  {syncing ? "Updating..." : "Refresh"}
+                </button>
+
+                {/* Download */}
+                <div className="relative" ref={downloadMenuRef}>
+                  <button
+                    id="download-data-button"
+                    type="button"
+                    onClick={() => setDownloadDropdownOpen((prev) => !prev)}
+                    className="px-3.5 py-1.5 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] text-xs md:text-sm font-bold flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 transition-colors shadow-xs"
+                    aria-expanded={downloadDropdownOpen}
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#0b684e]" />
+                    <span>Download</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#0b684e]" />
+                  </button>
+
+                  {downloadDropdownOpen && (
+                    <div className="absolute right-0 mt-1.5 w-44 bg-white border border-[#dcece6] rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                      <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-[#f0f5f2]">
+                        Download Format
+                      </div>
+                      <button
+                        type="button"
+                        id="download-excel-option"
+                        onClick={exportToExcel}
+                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
+                      >
+                        <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                        <span>Excel (.xlsx)</span>
+                      </button>
+                      <button
+                        type="button"
+                        id="download-csv-option"
+                        onClick={exportToCSV}
+                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
+                      >
+                        <FileText className="w-4 h-4 text-blue-600" />
+                        <span>CSV (.csv)</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
+        </header>
 
-          {/* LIVE STATUS BAR */}
-          <div className="mt-5 rounded-xl border border-[#c9ebdd] bg-[#e8f8f0] px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-2.5 text-sm flex-wrap">
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  syncing
-                    ? "bg-yellow-500 animate-pulse"
-                    : error && monthRows.length === 0
-                    ? "bg-red-500"
-                    : "bg-[#0aa37a]"
-                }`}
-              />
-
-              <span className="font-semibold text-gray-800">
+        {/* ================================================
+            2. LIVE STATUS
+            Last synced | Report date | Unique JOs
+        ================================================= */}
+        <section className="bg-white border border-[#c9ebdd] rounded-2xl p-4 md:p-5 mb-6 shadow-sm" id="live-status-section">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`h-3 w-3 rounded-full ${
+                    syncing
+                      ? "bg-yellow-500 animate-pulse"
+                      : error && monthRows.length === 0
+                      ? "bg-red-500"
+                      : "bg-[#0aa37a] shadow-[0_0_8px_#0aa37a]"
+                  }`}
+                />
+                <span className="text-xs font-black uppercase tracking-wider text-[#0a684d]">
+                  LIVE STATUS
+                </span>
+              </div>
+              <span className="text-gray-300">|</span>
+              <span className="text-xs font-semibold text-gray-700">
                 {syncing
                   ? "Updating live data..."
                   : error && monthRows.length === 0
                   ? "Live update issue"
                   : sourceName}
               </span>
-
-              {lastSynced && (
-                <span className="text-gray-500">
-                  • Last updated{" "}
-                  {lastSynced.toLocaleTimeString("en-PH", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                  })}
-                </span>
-              )}
-
-              <span className="text-gray-600 font-medium">
-                • Report date: <strong className="text-[#0a684d]">{formatDisplayDate(reportDate)}</strong>
-              </span>
             </div>
 
-            <div className="text-sm font-semibold text-[#0a684d]">
-              {formatCount(mtdRows.length)} MTD JOs ({formatCount(monthRows.length)} total in {formatMonth(filters.month)})
+            <div className="flex items-center gap-4 md:gap-6 text-xs md:text-sm flex-wrap">
+              {/* Last synced */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-400 font-medium">Last synced:</span>
+                <strong className="text-gray-800 font-semibold">
+                  {lastSynced
+                    ? lastSynced.toLocaleTimeString("en-PH", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })
+                    : "Pending"}
+                </strong>
+              </div>
+
+              <span className="text-gray-300 hidden sm:inline">|</span>
+
+              {/* Report date */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-400 font-medium">Report date:</span>
+                <strong className="text-[#0a684d] font-bold">
+                  {formatDisplayDate(reportDate)}
+                </strong>
+              </div>
+
+              <span className="text-gray-300 hidden sm:inline">|</span>
+
+              {/* Unique JOs */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-400 font-medium">Unique JOs:</span>
+                <strong className="text-[#123b31] font-bold">
+                  {formatCount(mtdRows.length)} MTD
+                </strong>
+                <span className="text-gray-400 text-xs">
+                  ({formatCount(monthRows.length)} total in {formatMonth(filters.month)})
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1692,84 +1825,17 @@ export default function App() {
               </button>
             </div>
           )}
-        </header>
-
-        {/* ================================================
-            2. FILTERS
-        ================================================= */}
-        <section className="bg-white rounded-2xl border border-[#dcece6] p-4 mb-6 shadow-sm" id="dashboard-filters">
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="font-semibold text-sm text-gray-600">Province:</label>
-            <select
-              className="rounded-xl border border-[#dcece6] px-3.5 py-2 bg-white text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#0aa37a]"
-              value={filters.province}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, province: e.target.value }))
-              }
-            >
-              {PROVINCES.map((province) => (
-                <option key={province} value={province}>
-                  {province}
-                </option>
-              ))}
-            </select>
-
-            <label className="font-semibold text-sm text-gray-600 ml-2">SLI Type:</label>
-            <select
-              className="rounded-xl border border-[#dcece6] px-3.5 py-2 bg-white text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#0aa37a]"
-              value={filters.sliType}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, sliType: e.target.value }))
-              }
-            >
-              {SLI_TYPES.map((sli) => (
-                <option key={sli} value={sli}>
-                  {sli}
-                </option>
-              ))}
-            </select>
-
-            <label className="font-semibold text-sm text-gray-600 ml-2">Package:</label>
-            <select
-              className="rounded-xl border border-[#dcece6] px-3.5 py-2 bg-white text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#0aa37a]"
-              value={filters.package}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, package: e.target.value }))
-              }
-            >
-              {PACKAGES.map((pkg) => (
-                <option key={pkg} value={pkg}>
-                  {pkg}
-                </option>
-              ))}
-            </select>
-
-            <button
-              className="ml-auto bg-gray-100 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
-              onClick={() => {
-                setFilters({
-                  month: DEFAULT_MONTH,
-                  province: "All districts",
-                  sliType: "All SLI Types",
-                  package: "All Packages",
-                });
-                setReportDate("2026-09-19");
-              }}
-            >
-              Reset filters
-            </button>
-          </div>
         </section>
 
         {/* ================================================
-            3. MAIN KPI CARDS (ACTIVATED JO COUNT & TOTAL MRC)
+            3. MAIN KPI CARDS (ACTIVATED JOs & TOTAL MRC)
         ================================================= */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-7" id="main-kpi-cards">
-          {/* Activated JO Count */}
+          {/* ACTIVATED JOs */}
           <div className="bg-[#15553f] text-white rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-activated-jo">
             <div>
-              <div className="text-xs font-bold uppercase tracking-wider opacity-80">
-                Activated JO Count (MTD)
+              <div className="text-xs font-bold uppercase tracking-wider opacity-85">
+                ACTIVATED JOs
               </div>
               <div className="text-6xl font-black mt-4 tracking-tight">
                 {formatCount(mainKpis.activatedJO)}
@@ -1780,11 +1846,11 @@ export default function App() {
             </div>
           </div>
 
-          {/* Total MRC */}
+          {/* TOTAL MRC */}
           <div className="bg-white border border-[#dcece6] rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-total-mrc">
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                Total MRC (MTD)
+                TOTAL MRC
               </div>
               <div className="text-5xl font-extrabold mt-4 text-[#073d2d] tracking-tight">
                 {formatPeso(mainKpis.totalMRC)}
@@ -1812,15 +1878,15 @@ export default function App() {
         </section>
 
         {/* ================================================
-            5. PACKAGE BREAKDOWN (FIBERX, SME, BIDA)
+            5. PACKAGE PERFORMANCE (FiberX | SME | BIDA)
         ================================================= */}
         <div className="mb-3">
-          <h2 className="text-xl font-bold text-[#123b31]">
-            Package breakdown
-            <span className="font-normal text-sm text-gray-500 ml-2">
-              (Respecting province and SLI filters)
-            </span>
+          <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
+            PACKAGE PERFORMANCE
           </h2>
+          <p className="text-sm text-gray-500 mt-0.5 font-medium">
+            FiberX | SME | BIDA • Running metrics respecting active province and SLI filters
+          </p>
         </div>
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5" id="package-breakdown">
@@ -1877,17 +1943,7 @@ export default function App() {
         </section>
 
         {/* ================================================
-            6. MTD VS TARGET — ALMASOR (FIBERX, SME, BIDA)
-        ================================================= */}
-        <MtdVsTargetAlmasor
-          runningFiberX={almasorRunning.fiberX}
-          runningSmeMRC={almasorRunning.smeMRC}
-          runningBida={almasorRunning.bida}
-          targets={almasorTargets}
-        />
-
-        {/* ================================================
-            7. MTD VS TARGET — BY PROVINCE (ALBAY, MASBATE, SORSOGON)
+            6. MTD VS TARGET — BY PROVINCE (ALBAY, MASBATE, SORSOGON)
         ================================================= */}
         <MtdVsTargetProvince
           provinceMetrics={provincialRunning}
@@ -1895,15 +1951,15 @@ export default function App() {
         />
 
         {/* ================================================
-            8. SLI CHANNEL BREAKDOWN (INHOUSE, MSA)
+            7. SLI CHANNEL (INHOUSE | MSA)
         ================================================= */}
         <div className="mb-3">
-          <h2 className="text-xl font-bold text-[#123b31]">
-            SLI channel breakdown
-            <span className="font-normal text-sm text-gray-500 ml-2">
-              (Respecting active package and province filters)
-            </span>
+          <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
+            SLI CHANNEL
           </h2>
+          <p className="text-sm text-gray-500 mt-0.5 font-medium">
+            INHOUSE | MSA • Channel distribution for activated JOs
+          </p>
         </div>
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8" id="sli-breakdown">
@@ -1912,7 +1968,7 @@ export default function App() {
         </section>
 
         {/* ================================================
-            9. TOP PERFORMING SLI
+            8. TOP PERFORMING SLI (Ranking + bars)
         ================================================= */}
         <TopPerformingSliSection
           rows={filteredRows}
@@ -1920,16 +1976,16 @@ export default function App() {
         />
 
         {/* ================================================
-            10. FIBERX RUNNING VS TARGET CHART
+            9. FIBERX RUNNING VS TARGET (Large line chart)
         ================================================= */}
         <section className="bg-white border border-[#dcece6] rounded-2xl p-6 shadow-sm mb-8" id="fiberx-chart">
           <div className="flex justify-between items-start gap-5 mb-5 flex-wrap">
             <div>
-              <h2 className="text-xl font-bold text-[#123b31]">
-                FiberX Running vs Target
+              <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
+                FIBERX RUNNING VS TARGET
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Monthly cumulative FiberX activations compared with the running target trajectory.
+              <p className="text-sm text-gray-500 mt-0.5 font-medium">
+                Large line chart • Monthly cumulative FiberX activations compared with running target trajectory
               </p>
             </div>
 
@@ -2013,7 +2069,7 @@ export default function App() {
         </section>
 
         {/* ================================================
-            9. TOTAL CLOSED (TABLES 1, 2, 3)
+            10. TOTAL CLOSED (Compact tables)
         ================================================= */}
         <TotalClosedTables
           rows={filteredRows}
@@ -2021,9 +2077,108 @@ export default function App() {
         />
 
         {/* ================================================
-            10. SLA PERFORMANCE (TABLE & PROGRESS VISUALIZATION)
+            11. SLA PERFORMANCE (Distribution + cumulative %)
         ================================================= */}
         <SlaPerformanceSection rows={filteredRows} />
+
+        {/* ================================================
+            12. FOOTER (Last synced | Data source | Verify counts)
+        ================================================= */}
+        <footer className="mt-12 pt-8 border-t border-[#dcece6] pb-10" id="dashboard-footer">
+          <div className="bg-white border border-[#dcece6] rounded-2xl p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pb-6 border-b border-[#edf3f0]">
+              <div>
+                <div className="text-xs font-black uppercase tracking-wider text-[#0a684d]">
+                  FOOTER
+                </div>
+                <div className="text-lg font-bold text-[#123b31] mt-0.5">
+                  Almasor Territory Operational Performance Hub
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Synchronized with Converge Almasor SLI daily tracking workbook.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => refresh()}
+                  disabled={syncing}
+                  className="px-4 py-2 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] text-xs font-bold hover:bg-[#cbf1e0] transition-colors cursor-pointer"
+                >
+                  {syncing ? "Syncing..." : "Sync Fresh Data"}
+                </button>
+                <button
+                  onClick={exportToExcel}
+                  className="px-4 py-2 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Export Workbook
+                </button>
+              </div>
+            </div>
+
+            {/* THREE COLUMNS: Last synced | Data source | Verify counts */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+              {/* 1. LAST SYNCED */}
+              <div className="bg-[#f8faf9] rounded-xl p-4 border border-[#e8f0ed]">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  LAST SYNCED
+                </div>
+                <div className="text-base font-bold text-[#123b31]">
+                  {lastSynced
+                    ? lastSynced.toLocaleDateString("en-PH", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      }) +
+                      " " +
+                      lastSynced.toLocaleTimeString("en-PH", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })
+                    : "Awaiting sync"}
+                </div>
+                <div className="text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      syncing ? "bg-yellow-500 animate-ping" : "bg-[#0aa37a]"
+                    }`}
+                  />
+                  <span>{syncing ? "Active sync in progress" : "Live synchronization active"}</span>
+                </div>
+              </div>
+
+              {/* 2. DATA SOURCE */}
+              <div className="bg-[#f8faf9] rounded-xl p-4 border border-[#e8f0ed]">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  DATA SOURCE
+                </div>
+                <div className="text-base font-bold text-[#0a684d]">
+                  {sourceName}
+                </div>
+                <div className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                  Google Sheet SLI Tracker • Tab: <span className="font-semibold text-gray-700">DAILY REPORT ALMASOR</span>
+                </div>
+              </div>
+
+              {/* 3. VERIFY COUNTS */}
+              <div className="bg-[#f8faf9] rounded-xl p-4 border border-[#e8f0ed]">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  VERIFY COUNTS
+                </div>
+                <div className="text-base font-bold text-[#123b31]">
+                  {formatCount(mtdRows.length)} MTD / {formatCount(monthRows.length)} Total
+                </div>
+                <div className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                  FiberX: <strong className="text-gray-700">{formatCount(packageMetrics.fiberX)}</strong> • SME: <strong className="text-gray-700">{formatCount(packageMetrics.sme)}</strong> • BIDA: <strong className="text-gray-700">{formatCount(packageMetrics.bida)}</strong>
+                </div>
+                <div className="text-[11px] text-[#0a684d] font-semibold mt-1 flex items-center gap-1">
+                  <span>✓</span> Unique JO verification complete
+                </div>
+              </div>
+            </div>
+          </div>
+        </footer>
 
         {/* TOAST NOTIFICATION */}
         {toastMessage && (
