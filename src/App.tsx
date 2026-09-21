@@ -182,8 +182,9 @@ function normalizePackage(value: any): string {
 }
 
 /*
-  SLI TYPE (Column S) is the primary source.
-  VENDOR TYPE (Column U) is used as fallback when SLI TYPE is blank.
+  SLI TYPE MUST COME ONLY FROM COLUMN S.
+  Do NOT use Vendor Type column U as a fallback for SLI Type.
+  Valid SLI TYPE values: INHOUSE, MSA
 */
 function normalizeSLI(row: RawRow): string {
   const sliType = normalizeText(getRowValue(row, "SLI TYPE", "S", "SLITYPE"));
@@ -191,12 +192,16 @@ function normalizeSLI(row: RawRow): string {
   if (sliType === "INHOUSE") return "INHOUSE";
   if (sliType === "MSA") return "MSA";
 
+  return "";
+}
+
+function normalizeVendorType(row: RawRow): string {
   const vendorType = normalizeText(getRowValue(row, "VENDOR TYPE", "U", "VENDORTYPE"));
 
   if (vendorType === "INHOUSE") return "INHOUSE";
   if (vendorType === "MSA") return "MSA";
 
-  return "";
+  return vendorType;
 }
 
 /*
@@ -518,10 +523,11 @@ async function fetchGoogleSheet(sheetName: string, query: string): Promise<RawRo
   AC = PACKAGE
   AE = MRC
   AF = CLOSING DATE
+  AU = VAT EX MRC
 */
 async function fetchJOActivated(): Promise<RawRow[]> {
   const sheetName = "JO ACTIVATED";
-  const query = "select A,G,Q,S,U,Y,AC,AE,AF where A is not null";
+  const query = "select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null";
   const url =
     `${GOOGLE_SHEET_URL}/gviz/tq` +
     `?sheet=${encodeURIComponent(sheetName)}` +
@@ -568,6 +574,17 @@ async function fetchJOActivated(): Promise<RawRow[]> {
       "PACKAGE": values[6]?.v ?? "",
       "MRC": values[7]?.v ?? "",
       "CLOSING DATE": values[8]?.v ?? "",
+      "VAT EX MRC": values[9]?.v ?? "",
+      A: values[0]?.v ?? "",
+      G: values[1]?.v ?? "",
+      Q: values[2]?.v ?? "",
+      S: values[3]?.v ?? "",
+      U: values[4]?.v ?? "",
+      Y: values[5]?.v ?? "",
+      AC: values[6]?.v ?? "",
+      AE: values[7]?.v ?? "",
+      AF: values[8]?.v ?? "",
+      AU: values[9]?.v ?? "",
     };
   });
 }
@@ -716,6 +733,16 @@ function parseTargetsFromSummaryRows(summaryRows: RawRow[]): Record<string, Targ
    PARSE JO RECORDS (UNIQUE JO NUMBER DE-DUPLICATION)
 ========================================================= */
 
+export function uniqueByJoNumber(rows: ParsedJO[]): ParsedJO[] {
+  const map = new Map<string, ParsedJO>();
+  for (const row of rows) {
+    if (!map.has(row.joNumber)) {
+      map.set(row.joNumber, row);
+    }
+  }
+  return Array.from(map.values());
+}
+
 function parseJORows(rawRows: RawRow[]): ParsedJO[] {
   const parsed: ParsedJO[] = [];
 
@@ -749,12 +776,17 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
       continue;
     }
 
-    const rawSli = row["SLI"] ?? getRowValue(row, "SLI", "Q", "SLINAME");
-    const normSli = normalizeText(rawSli);
-    const sli = normSli === "ONEMSA" ? "OneMSA" : normSli;
+    const rawSli = String(row["SLI"] ?? getRowValue(row, "SLI", "Q", "SLINAME") ?? "").trim();
+    const sli = rawSli.replace(/\s+/g, " ");
 
     const rawMrc = numberValue(row["MRC"] ?? getRowValue(row, "MRC", "AE", "AMOUNT"));
-    const rawMrcVatEx = numberValue(row["MRC VAT EX"] ?? getRowValue(row, "MRC VAT EX", "AU", "MRCVATEX"));
+    const rawMrcVatEx = numberValue(
+      row["VAT EX MRC"] ??
+      row["VAT EX"] ??
+      row["MRC VAT EX"] ??
+      getRowValue(row, "VAT EX MRC", "AU", "MRCVATEX", "VATEXMRC")
+    );
+    const vatExMrc = rawMrcVatEx || (rawMrc > 0 ? rawMrc / 1.12 : 0);
 
     const rawSla = String(row["SLA"] ?? getRowValue(row, "SLA", "Y", "Ageing", "Aging") ?? "").trim();
     const sla = normalizeSLA(rawSla);
@@ -766,26 +798,18 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
       ),
       sli,
       sliType: normalizeSLI(row),
-      vendorType: normalizeText(
-        row["VENDOR TYPE"] ?? getRowValue(row, "VENDOR TYPE", "U", "VENDORTYPE")
-      ),
+      vendorType: normalizeVendorType(row),
       package: packageName,
       mrc: rawMrc,
+      vatExMrc,
       sla,
       closingDate,
-      mrcVatEx: rawMrcVatEx || (rawMrc > 0 ? rawMrc / 1.12 : 0),
+      mrcVatEx: vatExMrc,
     });
   }
 
   // De-duplicate using UNIQUE JO NUMBER
-  const unique = new Map<string, ParsedJO>();
-  for (const item of parsed) {
-    if (!unique.has(item.joNumber)) {
-      unique.set(item.joNumber, item);
-    }
-  }
-
-  return Array.from(unique.values());
+  return uniqueByJoNumber(parsed);
 }
 
 /* =========================================================
@@ -1194,6 +1218,7 @@ export default function App() {
       "VENDOR TYPE": row.vendorType,
       "PACKAGE": row.package,
       "MRC": row.mrc,
+      "VAT EX MRC": row.vatExMrc,
       "CLOSING DATE": formatExportDate(row.closingDate),
       "SLA": row.sla,
     }));
@@ -1203,6 +1228,7 @@ export default function App() {
 
     XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Data");
     XLSX.writeFile(workbook, createExportFilename("xlsx"));
+    showToast("Data downloaded successfully.");
   };
 
   const exportToCSV = () => {
@@ -1221,6 +1247,7 @@ export default function App() {
       "VENDOR TYPE": row.vendorType,
       "PACKAGE": row.package,
       "MRC": row.mrc,
+      "VAT EX MRC": row.vatExMrc,
       "CLOSING DATE": formatExportDate(row.closingDate),
       "SLA": row.sla,
     }));
@@ -1242,6 +1269,7 @@ export default function App() {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+    showToast("Data downloaded successfully.");
   };
 
   // Package section scope: respects province and SLI filters, MTD cutoff
@@ -1521,73 +1549,28 @@ export default function App() {
     <div className="min-h-screen bg-[#f7faf9] text-[#123b31]">
       <div className="max-w-[1500px] mx-auto px-6 py-6">
         {/* ================================================
-            1. SALES PERFORMANCE & CONTROLS TOOLBAR
-            Month | Report Date | Province | SLI Type | Package | Refresh | Download
+            1. HEADER
+            Month | Date | Refresh | Download
         ================================================= */}
         <header className="mb-6" id="dashboard-header">
-          <div className="flex flex-col gap-4">
-            {/* TITLE BAR */}
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[#123b31] uppercase">
-                  SALES PERFORMANCE
-                </h1>
-                <p className="text-xs md:text-sm text-gray-500 mt-0.5">
-                  Monthly view of MTD progress against target across the Almasor territory.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  id="reset-filters-button"
-                  className="text-xs font-semibold text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                  onClick={() => {
-                    setFilters({
-                      month: DEFAULT_MONTH,
-                      province: "All districts",
-                      sliType: "All SLI Types",
-                      package: "All Packages",
-                    });
-                    setReportDate("2026-09-19");
-                  }}
-                >
-                  Reset filters
-                </button>
-
-                <button
-                  id="load-excel-button"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={excelLoading}
-                  className="text-xs font-semibold text-gray-600 hover:text-gray-900 bg-white border border-[#cfe4da] px-3 py-1.5 rounded-lg shadow-xs hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
-                  title="Upload an offline .xlsx or .csv workbook"
-                >
-                  {excelLoading ? "Loading..." : "Load Excel"}
-                </button>
-
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      loadExcel(file);
-                    }
-                  }}
-                />
-              </div>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[#123b31] uppercase">
+                SALES PERFORMANCE
+              </h1>
+              <p className="text-xs md:text-sm text-gray-500 mt-0.5">
+                Albay | Masbate | Sorsogon
+              </p>
             </div>
 
-            {/* UNIFIED CONTROLS TOOLBAR: Month | Report Date | Province | SLI Type | Package | Refresh | Download */}
-            <div className="bg-white border border-[#dcece6] rounded-2xl p-3 md:p-3.5 shadow-sm flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
               {/* Month */}
               <div className="flex items-center gap-1.5">
                 <label htmlFor="month-select" className="text-xs font-bold text-gray-500 uppercase">Month:</label>
                 <select
                   id="month-select"
                   aria-label="Month"
-                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+                  className="bg-white border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
                   value={filters.month}
                   onChange={(e) => handleMonthChange(e.target.value)}
                 >
@@ -1599,15 +1582,13 @@ export default function App() {
                 </select>
               </div>
 
-              <span className="text-gray-200 hidden sm:inline">|</span>
-
-              {/* Report Date */}
+              {/* Date */}
               <div className="flex items-center gap-1.5">
-                <label htmlFor="date-select" className="text-xs font-bold text-gray-500 uppercase">Report Date:</label>
+                <label htmlFor="date-select" className="text-xs font-bold text-gray-500 uppercase">Date:</label>
                 <select
                   id="date-select"
                   aria-label="Report Date"
-                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+                  className="bg-white border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
                   value={reportDate}
                   onChange={(e) => setReportDate(e.target.value)}
                 >
@@ -1619,124 +1600,80 @@ export default function App() {
                 </select>
               </div>
 
-              <span className="text-gray-200 hidden sm:inline">|</span>
+              {/* Refresh */}
+              <button
+                id="refresh-button"
+                onClick={() => refresh()}
+                disabled={syncing}
+                className="px-3.5 py-1.5 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] text-xs md:text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-[#cbf1e0] transition-colors shadow-xs"
+              >
+                {syncing ? "Updating..." : "Refresh"}
+              </button>
 
-              {/* Province */}
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="province-select" className="text-xs font-bold text-gray-500 uppercase">Province:</label>
-                <select
-                  id="province-select"
-                  aria-label="Province"
-                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
-                  value={filters.province}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, province: e.target.value }))
-                  }
-                >
-                  {PROVINCES.map((province) => (
-                    <option key={province} value={province}>
-                      {province}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <span className="text-gray-200 hidden sm:inline">|</span>
-
-              {/* SLI Type */}
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="sli-type-select" className="text-xs font-bold text-gray-500 uppercase">SLI Type:</label>
-                <select
-                  id="sli-type-select"
-                  aria-label="SLI Type"
-                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
-                  value={filters.sliType}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, sliType: e.target.value }))
-                  }
-                >
-                  {SLI_TYPES.map((sli) => (
-                    <option key={sli} value={sli}>
-                      {sli}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <span className="text-gray-200 hidden sm:inline">|</span>
-
-              {/* Package */}
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="package-select" className="text-xs font-bold text-gray-500 uppercase">Package:</label>
-                <select
-                  id="package-select"
-                  aria-label="Package"
-                  className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
-                  value={filters.package}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, package: e.target.value }))
-                  }
-                >
-                  {PACKAGES.map((pkg) => (
-                    <option key={pkg} value={pkg}>
-                      {pkg}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="ml-auto flex items-center gap-2">
-                {/* Refresh */}
+              {/* Download */}
+              <div className="relative" ref={downloadMenuRef}>
                 <button
-                  id="refresh-button"
-                  onClick={() => refresh()}
-                  disabled={syncing}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] text-xs md:text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-[#cbf1e0] transition-colors shadow-xs"
+                  id="download-data-button"
+                  type="button"
+                  onClick={() => setDownloadDropdownOpen((prev) => !prev)}
+                  className="px-3.5 py-1.5 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] text-xs md:text-sm font-bold flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 transition-colors shadow-xs"
+                  aria-expanded={downloadDropdownOpen}
                 >
-                  {syncing ? "Updating..." : "Refresh"}
+                  <Download className="w-3.5 h-3.5 text-[#0b684e]" />
+                  <span>Download</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#0b684e]" />
                 </button>
 
-                {/* Download */}
-                <div className="relative" ref={downloadMenuRef}>
-                  <button
-                    id="download-data-button"
-                    type="button"
-                    onClick={() => setDownloadDropdownOpen((prev) => !prev)}
-                    className="px-3.5 py-1.5 rounded-xl bg-white border border-[#cfe4da] text-[#0b684e] text-xs md:text-sm font-bold flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 transition-colors shadow-xs"
-                    aria-expanded={downloadDropdownOpen}
-                  >
-                    <Download className="w-3.5 h-3.5 text-[#0b684e]" />
-                    <span>Download</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-[#0b684e]" />
-                  </button>
-
-                  {downloadDropdownOpen && (
-                    <div className="absolute right-0 mt-1.5 w-44 bg-white border border-[#dcece6] rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-                      <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-[#f0f5f2]">
-                        Download Format
-                      </div>
-                      <button
-                        type="button"
-                        id="download-excel-option"
-                        onClick={exportToExcel}
-                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
-                      >
-                        <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                        <span>Excel (.xlsx)</span>
-                      </button>
-                      <button
-                        type="button"
-                        id="download-csv-option"
-                        onClick={exportToCSV}
-                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
-                      >
-                        <FileText className="w-4 h-4 text-blue-600" />
-                        <span>CSV (.csv)</span>
-                      </button>
+                {downloadDropdownOpen && (
+                  <div className="absolute right-0 mt-1.5 w-44 bg-white border border-[#dcece6] rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-[#f0f5f2]">
+                      Download Format
                     </div>
-                  )}
-                </div>
+                    <button
+                      type="button"
+                      id="download-excel-option"
+                      onClick={exportToExcel}
+                      className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                      <span>Excel (.xlsx)</span>
+                    </button>
+                    <button
+                      type="button"
+                      id="download-csv-option"
+                      onClick={exportToCSV}
+                      className="w-full text-left px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-[#f2f8f5] hover:text-[#0b684e] flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      <span>CSV (.csv)</span>
+                    </button>
+                  </div>
+                )}
               </div>
+
+              {/* Load Excel */}
+              <button
+                id="load-excel-button"
+                onClick={() => fileRef.current?.click()}
+                disabled={excelLoading}
+                className="text-xs font-semibold text-gray-600 hover:text-gray-900 bg-white border border-[#cfe4da] px-3 py-1.5 rounded-lg shadow-xs hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                title="Upload an offline .xlsx or .csv workbook"
+              >
+                {excelLoading ? "Loading..." : "Load Excel"}
+              </button>
+
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    loadExcel(file);
+                  }
+                }}
+              />
             </div>
           </div>
         </header>
@@ -1825,6 +1762,94 @@ export default function App() {
               </button>
             </div>
           )}
+        </section>
+
+        {/* ================================================
+            3. FILTERS
+            Province | SLI Type | Package | Reset filters
+        ================================================= */}
+        <section className="bg-white border border-[#dcece6] rounded-2xl p-3.5 mb-6 shadow-sm flex items-center gap-3 flex-wrap" id="filters-section">
+          {/* Province */}
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="province-select" className="text-xs font-bold text-gray-500 uppercase">Province:</label>
+            <select
+              id="province-select"
+              aria-label="Province"
+              className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+              value={filters.province}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, province: e.target.value }))
+              }
+            >
+              {PROVINCES.map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <span className="text-gray-200 hidden sm:inline">|</span>
+
+          {/* SLI Type */}
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="sli-type-select" className="text-xs font-bold text-gray-500 uppercase">SLI Type:</label>
+            <select
+              id="sli-type-select"
+              aria-label="SLI Type"
+              className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+              value={filters.sliType}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, sliType: e.target.value }))
+              }
+            >
+              {SLI_TYPES.map((sli) => (
+                <option key={sli} value={sli}>
+                  {sli}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <span className="text-gray-200 hidden sm:inline">|</span>
+
+          {/* Package */}
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="package-select" className="text-xs font-bold text-gray-500 uppercase">Package:</label>
+            <select
+              id="package-select"
+              aria-label="Package"
+              className="bg-[#f8faf9] border border-[#dcece6] rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-gray-800 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#0aa37a]"
+              value={filters.package}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, package: e.target.value }))
+              }
+            >
+              {PACKAGES.map((pkg) => (
+                <option key={pkg} value={pkg}>
+                  {pkg}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ml-auto">
+            <button
+              id="reset-filters-button"
+              className="text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              onClick={() => {
+                setFilters({
+                  month: DEFAULT_MONTH,
+                  province: "All districts",
+                  sliType: "All SLI Types",
+                  package: "All Packages",
+                });
+                setReportDate("2026-09-19");
+              }}
+            >
+              Reset filters
+            </button>
+          </div>
         </section>
 
         {/* ================================================

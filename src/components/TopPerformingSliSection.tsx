@@ -248,15 +248,16 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
           {/* DESKTOP TABLE VIEW */}
           <div className="hidden md:block">
             {/* Table Header */}
-            <div className="grid grid-cols-12 gap-3 text-xs font-bold uppercase tracking-wider text-gray-500 pb-3 border-b border-[#edf3f0] px-3">
+            <div className="grid grid-cols-12 gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 pb-3 border-b border-[#edf3f0] px-3">
               <div className="col-span-1">RANK</div>
               <div className="col-span-3">SLI</div>
               <div className="col-span-2">SLI TYPE</div>
-              <div className="col-span-2">PROVINCE</div>
+              <div className="col-span-1">PROVINCE</div>
               <div className="col-span-1 text-right">FIBERX</div>
               <div className="col-span-1 text-right">SME</div>
               <div className="col-span-1 text-right">BIDA</div>
               <div className="col-span-1 text-right">TOTAL</div>
+              <div className="col-span-1 text-right">SHARE</div>
             </div>
 
             {/* Table Rows */}
@@ -280,7 +281,7 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
                     {/* Main Row Content */}
                     <div
                       onClick={() => toggleExpand(item.name)}
-                      className="grid grid-cols-12 gap-3 items-center py-3.5 px-3 cursor-pointer text-sm select-none"
+                      className="grid grid-cols-12 gap-2 items-center py-3.5 px-3 cursor-pointer text-sm select-none"
                     >
                       {/* Rank */}
                       <div className="col-span-1 flex items-center gap-1.5">
@@ -315,24 +316,27 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
                         </div>
                       </div>
 
-                      {/* SLI Type */}
+                      {/* SLI Type: Valid INHOUSE, MSA from Column S only */}
                       <div className="col-span-2">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
-                            item.sliTypeDisplay.includes('INHOUSE') &&
-                            item.sliTypeDisplay.includes('MSA')
-                              ? 'bg-[#eef4f1] text-[#123b31] border border-[#cfe4da]'
-                              : item.sliTypeDisplay === 'INHOUSE'
-                              ? 'bg-[#e8f5f1] text-[#0a684d] border border-[#cfe4da]'
-                              : 'bg-[#edf4fc] text-[#1d4ed8] border border-[#cfe0fa]'
-                          }`}
-                        >
-                          {item.sliTypeDisplay}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {item.sliTypes.includes('INHOUSE') && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#e8f5f1] text-[#0a684d] border border-[#cfe4da]">
+                              INHOUSE
+                            </span>
+                          )}
+                          {item.sliTypes.includes('MSA') && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#edf4fc] text-[#1d4ed8] border border-[#cfe0fa]">
+                              MSA
+                            </span>
+                          )}
+                          {!item.sliTypes.includes('INHOUSE') && !item.sliTypes.includes('MSA') && (
+                            <span className="text-gray-400 text-xs">—</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Province */}
-                      <div className="col-span-2 text-xs font-medium text-gray-600">
+                      <div className="col-span-1 text-xs font-medium text-gray-600 truncate" title={item.provinceDisplay}>
                         {item.provinceDisplay}
                       </div>
 
@@ -351,25 +355,25 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
                         {formatCount(item.bida)}
                       </div>
 
-                      {/* Total & Share with Toggle */}
-                      <div className="col-span-1 text-right flex items-center justify-end gap-2">
-                        <div>
-                          <div className="font-extrabold text-[#123b31] text-[15px]">
-                            {formatCount(item.total)}
-                          </div>
-                          <div className="text-[11px] font-semibold text-[#0a8a64]">
-                            {formatPercent(item.share)}
-                          </div>
-                        </div>
+                      {/* Total */}
+                      <div className="col-span-1 text-right font-extrabold text-[#123b31] text-[15px]">
+                        {formatCount(item.total)}
+                      </div>
+
+                      {/* Share with Toggle */}
+                      <div className="col-span-1 text-right flex items-center justify-end gap-1.5">
+                        <span className="text-xs font-bold text-[#0a8a64]">
+                          {formatPercent(item.share)}
+                        </span>
                         <button
                           type="button"
                           aria-label={`Toggle details for ${item.name}`}
                           className="text-gray-400 hover:text-gray-600 p-0.5 transition-transform"
                         >
                           {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
+                            <ChevronUp className="w-3.5 h-3.5" />
                           ) : (
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronDown className="w-3.5 h-3.5" />
                           )}
                         </button>
                       </div>

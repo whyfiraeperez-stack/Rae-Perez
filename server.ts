@@ -145,6 +145,30 @@ async function fetchGoogleSheetGViz(sheetName: string, query?: string, range?: s
     headers.forEach((header: string, index: number) => {
       record[header] = row.c?.[index]?.v ?? '';
     });
+    if (sheetName === 'JO ACTIVATED' && row.c) {
+      const getVal = (idx: number) => row.c?.[idx]?.v ?? '';
+      record['A'] = record['A'] || getVal(0);
+      record['JO NUMBER'] = record['JO NUMBER'] || getVal(0);
+      record['G'] = record['G'] || getVal(1);
+      record['STATEORPROVINCE'] = record['STATEORPROVINCE'] || getVal(1);
+      record['PROVINCE'] = record['PROVINCE'] || getVal(1);
+      record['Q'] = record['Q'] || getVal(2);
+      record['SLI'] = record['SLI'] || getVal(2);
+      record['S'] = record['S'] || getVal(3);
+      record['SLI TYPE'] = record['SLI TYPE'] || getVal(3);
+      record['U'] = record['U'] || getVal(4);
+      record['VENDOR TYPE'] = record['VENDOR TYPE'] || getVal(4);
+      record['Y'] = record['Y'] || getVal(5);
+      record['SLA'] = record['SLA'] || getVal(5);
+      record['AC'] = record['AC'] || getVal(6);
+      record['PACKAGE'] = record['PACKAGE'] || getVal(6);
+      record['AE'] = record['AE'] || getVal(7);
+      record['MRC'] = record['MRC'] || getVal(7);
+      record['AF'] = record['AF'] || getVal(8);
+      record['CLOSING DATE'] = record['CLOSING DATE'] || getVal(8);
+      record['AU'] = record['AU'] || getVal(9);
+      record['VAT EX MRC'] = record['VAT EX MRC'] || getVal(9);
+    }
     return record;
   });
 }

@@ -111,6 +111,7 @@ export type ParsedJO = {
   vendorType: string;
   package: string;
   mrc: number;
+  vatExMrc: number;
   sla: string;
   closingDate: Date;
   mrcVatEx?: number;
