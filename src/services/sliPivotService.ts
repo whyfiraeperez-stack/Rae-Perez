@@ -55,7 +55,8 @@ export interface FetchPivotResult {
  * where the official "SLI ACTIVATION - SEPTEMBER 2026" pivot table block is maintained.
  */
 export async function fetchSliActivationPivot(
-  sheetName: string = 'SLI ACTIVATION - SEPTEMBER 2026'
+  sheetName: string = 'SLI ACTIVATION - SEPTEMBER 2026',
+  signal?: AbortSignal
 ): Promise<FetchPivotResult> {
   // Helper to query GViz
   const queryGviz = async (targetSheet: string) => {
@@ -68,6 +69,7 @@ export async function fetchSliActivationPivot(
 
     const response = await fetch(url, {
       cache: 'no-store',
+      signal,
       headers: { Accept: 'text/plain' },
     });
 

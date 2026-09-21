@@ -52,6 +52,15 @@ function formatReportLabel(raw: string): string {
   return cleaned;
 }
 
+function getCurrentManilaDateKey(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
 export const DailySLIReport: React.FC<DailySLIReportProps> = ({
   reportDate,
   monthKey,
@@ -59,14 +68,16 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
   overallTargets,
   dailyReport,
   dailyReportError,
-  latestDataDate = '2026-09-19',
+  latestDataDate,
 }) => {
   // Use official daily report from Google Sheet DAILY REPORT ALMASOR, or fallback default
   const activeReport: DailyReportAlmasor = dailyReport || DEFAULT_DAILY_REPORT;
+  const currentManilaToday = getCurrentManilaDateKey();
+  const effectiveLatestDate = latestDataDate || currentManilaToday;
 
   // Parse report date
   const { year, monthNum, dayNum, daysInMonth, selectedFormattedDate } = useMemo(() => {
-    const [y, m, d] = (reportDate || '2026-09-19').split('-').map(Number);
+    const [y, m, d] = (reportDate || currentManilaToday).split('-').map(Number);
     const dateObj = new Date(y, m - 1, d);
     const dim = new Date(y, m, 0).getDate();
 
@@ -74,7 +85,7 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
       day: '2-digit',
       month: 'short',
       year: 'numeric',
-    }); // e.g. "19 Sep 2026"
+    });
 
     return {
       year: y,
@@ -83,7 +94,7 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
       daysInMonth: dim,
       selectedFormattedDate: formatted,
     };
-  }, [reportDate]);
+  }, [reportDate, currentManilaToday]);
 
   // Determine if selected reportDate is TODAY
   const isToday = useMemo(() => {
@@ -107,24 +118,15 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
       return true;
     }
 
-    // Default target active date for spreadsheet is 2026-09-19
-    if (reportDate === '2026-09-19') return true;
-
-    // If reportDate >= latest recorded date
-    if (latestDataDate && reportDate >= latestDataDate) return true;
-
     // Manila time
-    const now = new Date();
-    const manilaIso = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Manila',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(now);
+    const manilaIso = getCurrentManilaDateKey();
     if (reportDate === manilaIso) return true;
 
+    // If reportDate >= latest recorded date
+    if (effectiveLatestDate && reportDate >= effectiveLatestDate) return true;
+
     return false;
-  }, [reportDate, activeReport.reportLabel, year, monthNum, dayNum, latestDataDate]);
+  }, [reportDate, activeReport.reportLabel, year, monthNum, dayNum, effectiveLatestDate]);
 
   // Targets from SUMMARY
   const targets = useMemo(() => ({

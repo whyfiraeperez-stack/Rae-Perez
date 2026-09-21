@@ -300,6 +300,19 @@ async function fetchDailyReportAlmasor(): Promise<typeof DEFAULT_DAILY_REPORT> {
   };
 }
 
+function getCurrentManilaDateKey(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
+function getCurrentManilaMonthKey(): string {
+  return getCurrentManilaDateKey().slice(0, 7);
+}
+
 let syncInProgress: Promise<any> | null = null;
 
 async function syncLiveGoogleSheets(): Promise<any> {
@@ -308,6 +321,9 @@ async function syncLiveGoogleSheets(): Promise<any> {
   syncInProgress = (async () => {
     try {
       console.log('Syncing live data from Google Sheets...');
+      const currentMonthKey = getCurrentManilaMonthKey();
+      const currentPivotTab = getSliPivotTabName(currentMonthKey);
+
       const [joRows, summaryRows, albay, sorsogon, masbate, overall, draReport, sliPivot] = await Promise.all([
         fetchGoogleSheetGViz('JO ACTIVATED', 'select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null'),
         fetchGoogleSheetGViz('SUMMARY', 'select B,C,D,E,F,G').catch(() => []),
@@ -319,7 +335,7 @@ async function syncLiveGoogleSheets(): Promise<any> {
           console.warn('DAILY REPORT ALMASOR live sync warning:', err.message);
           return liveCache?.dailyReport || DEFAULT_DAILY_REPORT;
         }),
-        fetchSliActivationPivot('SLI ACTIVATION - SEPTEMBER 2026')
+        fetchSliActivationPivot(currentPivotTab)
           .then((res) => ({
             found: res.found,
             sheetSource: res.sheetSource,
@@ -329,7 +345,7 @@ async function syncLiveGoogleSheets(): Promise<any> {
             console.warn('SLI ACTIVATION pivot sync warning:', err.message);
             return {
               found: false,
-              sheetSource: 'SLI ACTIVATION - SEPTEMBER 2026',
+              sheetSource: currentPivotTab,
               rows: [],
             };
           }),
@@ -404,10 +420,10 @@ async function syncLiveGoogleSheets(): Promise<any> {
 // Initial sync on startup
 syncLiveGoogleSheets().catch((e) => console.warn('Startup live sync warning:', e.message));
 
-// Periodically sync every 60 seconds
+// Periodically sync every 15 seconds
 setInterval(() => {
   syncLiveGoogleSheets().catch((e) => console.warn('Interval live sync warning:', e.message));
-}, 60_000);
+}, 15_000);
 
 // Attempt to load from disk on boot
 try {
@@ -434,6 +450,7 @@ async function startServer() {
 
   // Get live data from Google Sheets (cached, automatic proxy)
   app.get('/api/live-data', async (req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     try {
       const force = req.query.force === '1' || req.query.force === 'true';
       const month = typeof req.query.month === 'string' ? req.query.month : '';
@@ -445,27 +462,30 @@ async function startServer() {
         return res.status(503).json({ success: false, error: 'Live data not yet ready' });
       }
 
+      const currentMonthKey = getCurrentManilaMonthKey();
+      const targetMonth = month || currentMonthKey;
+      const expectedTabName = getSliPivotTabName(targetMonth);
+
       let sliPivotRows = liveCache.sliPivotRows || [];
-      let sliPivotSource = liveCache.sliPivotSource || 'SLI ACTIVATION - SEPTEMBER 2026';
+      let sliPivotSource = liveCache.sliPivotSource || expectedTabName;
       let sliPivotAvailable = liveCache.sliPivotAvailable ?? true;
 
       // Dynamic month selection
-      if (month && month !== '2026-09') {
-        const tabName = getSliPivotTabName(month);
+      if (expectedTabName !== liveCache.sliPivotSource) {
         try {
-          const pivotRes = await fetchSliActivationPivot(tabName);
+          const pivotRes = await fetchSliActivationPivot(expectedTabName);
           if (pivotRes.found && pivotRes.table) {
             sliPivotRows = parseSliActivationPivotTable(pivotRes.table);
             sliPivotSource = pivotRes.sheetSource;
             sliPivotAvailable = true;
           } else {
             sliPivotRows = [];
-            sliPivotSource = tabName;
+            sliPivotSource = expectedTabName;
             sliPivotAvailable = false;
           }
         } catch (err: any) {
           sliPivotRows = [];
-          sliPivotSource = tabName;
+          sliPivotSource = expectedTabName;
           sliPivotAvailable = false;
         }
       }

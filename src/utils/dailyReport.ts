@@ -22,7 +22,7 @@ export const DEFAULT_DAILY_REPORT: DailyReportAlmasor = {
   s2sRunrate: '0 / 782 (0%)',
 };
 
-export async function fetchDailyReportCell(cell: string): Promise<{ value: any; formatted: string }> {
+export async function fetchDailyReportCell(cell: string, signal?: AbortSignal): Promise<{ value: any; formatted: string }> {
   const url =
     `${GOOGLE_SHEET_URL}/gviz/tq` +
     `?sheet=${encodeURIComponent('DAILY REPORT ALMASOR')}` +
@@ -32,6 +32,7 @@ export async function fetchDailyReportCell(cell: string): Promise<{ value: any; 
 
   const response = await fetch(url, {
     cache: 'no-store',
+    signal,
   });
 
   if (!response.ok) {
@@ -70,27 +71,27 @@ export async function fetchDailyReportCell(cell: string): Promise<{ value: any; 
   };
 }
 
-export async function fetchDailyReportAlmasor(): Promise<DailyReportAlmasor> {
+export async function fetchDailyReportAlmasor(signal?: AbortSignal): Promise<DailyReportAlmasor> {
   const cells = await Promise.all([
-    fetchDailyReportCell('AJ9'),
+    fetchDailyReportCell('AJ9', signal),
 
-    fetchDailyReportCell('AK11'),
-    fetchDailyReportCell('AK12'),
-    fetchDailyReportCell('AK14'),
-    fetchDailyReportCell('AK17'),
-    fetchDailyReportCell('AK18'),
+    fetchDailyReportCell('AK11', signal),
+    fetchDailyReportCell('AK12', signal),
+    fetchDailyReportCell('AK14', signal),
+    fetchDailyReportCell('AK17', signal),
+    fetchDailyReportCell('AK18', signal),
 
-    fetchDailyReportCell('AK21'),
-    fetchDailyReportCell('AK22'),
-    fetchDailyReportCell('AK23'),
-    fetchDailyReportCell('AK24'),
-    fetchDailyReportCell('AK25'),
+    fetchDailyReportCell('AK21', signal),
+    fetchDailyReportCell('AK22', signal),
+    fetchDailyReportCell('AK23', signal),
+    fetchDailyReportCell('AK24', signal),
+    fetchDailyReportCell('AK25', signal),
 
-    fetchDailyReportCell('AK29'),
-    fetchDailyReportCell('AK30'),
-    fetchDailyReportCell('AK31'),
-    fetchDailyReportCell('AK32'),
-    fetchDailyReportCell('AK33'),
+    fetchDailyReportCell('AK29', signal),
+    fetchDailyReportCell('AK30', signal),
+    fetchDailyReportCell('AK31', signal),
+    fetchDailyReportCell('AK32', signal),
+    fetchDailyReportCell('AK33', signal),
   ]);
 
   return {

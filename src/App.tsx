@@ -64,14 +64,25 @@ const DEFAULT_TARGETS_MAP: Record<string, Targets> = {
 };
 
 /*
-  Live refresh interval: 60 seconds.
+  Live refresh interval: 15 seconds.
 */
-const LIVE_REFRESH_MS = 60_000;
+const LIVE_REFRESH_MS = 15_000;
 
-/*
-  Initial/default reporting month.
-*/
-const DEFAULT_MONTH = "2026-09";
+export function getCurrentManilaDateKey(): string {
+  return new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone: "Asia/Manila",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }
+  ).format(new Date());
+}
+
+export function getCurrentManilaMonthKey(): string {
+  return getCurrentManilaDateKey().slice(0, 7);
+}
 
 /*
   Dashboard filters.
@@ -482,7 +493,7 @@ function getRowValue(row: RawRow, ...keys: string[]): any {
   return "";
 }
 
-async function fetchGoogleSheet(sheetName: string, query: string): Promise<RawRow[]> {
+async function fetchGoogleSheet(sheetName: string, query: string, signal?: AbortSignal): Promise<RawRow[]> {
   const url =
     `${GOOGLE_SHEET_URL}/gviz/tq` +
     `?sheet=${encodeURIComponent(sheetName)}` +
@@ -493,6 +504,7 @@ async function fetchGoogleSheet(sheetName: string, query: string): Promise<RawRo
   const response = await fetch(url, {
     method: "GET",
     cache: "no-store",
+    signal,
     headers: { Accept: "text/plain" },
   });
 
@@ -543,7 +555,7 @@ async function fetchGoogleSheet(sheetName: string, query: string): Promise<RawRo
   AF = CLOSING DATE
   AU = VAT EX MRC
 */
-async function fetchJOActivated(): Promise<RawRow[]> {
+async function fetchJOActivated(signal?: AbortSignal): Promise<RawRow[]> {
   const sheetName = "JO ACTIVATED";
   const query = "select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null";
   const url =
@@ -556,6 +568,7 @@ async function fetchJOActivated(): Promise<RawRow[]> {
   const response = await fetch(url, {
     method: "GET",
     cache: "no-store",
+    signal,
     headers: { Accept: "text/plain" },
   });
 
@@ -610,8 +623,8 @@ async function fetchJOActivated(): Promise<RawRow[]> {
 /*
   Fetch SUMMARY rows for general matrix parsing and fallback.
 */
-async function fetchSummary(): Promise<RawRow[]> {
-  return fetchGoogleSheet("SUMMARY", `select B,C,D,E,F,G`);
+async function fetchSummary(signal?: AbortSignal): Promise<RawRow[]> {
+  return fetchGoogleSheet("SUMMARY", `select B,C,D,E,F,G`, signal);
 }
 
 /*
@@ -622,7 +635,7 @@ async function fetchSummary(): Promise<RawRow[]> {
   Row 29 = Almasor / Overall
   Columns: D = FIBERX, E = SME, F = BIDA, G = S2S
 */
-async function fetchSummaryTargetRow(rowNumber: number): Promise<Targets> {
+async function fetchSummaryTargetRow(rowNumber: number, signal?: AbortSignal): Promise<Targets> {
   const url =
     `${GOOGLE_SHEET_URL}/gviz/tq` +
     `?sheet=SUMMARY` +
@@ -633,6 +646,7 @@ async function fetchSummaryTargetRow(rowNumber: number): Promise<Targets> {
   const response = await fetch(url, {
     method: "GET",
     cache: "no-store",
+    signal,
     headers: { Accept: "text/plain" },
   });
 
@@ -665,12 +679,12 @@ async function fetchSummaryTargetRow(rowNumber: number): Promise<Targets> {
 /*
   Fetch all targets concurrently from live SUMMARY rows.
 */
-async function fetchAllTargets(): Promise<Record<string, Targets>> {
+async function fetchAllTargets(signal?: AbortSignal): Promise<Record<string, Targets>> {
   const [albay, sorsogon, masbate, overall] = await Promise.all([
-    fetchSummaryTargetRow(11),
-    fetchSummaryTargetRow(17),
-    fetchSummaryTargetRow(23),
-    fetchSummaryTargetRow(29),
+    fetchSummaryTargetRow(11, signal),
+    fetchSummaryTargetRow(17, signal),
+    fetchSummaryTargetRow(23, signal),
+    fetchSummaryTargetRow(29, signal),
   ]);
 
   return {
@@ -890,9 +904,19 @@ function useLiveGoogleSheet(selectedMonth?: string) {
   });
 
   const mountedRef = useRef(true);
+  const syncAbortController = useRef<AbortController | null>(null);
+  const syncingRef = useRef(false);
 
   const syncNow = useCallback(async (silent = false) => {
     if (!mountedRef.current) return;
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+
+    if (syncAbortController.current) {
+      syncAbortController.current.abort();
+    }
+    const controller = new AbortController();
+    syncAbortController.current = controller;
 
     setState((prev) => ({
       ...prev,
@@ -908,14 +932,19 @@ function useLiveGoogleSheet(selectedMonth?: string) {
       let draError = "";
       let liveOperational: OperationalStatus | undefined = undefined;
       let livePivotRows: SliPivotDetailRow[] = [];
-      let livePivotSource = "SLI ACTIVATION - SEPTEMBER 2026";
+      const currentMonthKey = getCurrentManilaMonthKey();
+      const targetMonthKey = selectedMonth || currentMonthKey;
+      let livePivotSource = getSliPivotTabName(targetMonthKey);
       let livePivotAvailable = true;
       let sourceName = "Live Google Sheet";
 
-      // 1. Fetch via backend proxy first (avoids browser iframe CORS/network blocks)
+      // 1. Fetch via backend proxy first with cache: no-store and abort signal
       try {
         const monthQuery = selectedMonth ? `&month=${encodeURIComponent(selectedMonth)}` : "";
-        const res = await fetch(`/api/live-data?force=1${monthQuery}`, { cache: "no-store" });
+        const res = await fetch(`/api/live-data?force=1${monthQuery}&_=${Date.now()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.joRows) && data.joRows.length > 0) {
@@ -936,19 +965,20 @@ function useLiveGoogleSheet(selectedMonth?: string) {
             sourceName = data.sourceName || "Live Google Sheet";
           }
         }
-      } catch (proxyErr) {
+      } catch (proxyErr: any) {
+        if (proxyErr.name === "AbortError") throw proxyErr;
         console.warn(
           "Backend proxy live-data fetch failed, trying direct Google Sheet GViz:",
           proxyErr
         );
       }
 
-      // 2. Direct GViz fallback if proxy did not return rows
+      // 2. Direct GViz fallback in parallel if proxy did not return rows
       if (joRows.length === 0) {
         const [directJo, directSummary, directTargets] = await Promise.all([
-          fetchJOActivated(),
-          fetchSummary().catch(() => []),
-          fetchAllTargets().catch(() => null),
+          fetchJOActivated(controller.signal),
+          fetchSummary(controller.signal).catch(() => []),
+          fetchAllTargets(controller.signal).catch(() => null),
         ]);
         joRows = directJo;
         summaryRows = directSummary;
@@ -958,8 +988,8 @@ function useLiveGoogleSheet(selectedMonth?: string) {
       // 3. Direct fetch for SLI pivot if not returned by proxy
       if (livePivotRows.length === 0) {
         try {
-          const tabName = getSliPivotTabName(selectedMonth || "2026-09");
-          const pivotRes = await fetchSliActivationPivot(tabName);
+          const tabName = getSliPivotTabName(targetMonthKey);
+          const pivotRes = await fetchSliActivationPivot(tabName, controller.signal);
           if (pivotRes.found && pivotRes.table) {
             livePivotRows = parseSliActivationPivotTable(pivotRes.table);
             livePivotSource = pivotRes.sheetSource;
@@ -969,7 +999,8 @@ function useLiveGoogleSheet(selectedMonth?: string) {
             livePivotSource = tabName;
             livePivotAvailable = false;
           }
-        } catch (pivotErr) {
+        } catch (pivotErr: any) {
+          if (pivotErr.name === "AbortError") throw pivotErr;
           console.warn("Direct SLI pivot fetch error:", pivotErr);
         }
       }
@@ -977,8 +1008,9 @@ function useLiveGoogleSheet(selectedMonth?: string) {
       // 4. Ensure fresh DAILY REPORT ALMASOR is retrieved
       if (!liveDailyReport) {
         try {
-          liveDailyReport = await fetchDailyReportAlmasor();
+          liveDailyReport = await fetchDailyReportAlmasor(controller.signal);
         } catch (draErr: any) {
+          if (draErr.name === "AbortError") throw draErr;
           console.warn("fetchDailyReportAlmasor direct error:", draErr);
           draError = "Daily Report temporarily unavailable";
         }
@@ -993,8 +1025,8 @@ function useLiveGoogleSheet(selectedMonth?: string) {
 
       setState((prev) => ({
         sourceName,
-        joRows,
-        summaryRows,
+        joRows: joRows.length > 0 ? joRows : prev.joRows,
+        summaryRows: summaryRows.length > 0 ? summaryRows : prev.summaryRows,
         targetsMap: finalTargets,
         dailyReport: liveDailyReport || prev.dailyReport || DEFAULT_DAILY_REPORT,
         dailyReportError: draError,
@@ -1007,6 +1039,9 @@ function useLiveGoogleSheet(selectedMonth?: string) {
         error: "",
       }));
     } catch (err: any) {
+      if (err?.name === "AbortError") {
+        return;
+      }
       if (!mountedRef.current) return;
       console.warn("Sync error:", err);
       setState((prev) => ({
@@ -1015,8 +1050,10 @@ function useLiveGoogleSheet(selectedMonth?: string) {
         error:
           prev.joRows.length === 0
             ? err?.message || "Unable to refresh Google Sheet."
-            : "",
+            : "Some live data could not be refreshed.",
       }));
+    } finally {
+      syncingRef.current = false;
     }
   }, [selectedMonth]);
 
@@ -1055,12 +1092,21 @@ function useLiveGoogleSheet(selectedMonth?: string) {
       }
     };
 
+    const handleWindowFocus = () => {
+      syncNow(true);
+    };
+
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleWindowFocus);
 
     return () => {
       mountedRef.current = false;
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleWindowFocus);
+      if (syncAbortController.current) {
+        syncAbortController.current.abort();
+      }
     };
   }, [syncNow]);
 
@@ -1087,11 +1133,15 @@ function formatDisplayDate(iso: string): string {
 }
 
 export default function App() {
-  const [filters, setFilters] = useState<Filters>({
-    month: DEFAULT_MONTH,
-    province: "All districts",
-    sliType: "All SLI Types",
-    package: "All Packages",
+  const [filters, setFilters] = useState<Filters>(() => {
+    const today = getCurrentManilaDateKey();
+    const currentMonth = today.slice(0, 7);
+    return {
+      month: currentMonth,
+      province: "All districts",
+      sliType: "All SLI Types",
+      package: "All Packages",
+    };
   });
 
   const {
@@ -1111,7 +1161,57 @@ export default function App() {
     setManualExcel,
   } = useLiveGoogleSheet(filters.month);
 
-  const [reportDate, setReportDate] = useState<string>("2026-09-19");
+  const [reportDate, setReportDate] = useState<string>(() => getCurrentManilaDateKey());
+  const [lastKnownToday, setLastKnownToday] = useState<string>(() => getCurrentManilaDateKey());
+
+  // Manual refresh button UX: "Refreshing..." then "Updated HH:MM:SS"
+  const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
+  const refreshNoticeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleManualRefresh = useCallback(async () => {
+    await refresh();
+    const timeStr = new Date().toLocaleTimeString("en-PH", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    setRefreshNotice(`Updated ${timeStr}`);
+    if (refreshNoticeTimeoutRef.current) clearTimeout(refreshNoticeTimeoutRef.current);
+    refreshNoticeTimeoutRef.current = setTimeout(() => {
+      setRefreshNotice(null);
+    }, 3000);
+  }, [refresh]);
+
+  // Midnight date monitor: checks Manila date every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const currentDate = getCurrentManilaDateKey();
+      if (currentDate !== lastKnownToday) {
+        const prevToday = lastKnownToday;
+        setLastKnownToday(currentDate);
+
+        setReportDate((prevReportDate) => {
+          const wasViewingToday = prevReportDate === prevToday;
+          if (!wasViewingToday) {
+            // User intentionally selected historical date, preserve it
+            return prevReportDate;
+          }
+
+          // Advance to new Manila date and month
+          setFilters((prev) => ({
+            ...prev,
+            month: currentDate.slice(0, 7),
+          }));
+          return currentDate;
+        });
+
+        // Trigger immediate live refresh
+        refresh();
+      }
+    }, 30_000);
+
+    return () => clearInterval(timer);
+  }, [lastKnownToday, refresh]);
 
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [excelLoading, setExcelLoading] = useState(false);
@@ -1152,9 +1252,10 @@ export default function App() {
   // Available months from data
   const monthOptions = useMemo(() => {
     const set = new Set<string>();
-    set.add(DEFAULT_MONTH);
+    set.add(getCurrentManilaMonthKey());
     for (const r of rows) {
-      set.add(monthKey(r.closingDate));
+      const k = monthKey(r.closingDate);
+      if (k) set.add(k);
     }
     return Array.from(set).sort().reverse();
   }, [rows]);
@@ -1192,12 +1293,12 @@ export default function App() {
 
   // Find latest recorded closing date in dataset
   const latestAvailableDate = useMemo(() => {
-    let maxDate = "2026-09-18";
+    let maxDate = "";
     for (const r of rows) {
       const k = dateKey(r.closingDate);
-      if (k > maxDate) maxDate = k;
+      if (k && (!maxDate || k > maxDate)) maxDate = k;
     }
-    return maxDate;
+    return maxDate || getCurrentManilaDateKey();
   }, [rows]);
 
   // All unique records in selected month (unfiltered territory scope)
@@ -1661,11 +1762,11 @@ export default function App() {
               {/* Refresh */}
               <button
                 id="refresh-button"
-                onClick={() => refresh()}
+                onClick={handleManualRefresh}
                 disabled={syncing}
-                className="px-3.5 py-1.5 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] text-xs md:text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-[#cbf1e0] transition-colors shadow-xs"
+                className="px-3.5 py-1.5 rounded-xl bg-[#dff7ec] border border-[#b5e6d0] text-[#0b684e] text-xs md:text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-[#cbf1e0] transition-colors shadow-xs whitespace-nowrap"
               >
-                {syncing ? "Updating..." : "Refresh"}
+                {syncing ? "Refreshing..." : refreshNotice || "Refresh"}
               </button>
 
               {/* Download */}
@@ -1738,7 +1839,7 @@ export default function App() {
 
         {/* ================================================
             2. LIVE STATUS
-            Last synced | Report date | Unique JOs
+            Last synced | Report date | Unique JOs | Update interval
         ================================================= */}
         <section className="bg-white border border-[#c9ebdd] rounded-2xl p-4 md:p-5 mb-6 shadow-sm" id="live-status-section">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -1754,7 +1855,7 @@ export default function App() {
                   }`}
                 />
                 <span className="text-xs font-black uppercase tracking-wider text-[#0a684d]">
-                  LIVE STATUS
+                  LIVE
                 </span>
               </div>
               <span className="text-gray-300">|</span>
@@ -1790,6 +1891,14 @@ export default function App() {
                 <strong className="text-[#0a684d] font-bold">
                   {formatDisplayDate(reportDate)}
                 </strong>
+              </div>
+
+              <span className="text-gray-300 hidden sm:inline">|</span>
+
+              {/* Update interval */}
+              <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                <span className="text-gray-400 font-medium">Update interval:</span>
+                <span className="font-semibold text-gray-600">15 sec</span>
               </div>
 
               <span className="text-gray-300 hidden sm:inline">|</span>
@@ -1945,13 +2054,15 @@ export default function App() {
               id="reset-filters-button"
               className="text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
               onClick={() => {
+                const today = getCurrentManilaDateKey();
+                const currentMonth = today.slice(0, 7);
                 setFilters({
-                  month: DEFAULT_MONTH,
+                  month: currentMonth,
                   province: "All districts",
                   sliType: "All SLI Types",
                   package: "All Packages",
                 });
-                setReportDate("2026-09-19");
+                setReportDate(today);
               }}
             >
               Reset filters
