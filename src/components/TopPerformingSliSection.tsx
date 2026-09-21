@@ -1,13 +1,22 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { ParsedJO } from '../types';
+import { ParsedJO, SliPivotDetailRow } from '../types';
+import { aggregateSliPivotDetailRows } from '../services/sliPivotService';
 
-interface TopPerformingSliSectionProps {
-  rows: ParsedJO[]; // MTD records filtered by province, sliType, package
-  totalScopeJOs: number; // Total unique JOs in the current filtered dashboard scope
+export interface TopPerformingSliSectionProps {
+  rows: ParsedJO[];
+  totalScopeJOs: number;
+  pivotRows?: SliPivotDetailRow[];
+  pivotAvailable?: boolean;
+  pivotSource?: string;
+  monthName?: string;
+  filterProvince?: string;
+  filterSliType?: string;
+  filterPackage?: string;
 }
 
-interface RankingRecord {
+interface DisplayRankingItem {
+  key: string;
   name: string;
   sliType: 'INHOUSE' | 'MSA';
   count: number;
@@ -15,13 +24,9 @@ interface RankingRecord {
   sme: number;
   bida: number;
   mrc: number;
-  provinces: Set<string>;
-}
-
-interface DisplayRankingItem extends RankingRecord {
-  key: string;
   share: number;
   provinceDisplay: string;
+  provinces: string[];
 }
 
 function formatCount(val: number): string {
@@ -51,6 +56,13 @@ function toTitleCase(val: string): string {
 export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = ({
   rows,
   totalScopeJOs,
+  pivotRows,
+  pivotAvailable = true,
+  pivotSource,
+  monthName = 'September 2026',
+  filterProvince = 'All districts',
+  filterSliType = 'All SLI Types',
+  filterPackage = 'All Packages',
 }) => {
   // Set of expanded composite keys (${sliType}|||${name}) for collapsible detail view
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
@@ -67,14 +79,21 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
     });
   };
 
-  /*
-    CRITICAL UNIQUE-JO REQUIREMENT:
-    Before the ranking aggregation, make sure rows are already
-    deduplicated by JO NUMBER. A JO must only exist once.
-    The unique key for raw JO records is JO NUMBER.
-    The unique key for ranking groups is SLI TYPE + SLI.
-  */
-  const uniqueJoRows = useMemo(() => {
+  // Map MRC from raw rows by key: `${sliType}|||${sli.toUpperCase()}`
+  const mrcByKey = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of rows) {
+      const type = (r.sliType || '').toUpperCase();
+      const sli = (r.sli || '').toUpperCase();
+      if (!type || !sli) continue;
+      const k = `${type}|||${sli}`;
+      map.set(k, (map.get(k) || 0) + Number(r.mrc || 0));
+    }
+    return map;
+  }, [rows]);
+
+  // Fallback ranking calculation from deduplicated unique JO rows
+  const fallbackList: DisplayRankingItem[] = useMemo(() => {
     const seen = new Set<string>();
     const deduplicated: ParsedJO[] = [];
     for (const r of rows) {
@@ -83,20 +102,7 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
       seen.add(jo);
       deduplicated.push(r);
     }
-    return deduplicated;
-  }, [rows]);
 
-  /*
-    REPLACE TOP PERFORMING SLI CALCULATION:
-    The Top Performing SLI must be grouped by SLI TYPE + SLI NAME,
-    NOT by SLI name alone.
-    Composite key: `${sliType}|||${sliName.toUpperCase()}`
-    Example:
-    MSA|||RAVENOUS SLR
-    INHOUSE|||RAVENOUS SLR
-    These are two separate ranking records.
-  */
-  const ranking = useMemo(() => {
     const map = new Map<
       string,
       {
@@ -111,39 +117,16 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
       }
     >();
 
-    for (const row of uniqueJoRows) {
-      let sliName = String(
-        (row as any)['SLI'] ??
-        row.sli ??
-        ''
-      )
-        .trim()
-        .replace(
-          /\s+/g,
-          ' '
-        );
+    for (const row of deduplicated) {
+      let sliName = String(row.sli ?? '').trim().replace(/\s+/g, ' ');
+      const sliType = String(row.sliType ?? '').trim().toUpperCase();
 
-      const sliType = String(
-        (row as any)['SLI TYPE'] ??
-        row.sliType ??
-        ''
-      )
-        .trim()
-        .toUpperCase();
-
-      if (
-        sliType !== 'INHOUSE' &&
-        sliType !== 'MSA'
-      ) {
+      if (sliType !== 'INHOUSE' && sliType !== 'MSA') {
         continue;
       }
 
-      /*
-        Official SLI ACTIVATION - SEPTEMBER 2026 sheet alignment:
-        If a record has empty SLI name, the official pivot assigns it to RAVENOUS SLR.
-      */
       if (!sliName) {
-        const vendor = String((row as any)['VENDOR TYPE'] ?? row.vendorType ?? '').toUpperCase();
+        const vendor = String(row.vendorType ?? '').toUpperCase();
         if (vendor === 'MSA' || sliType === 'MSA') {
           sliName = 'RAVENOUS SLR';
         } else {
@@ -151,52 +134,22 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
         }
       }
 
-      /*
-        IMPORTANT:
-        The composite key contains BOTH SLI TYPE and SLI.
-
-        Therefore:
-
-        INHOUSE + RAVENOUS SLR
-        and
-        MSA + RAVENOUS SLR
-
-        remain separate records.
-      */
       const key = `${sliType}|||${sliName.toUpperCase()}`;
-
       if (!map.has(key)) {
-        map.set(
-          key,
-          {
-            name: sliName,
-            sliType:
-              sliType as
-                | 'INHOUSE'
-                | 'MSA',
-
-            count: 0,
-
-            fiberX: 0,
-            sme: 0,
-            bida: 0,
-
-            mrc: 0,
-
-            provinces:
-              new Set<string>(),
-          }
-        );
+        map.set(key, {
+          name: sliName,
+          sliType: sliType as 'INHOUSE' | 'MSA',
+          count: 0,
+          fiberX: 0,
+          sme: 0,
+          bida: 0,
+          mrc: 0,
+          provinces: new Set<string>(),
+        });
       }
 
       const item = map.get(key)!;
-
-      /*
-        UNIQUE JO NUMBER must be handled BEFORE
-        this aggregation.
-      */
       item.count += 1;
-
       item.mrc += Number(row.mrc || 0);
 
       const pkg = String(row.package || '').toUpperCase();
@@ -213,23 +166,17 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
       }
     }
 
-    return Array.from(map.values()).sort(
+    const ranking = Array.from(map.values()).sort(
       (a, b) =>
         b.count - a.count ||
         a.sliType.localeCompare(b.sliType) ||
         a.name.localeCompare(b.name)
     );
-  }, [uniqueJoRows]);
 
-  // Denominator: Total unique JO count for the current dashboard filter scope
-  const denominator = Math.max(totalScopeJOs, uniqueJoRows.length);
+    const denominator = Math.max(totalScopeJOs, deduplicated.length);
 
-  // Compute share %, province formatting, and unique key per SLI TYPE + SLI record
-  const displayList: DisplayRankingItem[] = useMemo(() => {
     return ranking.map((item) => {
       const share = denominator > 0 ? (item.count / denominator) * 100 : 0;
-
-      // Province display for this specific SLI TYPE + SLI combination
       const provArray = Array.from(item.provinces)
         .map((p: string) => toTitleCase(p))
         .filter(Boolean);
@@ -243,18 +190,62 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
         provinceDisplay = 'Multiple provinces';
       }
 
-      const key = `${item.sliType}|||${item.name.toUpperCase()}`;
-
       return {
-        ...item,
-        key,
+        key: `${item.sliType}|||${item.name.toUpperCase()}`,
+        name: item.name,
+        sliType: item.sliType,
+        count: item.count,
+        fiberX: item.fiberX,
+        sme: item.sme,
+        bida: item.bida,
+        mrc: item.mrc,
         share,
         provinceDisplay,
+        provinces: uniqueProvs,
       };
     });
-  }, [ranking, denominator]);
+  }, [rows, totalScopeJOs]);
+
+  // Primary source of truth: aggregate from live spreadsheet pivot detail rows
+  const displayList: DisplayRankingItem[] = useMemo(() => {
+    if (pivotRows && pivotRows.length > 0) {
+      const { groups } = aggregateSliPivotDetailRows(pivotRows, {
+        province: filterProvince,
+        sliType: filterSliType,
+        package: filterPackage,
+      });
+
+      return groups.map((g) => ({
+        key: g.key,
+        name: g.name,
+        sliType: g.sliType,
+        count: g.total,
+        fiberX: g.fiberX,
+        sme: g.sme,
+        bida: g.bida,
+        mrc: mrcByKey.get(g.key) || 0,
+        share: g.share,
+        provinceDisplay: g.provinceDisplay,
+        provinces: g.provinces,
+      }));
+    }
+
+    // Fallback if pivot is still loading or not yet ready
+    return fallbackList;
+  }, [
+    pivotRows,
+    filterProvince,
+    filterSliType,
+    filterPackage,
+    fallbackList,
+    mrcByKey,
+  ]);
 
   const maxCount = displayList.length > 0 ? displayList[0].count : 0;
+  const totalFilteredJOs = useMemo(
+    () => displayList.reduce((sum, item) => sum + item.count, 0),
+    [displayList]
+  );
 
   return (
     <section
@@ -269,29 +260,39 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
               TOP PERFORMING SLI
             </h2>
             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#dff7ec] text-[#0a684d] border border-[#b5e6d0]">
-              SLI ACTIVATION - SEPTEMBER 2026
+              {pivotSource || `SLI ACTIVATION - ${monthName.toUpperCase()}`}
             </span>
           </div>
           <p className="text-sm text-gray-500 mt-0.5 font-medium">
-            Official Top Performing SLI Report • Grouped by SLI Type + SLI Partner
+            Activated JO performance by SLI partner.
           </p>
         </div>
 
-        {displayList.length > 0 && (
+        {displayList.length > 0 && pivotAvailable && (
           <div className="text-xs text-gray-500 font-semibold bg-[#f4f8f6] px-3.5 py-1.5 rounded-xl border border-[#dcece6]">
-            {displayList.length} Active Records • {formatCount(denominator)} Total Filtered JOs
+            {displayList.length} Active Records • {formatCount(totalFilteredJOs)} Total Filtered JOs
           </div>
         )}
       </div>
 
-      {/* EMPTY DATA STATE */}
-      {displayList.length === 0 ? (
+      {/* MONTH PIVOT NOT AVAILABLE STATE */}
+      {!pivotAvailable ? (
+        <div className="py-12 text-center text-gray-500 bg-[#fbfdfc] rounded-xl border border-dashed border-[#dcece6] my-2">
+          <p className="font-semibold text-base text-gray-700">
+            No SLI activation pivot available for this month.
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Selected month: {monthName}. The spreadsheet does not contain a monthly pivot tab for this period.
+          </p>
+        </div>
+      ) : displayList.length === 0 ? (
+        /* EMPTY DATA STATE FOR SELECTED FILTERS */
         <div className="py-12 text-center text-gray-500 bg-[#fbfdfc] rounded-xl border border-dashed border-[#dcece6] my-2">
           <p className="font-semibold text-base text-gray-600">
             No SLI data available for the selected filters.
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Try adjusting your province, SLI type, package, or report date filters.
+            Try adjusting your province, SLI type, or package filters.
           </p>
         </div>
       ) : (
@@ -351,12 +352,14 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
                       <div className="col-span-3 pr-2">
                         <div
                           className={`font-semibold tracking-tight ${
-                            isRank1 ? 'text-[#0a684d] font-bold text-[15px]' : 'text-[#123b31]'
+                            isRank1
+                              ? 'text-[#0a684d] font-bold text-[15px]'
+                              : 'text-[#123b31]'
                           }`}
                         >
                           {item.name}
                         </div>
-                        {/* Horizontal Performance Bar */}
+                        {/* Horizontal Thin Green Performance Bar */}
                         <div className="w-full max-w-[220px] bg-[#e4ede8] h-1.5 rounded-full overflow-hidden mt-1.5">
                           <div
                             className="bg-[#0aa37a] h-full rounded-full transition-all duration-300"
@@ -403,7 +406,7 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
                         {formatCount(item.bida)}
                       </div>
 
-                      {/* Total (Unique JOs for this SLI TYPE + SLI) */}
+                      {/* Total */}
                       <div className="col-span-1 text-right font-extrabold text-[#123b31] text-[15px]">
                         {formatCount(item.count)}
                       </div>
@@ -430,53 +433,61 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
                     {/* EXPANDABLE DETAIL DRAWER */}
                     {isExpanded && (
                       <div className="bg-[#f8faf9] border-t border-[#e2eee8] px-5 py-4 text-xs">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 items-start">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 items-start">
                           <div>
-                            <span className="text-gray-400 block font-medium">SLI Partner</span>
+                            <span className="text-gray-400 block font-medium">
+                              SLI Partner
+                            </span>
                             <span className="font-bold text-[#123b31] text-sm mt-0.5 block">
                               {item.name}
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400 block font-medium">SLI Type</span>
+                            <span className="text-gray-400 block font-medium">
+                              SLI Type
+                            </span>
                             <span className="font-semibold text-gray-800 text-sm mt-0.5 block">
                               [{item.sliType}]
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400 block font-medium">Total Unique JOs</span>
-                            <span className="font-bold text-[#123b31] text-sm mt-0.5 block">
-                              {formatCount(item.count)} ({formatPercent(item.share)})
+                            <span className="text-gray-400 block font-medium">
+                              Coverage Area
+                            </span>
+                            <span className="font-medium text-gray-700 mt-0.5 block">
+                              {item.provinceDisplay}
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400 block font-medium">FiberX Activations</span>
+                            <span className="text-gray-400 block font-medium">
+                              FiberX
+                            </span>
                             <span className="font-semibold text-gray-800 text-sm mt-0.5 block">
                               {formatCount(item.fiberX)}
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400 block font-medium">SME Activations</span>
+                            <span className="text-gray-400 block font-medium">
+                              SME
+                            </span>
                             <span className="font-semibold text-gray-800 text-sm mt-0.5 block">
                               {formatCount(item.sme)}
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400 block font-medium">BIDA Activations</span>
+                            <span className="text-gray-400 block font-medium">
+                              BIDA
+                            </span>
                             <span className="font-semibold text-gray-800 text-sm mt-0.5 block">
                               {formatCount(item.bida)}
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-400 block font-medium">Total MRC</span>
-                            <span className="font-bold text-[#0a684d] text-sm mt-0.5 block">
-                              {formatPeso(item.mrc)}
+                            <span className="text-gray-400 block font-medium">
+                              Total Activations
                             </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-400 block font-medium">Coverage Area</span>
-                            <span className="font-medium text-gray-700 mt-0.5 block">
-                              {item.provinceDisplay}
+                            <span className="font-bold text-[#123b31] text-sm mt-0.5 block">
+                              {formatCount(item.count)} ({formatPercent(item.share)})
                             </span>
                           </div>
                         </div>
@@ -522,7 +533,9 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
                         <div>
                           <div
                             className={`font-semibold text-sm ${
-                              isRank1 ? 'text-[#0a684d] font-bold' : 'text-[#123b31]'
+                              isRank1
+                                ? 'text-[#0a684d] font-bold'
+                                : 'text-[#123b31]'
                             }`}
                           >
                             {item.name}
@@ -575,28 +588,52 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
                     <div className="mt-3 pt-3 border-t border-[#e2eee8] bg-[#f8faf9] rounded-xl p-3 text-xs space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <span className="text-gray-400 block font-medium">SLI Type</span>
-                          <span className="font-semibold text-gray-800">[{item.sliType}]</span>
+                          <span className="text-gray-400 block font-medium">
+                            SLI Type
+                          </span>
+                          <span className="font-semibold text-gray-800">
+                            [{item.sliType}]
+                          </span>
                         </div>
                         <div>
-                          <span className="text-gray-400 block font-medium">Province</span>
-                          <span className="font-semibold text-gray-800">{item.provinceDisplay}</span>
+                          <span className="text-gray-400 block font-medium">
+                            Province
+                          </span>
+                          <span className="font-semibold text-gray-800">
+                            {item.provinceDisplay}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-gray-400 block font-medium">FiberX</span>
-                          <span className="font-semibold text-gray-800">{formatCount(item.fiberX)}</span>
+                          <span className="text-gray-400 block font-medium">
+                            FiberX
+                          </span>
+                          <span className="font-semibold text-gray-800">
+                            {formatCount(item.fiberX)}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-gray-400 block font-medium">SME</span>
-                          <span className="font-semibold text-gray-800">{formatCount(item.sme)}</span>
+                          <span className="text-gray-400 block font-medium">
+                            SME
+                          </span>
+                          <span className="font-semibold text-gray-800">
+                            {formatCount(item.sme)}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-gray-400 block font-medium">BIDA</span>
-                          <span className="font-semibold text-gray-800">{formatCount(item.bida)}</span>
+                          <span className="text-gray-400 block font-medium">
+                            BIDA
+                          </span>
+                          <span className="font-semibold text-gray-800">
+                            {formatCount(item.bida)}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-gray-400 block font-medium">Total MRC</span>
-                          <span className="font-bold text-[#0a684d]">{formatPeso(item.mrc)}</span>
+                          <span className="text-gray-400 block font-medium">
+                            Total Activations
+                          </span>
+                          <span className="font-bold text-[#123b31]">
+                            {formatCount(item.count)} ({formatPercent(item.share)})
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -610,3 +647,4 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
     </section>
   );
 };
+export default TopPerformingSliSection;

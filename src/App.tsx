@@ -33,8 +33,13 @@ import { TotalClosedTables } from "./components/TotalClosedTables";
 import { SlaPerformanceSection } from "./components/SlaPerformanceSection";
 import { DailySLIReport } from "./components/DailySLIReport";
 import { TopPerformingSliSection } from "./components/TopPerformingSliSection";
-import { DailyReportAlmasor, OperationalStatus, ParsedJO, Targets } from "./types";
+import { DailyReportAlmasor, OperationalStatus, ParsedJO, Targets, SliPivotDetailRow } from "./types";
 import { DEFAULT_DAILY_REPORT, fetchDailyReportAlmasor } from "./utils/dailyReport";
+import {
+  fetchSliActivationPivot,
+  parseSliActivationPivotTable,
+  getSliPivotTabName,
+} from "./services/sliPivotService";
 import liveCacheFallback from "./data/live_sheets_cache.json";
 
 /* =========================================================
@@ -131,6 +136,9 @@ type LiveState = {
   dailyReport: DailyReportAlmasor;
   dailyReportError: string;
   operationalStatus?: OperationalStatus;
+  sliPivotRows?: SliPivotDetailRow[];
+  sliPivotSource?: string;
+  sliPivotAvailable?: boolean;
   lastSynced: Date | null;
   syncing: boolean;
   error: string;
@@ -845,7 +853,7 @@ function matchesPackage(row: ParsedJO, packageName: string): boolean {
    LIVE DATA HOOK
 ========================================================= */
 
-function useLiveGoogleSheet() {
+function useLiveGoogleSheet(selectedMonth?: string) {
   const [state, setState] = useState<LiveState>(() => {
     const cachedJo = (liveCacheFallback as any)?.joRows || [];
     const cachedSummary = (liveCacheFallback as any)?.summaryRows || [];
@@ -859,6 +867,9 @@ function useLiveGoogleSheet() {
       forCloseout: 1,
       forActivation: 2,
     };
+    const cachedPivotRows = (liveCacheFallback as any)?.sliPivotRows || [];
+    const cachedPivotSource = (liveCacheFallback as any)?.sliPivotSource || "SLI ACTIVATION - SEPTEMBER 2026";
+    const cachedPivotAvailable = (liveCacheFallback as any)?.sliPivotAvailable ?? true;
     return {
       sourceName: "Live Google Sheet",
       joRows: cachedJo,
@@ -867,6 +878,9 @@ function useLiveGoogleSheet() {
       dailyReport: cachedDailyReport,
       dailyReportError: "",
       operationalStatus: cachedOperational,
+      sliPivotRows: cachedPivotRows,
+      sliPivotSource: cachedPivotSource,
+      sliPivotAvailable: cachedPivotAvailable,
       lastSynced: (liveCacheFallback as any)?.updatedAt
         ? new Date((liveCacheFallback as any).updatedAt)
         : new Date(),
@@ -893,11 +907,15 @@ function useLiveGoogleSheet() {
       let liveDailyReport: DailyReportAlmasor | null = null;
       let draError = "";
       let liveOperational: OperationalStatus | undefined = undefined;
+      let livePivotRows: SliPivotDetailRow[] = [];
+      let livePivotSource = "SLI ACTIVATION - SEPTEMBER 2026";
+      let livePivotAvailable = true;
       let sourceName = "Live Google Sheet";
 
       // 1. Fetch via backend proxy first (avoids browser iframe CORS/network blocks)
       try {
-        const res = await fetch("/api/live-data?force=1", { cache: "no-store" });
+        const monthQuery = selectedMonth ? `&month=${encodeURIComponent(selectedMonth)}` : "";
+        const res = await fetch(`/api/live-data?force=1${monthQuery}`, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.joRows) && data.joRows.length > 0) {
@@ -909,6 +927,11 @@ function useLiveGoogleSheet() {
             }
             if (data.operationalStatus) {
               liveOperational = data.operationalStatus;
+            }
+            if (Array.isArray(data.sliPivotRows)) {
+              livePivotRows = data.sliPivotRows;
+              livePivotSource = data.sliPivotSource || livePivotSource;
+              livePivotAvailable = data.sliPivotAvailable ?? true;
             }
             sourceName = data.sourceName || "Live Google Sheet";
           }
@@ -932,7 +955,26 @@ function useLiveGoogleSheet() {
         liveTargets = directTargets;
       }
 
-      // 3. Ensure fresh DAILY REPORT ALMASOR is retrieved
+      // 3. Direct fetch for SLI pivot if not returned by proxy
+      if (livePivotRows.length === 0) {
+        try {
+          const tabName = getSliPivotTabName(selectedMonth || "2026-09");
+          const pivotRes = await fetchSliActivationPivot(tabName);
+          if (pivotRes.found && pivotRes.table) {
+            livePivotRows = parseSliActivationPivotTable(pivotRes.table);
+            livePivotSource = pivotRes.sheetSource;
+            livePivotAvailable = true;
+          } else {
+            livePivotRows = [];
+            livePivotSource = tabName;
+            livePivotAvailable = false;
+          }
+        } catch (pivotErr) {
+          console.warn("Direct SLI pivot fetch error:", pivotErr);
+        }
+      }
+
+      // 4. Ensure fresh DAILY REPORT ALMASOR is retrieved
       if (!liveDailyReport) {
         try {
           liveDailyReport = await fetchDailyReportAlmasor();
@@ -957,6 +999,9 @@ function useLiveGoogleSheet() {
         dailyReport: liveDailyReport || prev.dailyReport || DEFAULT_DAILY_REPORT,
         dailyReportError: draError,
         operationalStatus: liveOperational || prev.operationalStatus,
+        sliPivotRows: livePivotRows.length > 0 ? livePivotRows : (prev.sliPivotRows || []),
+        sliPivotSource: livePivotSource || prev.sliPivotSource,
+        sliPivotAvailable: livePivotAvailable,
         lastSynced: new Date(),
         syncing: false,
         error: "",
@@ -973,7 +1018,7 @@ function useLiveGoogleSheet() {
             : "",
       }));
     }
-  }, []);
+  }, [selectedMonth]);
 
   const setManualExcel = useCallback(
     (excelJo: RawRow[], excelSummary: RawRow[], fileName: string) => {
@@ -1042,6 +1087,13 @@ function formatDisplayDate(iso: string): string {
 }
 
 export default function App() {
+  const [filters, setFilters] = useState<Filters>({
+    month: DEFAULT_MONTH,
+    province: "All districts",
+    sliType: "All SLI Types",
+    package: "All Packages",
+  });
+
   const {
     sourceName,
     joRows,
@@ -1049,19 +1101,15 @@ export default function App() {
     dailyReport,
     dailyReportError,
     operationalStatus,
+    sliPivotRows,
+    sliPivotSource,
+    sliPivotAvailable,
     lastSynced,
     syncing,
     error,
     refresh,
     setManualExcel,
-  } = useLiveGoogleSheet();
-
-  const [filters, setFilters] = useState<Filters>({
-    month: DEFAULT_MONTH,
-    province: "All districts",
-    sliType: "All SLI Types",
-    package: "All Packages",
-  });
+  } = useLiveGoogleSheet(filters.month);
 
   const [reportDate, setReportDate] = useState<string>("2026-09-19");
 
@@ -2094,6 +2142,13 @@ export default function App() {
         <TopPerformingSliSection
           rows={filteredRows}
           totalScopeJOs={filteredRows.length}
+          pivotRows={sliPivotRows}
+          pivotAvailable={sliPivotAvailable}
+          pivotSource={sliPivotSource}
+          monthName={formatMonth(filters.month)}
+          filterProvince={filters.province}
+          filterSliType={filters.sliType}
+          filterPackage={filters.package}
         />
 
         {/* ================================================

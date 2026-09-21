@@ -149,3 +149,26 @@ export interface DailyReportAlmasor {
   bidaRunrate: string;
   s2sRunrate: string;
 }
+
+export interface SliPivotDetailRow {
+  sliType: 'INHOUSE' | 'MSA';
+  sli: string;
+  province: string;
+  fiberX: number;
+  sme: number;
+  bida: number;
+  total: number;
+}
+
+export interface SliPivotGroup {
+  key: string;
+  name: string;
+  sliType: 'INHOUSE' | 'MSA';
+  provinces: string[];
+  provinceDisplay: string;
+  fiberX: number;
+  sme: number;
+  bida: number;
+  total: number;
+  share: number;
+}

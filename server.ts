@@ -2,6 +2,11 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
+import {
+  fetchSliActivationPivot,
+  parseSliActivationPivotTable,
+  getSliPivotTabName,
+} from './src/services/sliPivotService';
 
 const PORT = 3000;
 const DATA_FILE = path.join(process.cwd(), 'data', 'saved_records.json');
@@ -59,6 +64,9 @@ let liveCache: {
     forCloseout: number;
     forActivation: number;
   };
+  sliPivotRows?: any[];
+  sliPivotSource?: string;
+  sliPivotAvailable?: boolean;
   lastSynced: string;
   sourceName: string;
 } | null = null;
@@ -90,10 +98,13 @@ try {
           forCloseout: 2,
           forActivation: 1,
         },
+        sliPivotRows: parsed.sliPivotRows || [],
+        sliPivotSource: parsed.sliPivotSource || 'SLI ACTIVATION - SEPTEMBER 2026',
+        sliPivotAvailable: parsed.sliPivotAvailable ?? true,
         lastSynced: parsed.updatedAt || new Date().toISOString(),
         sourceName: 'Live Google Sheet',
       };
-      console.log(`Loaded ${liveCache.joRows.length} live records from disk cache.`);
+      console.log(`Loaded ${liveCache.joRows.length} live records and ${liveCache.sliPivotRows?.length || 0} pivot records from disk cache.`);
     }
   }
 } catch (e) {
@@ -297,7 +308,7 @@ async function syncLiveGoogleSheets(): Promise<any> {
   syncInProgress = (async () => {
     try {
       console.log('Syncing live data from Google Sheets...');
-      const [joRows, summaryRows, albay, sorsogon, masbate, overall, draReport] = await Promise.all([
+      const [joRows, summaryRows, albay, sorsogon, masbate, overall, draReport, sliPivot] = await Promise.all([
         fetchGoogleSheetGViz('JO ACTIVATED', 'select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null'),
         fetchGoogleSheetGViz('SUMMARY', 'select B,C,D,E,F,G').catch(() => []),
         fetchSummaryTargetRow(11).catch(() => DEFAULT_TARGETS_MAP.Albay),
@@ -308,6 +319,20 @@ async function syncLiveGoogleSheets(): Promise<any> {
           console.warn('DAILY REPORT ALMASOR live sync warning:', err.message);
           return liveCache?.dailyReport || DEFAULT_DAILY_REPORT;
         }),
+        fetchSliActivationPivot('SLI ACTIVATION - SEPTEMBER 2026')
+          .then((res) => ({
+            found: res.found,
+            sheetSource: res.sheetSource,
+            rows: res.found ? parseSliActivationPivotTable(res.table) : [],
+          }))
+          .catch((err) => {
+            console.warn('SLI ACTIVATION pivot sync warning:', err.message);
+            return {
+              found: false,
+              sheetSource: 'SLI ACTIVATION - SEPTEMBER 2026',
+              rows: [],
+            };
+          }),
       ]);
 
       const targetsMap = {
@@ -337,6 +362,9 @@ async function syncLiveGoogleSheets(): Promise<any> {
         targetsMap,
         dailyReport,
         operationalStatus,
+        sliPivotRows: sliPivot.rows,
+        sliPivotSource: sliPivot.sheetSource,
+        sliPivotAvailable: sliPivot.found,
         lastSynced: now,
         sourceName: 'Live Google Sheet',
       };
@@ -348,6 +376,9 @@ async function syncLiveGoogleSheets(): Promise<any> {
         targetsMap,
         dailyReport,
         operationalStatus,
+        sliPivotRows: sliPivot.rows,
+        sliPivotSource: sliPivot.sheetSource,
+        sliPivotAvailable: sliPivot.found,
         updatedAt: now,
       }, null, 2), (err) => {
         if (err) console.error('Error writing live cache file:', err);
@@ -405,12 +436,40 @@ async function startServer() {
   app.get('/api/live-data', async (req, res) => {
     try {
       const force = req.query.force === '1' || req.query.force === 'true';
+      const month = typeof req.query.month === 'string' ? req.query.month : '';
+
       if (force || !liveCache) {
         await syncLiveGoogleSheets();
       }
       if (!liveCache) {
         return res.status(503).json({ success: false, error: 'Live data not yet ready' });
       }
+
+      let sliPivotRows = liveCache.sliPivotRows || [];
+      let sliPivotSource = liveCache.sliPivotSource || 'SLI ACTIVATION - SEPTEMBER 2026';
+      let sliPivotAvailable = liveCache.sliPivotAvailable ?? true;
+
+      // Dynamic month selection
+      if (month && month !== '2026-09') {
+        const tabName = getSliPivotTabName(month);
+        try {
+          const pivotRes = await fetchSliActivationPivot(tabName);
+          if (pivotRes.found && pivotRes.table) {
+            sliPivotRows = parseSliActivationPivotTable(pivotRes.table);
+            sliPivotSource = pivotRes.sheetSource;
+            sliPivotAvailable = true;
+          } else {
+            sliPivotRows = [];
+            sliPivotSource = tabName;
+            sliPivotAvailable = false;
+          }
+        } catch (err: any) {
+          sliPivotRows = [];
+          sliPivotSource = tabName;
+          sliPivotAvailable = false;
+        }
+      }
+
       res.json({
         success: true,
         sourceName: liveCache.sourceName,
@@ -419,6 +478,9 @@ async function startServer() {
         targetsMap: liveCache.targetsMap,
         dailyReport: liveCache.dailyReport,
         operationalStatus: liveCache.operationalStatus,
+        sliPivotRows,
+        sliPivotSource,
+        sliPivotAvailable,
         lastSynced: liveCache.lastSynced,
       });
     } catch (err: any) {
@@ -431,6 +493,9 @@ async function startServer() {
           targetsMap: liveCache.targetsMap,
           dailyReport: liveCache.dailyReport,
           operationalStatus: liveCache.operationalStatus,
+          sliPivotRows: liveCache.sliPivotRows || [],
+          sliPivotSource: liveCache.sliPivotSource || 'SLI ACTIVATION - SEPTEMBER 2026',
+          sliPivotAvailable: liveCache.sliPivotAvailable ?? true,
           lastSynced: liveCache.lastSynced,
           warning: err.message,
         });
@@ -451,6 +516,9 @@ async function startServer() {
         targetsMap: data.targetsMap,
         dailyReport: data.dailyReport,
         operationalStatus: data.operationalStatus,
+        sliPivotRows: data.sliPivotRows,
+        sliPivotSource: data.sliPivotSource,
+        sliPivotAvailable: data.sliPivotAvailable,
         lastSynced: data.lastSynced,
       });
     } catch (err: any) {
