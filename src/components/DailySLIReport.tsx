@@ -438,18 +438,18 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
       {/* 1. SECTION HEADER */}
       <div className="flex items-center justify-between pb-5 border-b border-[#edf3f0] mb-6 flex-wrap gap-3">
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <h2 className="text-lg font-bold tracking-tight text-[#123b31]">
               DAILY SLI REPORT
             </h2>
             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#e8f5f1] text-[#0a684d] border border-[#cfe4da]">
-              ALMASOR
+              DAILY REPORT ALMASOR
             </span>
           </div>
 
           <div className="flex items-center gap-3 mt-1.5 flex-wrap text-xs text-gray-500 font-medium">
             <span>
-              Spreadsheet report:{' '}
+              Official Daily SLI Report:{' '}
               <strong className="text-[#0a684d]">
                 {formatReportLabel(activeReport.reportLabel)}
               </strong>

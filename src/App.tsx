@@ -1775,6 +1775,55 @@ export default function App() {
         </section>
 
         {/* ================================================
+            SHEET MAPPING REFERENCE
+            JO ACTIVATED → raw operational dashboard
+            SUMMARY → targets
+            DAILY REPORT ALMASOR → official Daily SLI Report
+            SLI ACTIVATION - SEPTEMBER 2026 → official Top Performing SLI
+        ================================================= */}
+        <div className="bg-white border border-[#dcece6] rounded-2xl p-3 md:p-3.5 mb-6 shadow-xs flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#0a684d]">
+              SHEET SOURCES:
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            <a
+              href="#operational-dashboard"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#f0f7f4] border border-[#d4ebe0] text-[#0b684e] font-semibold hover:bg-[#e4f3ec] transition-colors"
+            >
+              <span className="font-mono text-[11px] font-bold">JO ACTIVATED</span>
+              <span className="text-gray-400">→</span>
+              <span>Raw Operational Dashboard</span>
+            </a>
+            <a
+              href="#target-summary-cards"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#f8faf9] border border-[#dcece6] text-gray-700 font-semibold hover:bg-[#f0f4f2] transition-colors"
+            >
+              <span className="font-mono text-[11px] font-bold">SUMMARY</span>
+              <span className="text-gray-400">→</span>
+              <span>Targets</span>
+            </a>
+            <a
+              href="#daily-sli-section"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#f8faf9] border border-[#dcece6] text-gray-700 font-semibold hover:bg-[#f0f4f2] transition-colors"
+            >
+              <span className="font-mono text-[11px] font-bold">DAILY REPORT ALMASOR</span>
+              <span className="text-gray-400">→</span>
+              <span>Official Daily SLI Report</span>
+            </a>
+            <a
+              href="#top-performing-sli"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#f8faf9] border border-[#dcece6] text-gray-700 font-semibold hover:bg-[#f0f4f2] transition-colors"
+            >
+              <span className="font-mono text-[11px] font-bold">SLI ACTIVATION - SEPTEMBER 2026</span>
+              <span className="text-gray-400">→</span>
+              <span>Official Top Performing SLI</span>
+            </a>
+          </div>
+        </div>
+
+        {/* ================================================
             3. FILTERS
             Province | SLI Type | Package | Reset filters
         ================================================= */}
@@ -1864,7 +1913,24 @@ export default function App() {
 
         {/* ================================================
             3. MAIN KPI CARDS (ACTIVATED JOs & TOTAL MRC)
+            Source: JO ACTIVATED → raw operational dashboard
         ================================================= */}
+        <div className="flex items-center justify-between mb-3" id="operational-dashboard">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
+                OPERATIONAL DASHBOARD
+              </h2>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#f0f7f4] text-[#0b684e] border border-[#d4ebe0]">
+                JO ACTIVATED
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5 font-medium">
+              Raw operational dashboard • Unique activated job orders &amp; revenue consolidation
+            </p>
+          </div>
+        </div>
+
         <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-7" id="main-kpi-cards">
           {/* ACTIVATED JOs */}
           <div className="bg-[#15553f] text-white rounded-3xl p-7 shadow-sm flex flex-col justify-between" id="kpi-activated-jo">
@@ -1970,8 +2036,28 @@ export default function App() {
           />
         </section>
 
+        {/* ================================================
+            5. TARGETS & MTD VS TARGET
+            Source: SUMMARY → targets
+        ================================================= */}
+        <div className="flex items-center justify-between mb-3" id="target-summary-cards">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
+                MONTHLY TARGETS
+              </h2>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#f8faf9] text-gray-700 border border-[#dcece6]">
+                SUMMARY
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5 font-medium">
+              Official target allocations from SUMMARY sheet (Rows 11, 17, 23, 29)
+            </p>
+          </div>
+        </div>
+
         {/* Target summary cards */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7" id="target-summary-cards">
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
           <TargetCard title="FiberX Target" value={formatCount(activeTargets.fiberX)} />
           <TargetCard title="SME Target" value={formatPeso(activeTargets.sme)} />
           <TargetCard title="BIDA Target" value={formatCount(activeTargets.bida)} />

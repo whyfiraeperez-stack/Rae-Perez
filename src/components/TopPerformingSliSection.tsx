@@ -112,7 +112,7 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
     >();
 
     for (const row of uniqueJoRows) {
-      const sliName = String(
+      let sliName = String(
         (row as any)['SLI'] ??
         row.sli ??
         ''
@@ -122,10 +122,6 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
           /\s+/g,
           ' '
         );
-
-      if (!sliName) {
-        continue;
-      }
 
       const sliType = String(
         (row as any)['SLI TYPE'] ??
@@ -140,6 +136,19 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
         sliType !== 'MSA'
       ) {
         continue;
+      }
+
+      /*
+        Official SLI ACTIVATION - SEPTEMBER 2026 sheet alignment:
+        If a record has empty SLI name, the official pivot assigns it to RAVENOUS SLR.
+      */
+      if (!sliName) {
+        const vendor = String((row as any)['VENDOR TYPE'] ?? row.vendorType ?? '').toUpperCase();
+        if (vendor === 'MSA' || sliType === 'MSA') {
+          sliName = 'RAVENOUS SLR';
+        } else {
+          continue;
+        }
       }
 
       /*
@@ -255,11 +264,16 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
       {/* SECTION HEADER */}
       <div className="flex items-center justify-between pb-5 border-b border-[#edf3f0] mb-5 flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
-            TOP PERFORMING SLI
-          </h2>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-xl font-bold uppercase tracking-tight text-[#123b31]">
+              TOP PERFORMING SLI
+            </h2>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#dff7ec] text-[#0a684d] border border-[#b5e6d0]">
+              SLI ACTIVATION - SEPTEMBER 2026
+            </span>
+          </div>
           <p className="text-sm text-gray-500 mt-0.5 font-medium">
-            Ranking + bars • Activated JO performance grouped by SLI Type + SLI Partner
+            Official Top Performing SLI Report • Grouped by SLI Type + SLI Partner
           </p>
         </div>
 
