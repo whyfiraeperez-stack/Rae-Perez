@@ -1823,13 +1823,13 @@ export default function App() {
         </section>
 
         {/* ================================================
-            SHEET MAPPING REFERENCE
+            SHEET MAPPING REFERENCE (Hidden)
             JO ACTIVATED → raw operational dashboard
             SUMMARY → targets
             DAILY REPORT ALMASOR → official Daily SLI Report
             SLI ACTIVATION - SEPTEMBER 2026 → official Top Performing SLI
         ================================================= */}
-        <div className="bg-white border border-[#dcece6] rounded-2xl p-3 md:p-3.5 mb-6 shadow-xs flex items-center justify-between gap-3 flex-wrap">
+        <div className="hidden">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-black uppercase tracking-wider text-[#0a684d]">
               SHEET SOURCES:
