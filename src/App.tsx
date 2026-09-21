@@ -183,14 +183,24 @@ function normalizePackage(value: any): string {
 
 /*
   SLI TYPE MUST COME ONLY FROM COLUMN S.
-  Do NOT use Vendor Type column U as a fallback for SLI Type.
+  Do NOT use Column U / VENDOR TYPE as a fallback.
   Valid SLI TYPE values: INHOUSE, MSA
 */
 function normalizeSLI(row: RawRow): string {
-  const sliType = normalizeText(getRowValue(row, "SLI TYPE", "S", "SLITYPE"));
+  const sliType =
+    String(
+      row["SLI TYPE"] ?? row["S"] ?? ""
+    )
+      .trim()
+      .toUpperCase();
 
-  if (sliType === "INHOUSE") return "INHOUSE";
-  if (sliType === "MSA") return "MSA";
+  if (sliType === "INHOUSE") {
+    return "INHOUSE";
+  }
+
+  if (sliType === "MSA") {
+    return "MSA";
+  }
 
   return "";
 }
