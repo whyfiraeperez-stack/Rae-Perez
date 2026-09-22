@@ -549,7 +549,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 FiberX
               </span>
               <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                Core Fiber
+                FTTH
               </span>
             </div>
 

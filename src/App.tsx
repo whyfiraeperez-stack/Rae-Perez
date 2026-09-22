@@ -2153,7 +2153,7 @@ export default function App() {
           {/* FIBERX */}
           <PackageCard
             title="FIBERX"
-            label="Core Fiber"
+            label="FTTH"
             running={packageMetrics.fiberX}
             target={activeTargets.fiberX}
             percentage={calculatePercentage(

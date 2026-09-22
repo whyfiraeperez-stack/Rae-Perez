@@ -56,7 +56,7 @@ export const MtdVsTargetAlmasor: React.FC<MtdVsTargetAlmasorProps> = ({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold tracking-wider px-3 py-1 rounded-full bg-[#dff7ec] text-[#0a684d] border border-[#b5e6d0]">
-                CORE FIBER
+                FTTH
               </span>
               <h3 className="text-lg font-bold text-[#005e47]">FIBERX</h3>
             </div>
