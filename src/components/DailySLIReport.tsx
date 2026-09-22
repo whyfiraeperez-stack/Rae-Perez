@@ -18,6 +18,15 @@ function parsePercentFromText(text: string): number {
   return match ? parseFloat(match[1]) : 0;
 }
 
+function parseCountFromText(text: string): number {
+  if (!text) return 0;
+  const cleaned = String(text).replace(/^[^\d]+/, '');
+  const match = cleaned.match(/^([\d,]+(?:\.\d+)?)/);
+  if (!match) return 0;
+  const num = parseFloat(match[1].replace(/,/g, ''));
+  return isNaN(num) ? 0 : num;
+}
+
 function formatNumber(val: number): string {
   if (!Number.isFinite(val) || isNaN(val)) return '0';
   return Math.round(val).toLocaleString('en-PH');
@@ -184,13 +193,9 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
   const forCloseoutDisplay = activeReport.forCloseout || '0';
   const forActivationDisplay = activeReport.forActivation || '0';
 
-  // Historical MTD calculation (only when not TODAY)
-  const historicalMtd = useMemo(() => {
-    if (isToday) {
-      return null;
-    }
-
-    const mtdRows = allMonthRows.filter((r) => {
+  // Calculated MTD from raw JO ACTIVATED records up to selected day
+  const calculatedMtd = useMemo(() => {
+    const mtdRecords = allMonthRows.filter((r) => {
       const rYear = r.closingDate.getFullYear();
       const rMonth = r.closingDate.getMonth() + 1;
       const rDay = r.closingDate.getDate();
@@ -203,7 +208,7 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
     let smeVatIncSum = 0;
     let smeVatExSum = 0;
 
-    for (const r of mtdRows) {
+    for (const r of mtdRecords) {
       if (r.package === 'FIBERX') {
         fiberXSet.add(r.joNumber);
       } else if (r.package === 'SME') {
@@ -223,214 +228,125 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
       bida: bidaSet.size,
       s2s: s2sSet.size,
     };
-  }, [isToday, allMonthRows, year, monthNum, dayNum]);
+  }, [allMonthRows, year, monthNum, dayNum]);
 
   // MTD Rows definition
   const mtdRows = useMemo(() => {
+    const c = calculatedMtd;
+
+    const buildMtdRow = (
+      name: string,
+      sublabel: string,
+      rawText: string | undefined,
+      calcCount: number,
+      target: number,
+      isMoney: boolean
+    ) => {
+      const parsedNum = rawText ? parseCountFromText(rawText) : 0;
+      const count = parsedNum > 0 ? parsedNum : calcCount;
+
+      const parsedPct = rawText ? parsePercentFromText(rawText) : 0;
+      const calculatedPct = target > 0 ? (count / target) * 100 : 0;
+
+      // If the spreadsheet string contains (0%) or is 0, but count > 0 and target > 0,
+      // use the calculated percentage so the percentage bar renders properly.
+      const progressPercent =
+        parsedPct > 0 && Math.abs(parsedPct - calculatedPct) <= 5
+          ? parsedPct
+          : calculatedPct;
+
+      const progressDisplay = `${Math.round(progressPercent)}%`;
+      const runningDisplay = `${formatVal(count, isMoney)} (${progressDisplay})`;
+      const targetDisplay = formatVal(target, isMoney);
+
+      return {
+        name,
+        sublabel,
+        runningDisplay,
+        targetDisplay,
+        progressPercent,
+        progressDisplay,
+      };
+    };
+
     if (isToday) {
       return [
-        {
-          name: 'FIBERX',
-          sublabel: 'JO Count',
-          runningDisplay: activeReport.fiberMTD,
-          targetDisplay: formatVal(targets.fiberX, false),
-          progressPercent: parsePercentFromText(activeReport.fiberMTD),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.fiberMTD))}%`,
-        },
-        {
-          name: 'SME (VAT INC)',
-          sublabel: 'MRC Inc',
-          runningDisplay: prefixPesoIfNeeded(activeReport.smeVatIncMTD),
-          targetDisplay: formatVal(targets.sme, true),
-          progressPercent: parsePercentFromText(activeReport.smeVatIncMTD),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.smeVatIncMTD))}%`,
-        },
-        {
-          name: 'SME (VAT EX)',
-          sublabel: 'MRC Ex',
-          runningDisplay: prefixPesoIfNeeded(activeReport.smeVatExMTD),
-          targetDisplay: formatVal(targets.sme, true),
-          progressPercent: parsePercentFromText(activeReport.smeVatExMTD),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.smeVatExMTD))}%`,
-        },
-        {
-          name: 'BIDA',
-          sublabel: 'JO Count',
-          runningDisplay: activeReport.bidaMTD,
-          targetDisplay: formatVal(targets.bida, false),
-          progressPercent: parsePercentFromText(activeReport.bidaMTD),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.bidaMTD))}%`,
-        },
-        {
-          name: 'S2S',
-          sublabel: 'JO Count',
-          runningDisplay: activeReport.s2sMTD,
-          targetDisplay: formatVal(targets.s2s, false),
-          progressPercent: parsePercentFromText(activeReport.s2sMTD),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.s2sMTD))}%`,
-        },
+        buildMtdRow('FIBERX', 'JO Count', activeReport.fiberMTD, c.fiberX, targets.fiberX, false),
+        buildMtdRow('SME (VAT INC)', 'MRC Inc', activeReport.smeVatIncMTD, c.smeVatInc, targets.sme, true),
+        buildMtdRow('SME (VAT EX)', 'MRC Ex', activeReport.smeVatExMTD, c.smeVatEx, targets.sme, true),
+        buildMtdRow('BIDA', 'JO Count', activeReport.bidaMTD, c.bida, targets.bida, false),
+        buildMtdRow('S2S', 'JO Count', activeReport.s2sMTD, c.s2s, targets.s2s, false),
       ];
     }
 
     // Historical MTD
-    const h = historicalMtd || { fiberX: 0, smeVatInc: 0, smeVatEx: 0, bida: 0, s2s: 0 };
-    const pFiber = targets.fiberX > 0 ? (h.fiberX / targets.fiberX) * 100 : 0;
-    const pSmeInc = targets.sme > 0 ? (h.smeVatInc / targets.sme) * 100 : 0;
-    const pSmeEx = targets.sme > 0 ? (h.smeVatEx / targets.sme) * 100 : 0;
-    const pBida = targets.bida > 0 ? (h.bida / targets.bida) * 100 : 0;
-    const pS2s = targets.s2s > 0 ? (h.s2s / targets.s2s) * 100 : 0;
-
     return [
-      {
-        name: 'FIBERX',
-        sublabel: 'JO Count',
-        runningDisplay: formatVal(h.fiberX, false),
-        targetDisplay: formatVal(targets.fiberX, false),
-        progressPercent: pFiber,
-        progressDisplay: formatPercent(pFiber),
-      },
-      {
-        name: 'SME (VAT INC)',
-        sublabel: 'MRC Inc',
-        runningDisplay: formatVal(h.smeVatInc, true),
-        targetDisplay: formatVal(targets.sme, true),
-        progressPercent: pSmeInc,
-        progressDisplay: formatPercent(pSmeInc),
-      },
-      {
-        name: 'SME (VAT EX)',
-        sublabel: 'MRC Ex',
-        runningDisplay: formatVal(h.smeVatEx, true),
-        targetDisplay: formatVal(targets.sme, true),
-        progressPercent: pSmeEx,
-        progressDisplay: formatPercent(pSmeEx),
-      },
-      {
-        name: 'BIDA',
-        sublabel: 'JO Count',
-        runningDisplay: formatVal(h.bida, false),
-        targetDisplay: formatVal(targets.bida, false),
-        progressPercent: pBida,
-        progressDisplay: formatPercent(pBida),
-      },
-      {
-        name: 'S2S',
-        sublabel: 'JO Count',
-        runningDisplay: formatVal(h.s2s, false),
-        targetDisplay: formatVal(targets.s2s, false),
-        progressPercent: pS2s,
-        progressDisplay: formatPercent(pS2s),
-      },
+      buildMtdRow('FIBERX', 'JO Count', undefined, c.fiberX, targets.fiberX, false),
+      buildMtdRow('SME (VAT INC)', 'MRC Inc', undefined, c.smeVatInc, targets.sme, true),
+      buildMtdRow('SME (VAT EX)', 'MRC Ex', undefined, c.smeVatEx, targets.sme, true),
+      buildMtdRow('BIDA', 'JO Count', undefined, c.bida, targets.bida, false),
+      buildMtdRow('S2S', 'JO Count', undefined, c.s2s, targets.s2s, false),
     ];
-  }, [isToday, activeReport, targets, historicalMtd]);
+  }, [isToday, activeReport, targets, calculatedMtd]);
 
   // Runrate Rows definition
   const runrateRows = useMemo(() => {
-    if (isToday) {
-      return [
-        {
-          name: 'FIBERX',
-          sublabel: 'JO Count',
-          runrateDisplay: activeReport.fiberRunrate,
-          targetDisplay: formatVal(targets.fiberX, false),
-          progressPercent: parsePercentFromText(activeReport.fiberRunrate),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.fiberRunrate))}%`,
-        },
-        {
-          name: 'SME (VAT INC)',
-          sublabel: 'MRC Inc',
-          runrateDisplay: prefixPesoIfNeeded(activeReport.smeVatIncRunrate),
-          targetDisplay: formatVal(targets.sme, true),
-          progressPercent: parsePercentFromText(activeReport.smeVatIncRunrate),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.smeVatIncRunrate))}%`,
-        },
-        {
-          name: 'SME (VAT EX)',
-          sublabel: 'MRC Ex',
-          runrateDisplay: prefixPesoIfNeeded(activeReport.smeVatExRunrate),
-          targetDisplay: formatVal(targets.sme, true),
-          progressPercent: parsePercentFromText(activeReport.smeVatExRunrate),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.smeVatExRunrate))}%`,
-        },
-        {
-          name: 'BIDA',
-          sublabel: 'JO Count',
-          runrateDisplay: activeReport.bidaRunrate,
-          targetDisplay: formatVal(targets.bida, false),
-          progressPercent: parsePercentFromText(activeReport.bidaRunrate),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.bidaRunrate))}%`,
-        },
-        {
-          name: 'S2S',
-          sublabel: 'JO Count',
-          runrateDisplay: activeReport.s2sRunrate,
-          targetDisplay: formatVal(targets.s2s, false),
-          progressPercent: parsePercentFromText(activeReport.s2sRunrate),
-          progressDisplay: `${Math.round(parsePercentFromText(activeReport.s2sRunrate))}%`,
-        },
-      ];
-    }
-
-    // Historical runrate projection
-    const h = historicalMtd || { fiberX: 0, smeVatInc: 0, smeVatEx: 0, bida: 0, s2s: 0 };
+    const c = calculatedMtd;
     const elapsedDays = Math.max(dayNum, 1);
     const factor = daysInMonth / elapsedDays;
 
-    const rFiber = Math.round(h.fiberX * factor);
-    const rSmeInc = Math.round(h.smeVatInc * factor);
-    const rSmeEx = Math.round(h.smeVatEx * factor);
-    const rBida = Math.round(h.bida * factor);
-    const rS2s = Math.round(h.s2s * factor);
+    const buildRunrateRow = (
+      name: string,
+      sublabel: string,
+      rawText: string | undefined,
+      runningCount: number,
+      target: number,
+      isMoney: boolean
+    ) => {
+      const parsedRunrate = rawText ? parseCountFromText(rawText) : 0;
+      const parsedPct = rawText ? parsePercentFromText(rawText) : 0;
 
-    const pFiber = targets.fiberX > 0 ? (rFiber / targets.fiberX) * 100 : 0;
-    const pSmeInc = targets.sme > 0 ? (rSmeInc / targets.sme) * 100 : 0;
-    const pSmeEx = targets.sme > 0 ? (rSmeEx / targets.sme) * 100 : 0;
-    const pBida = targets.bida > 0 ? (rBida / targets.bida) * 100 : 0;
-    const pS2s = targets.s2s > 0 ? (rS2s / targets.s2s) * 100 : 0;
+      let runrateCount: number;
+      let progressPercent: number;
+
+      // If the spreadsheet provides a valid non-zero runrate, use it;
+      // otherwise, dynamically calculate projected runrate from running MTD count
+      if (parsedRunrate > 0 && parsedPct > 0) {
+        runrateCount = parsedRunrate;
+        progressPercent = parsedPct;
+      } else {
+        runrateCount = Math.round(runningCount * factor);
+        progressPercent = target > 0 ? (runrateCount / target) * 100 : 0;
+      }
+
+      const progressDisplay = `${Math.round(progressPercent)}%`;
+      const runrateDisplay = `${formatVal(runrateCount, isMoney)} / ${formatVal(target, isMoney)} (${progressDisplay})`;
+      const targetDisplay = formatVal(target, isMoney);
+
+      return {
+        name,
+        sublabel,
+        runrateDisplay,
+        targetDisplay,
+        progressPercent,
+        progressDisplay,
+      };
+    };
+
+    const runningFiber = (activeReport.fiberMTD ? parseCountFromText(activeReport.fiberMTD) : 0) || c.fiberX;
+    const runningSmeInc = (activeReport.smeVatIncMTD ? parseCountFromText(activeReport.smeVatIncMTD) : 0) || c.smeVatInc;
+    const runningSmeEx = (activeReport.smeVatExMTD ? parseCountFromText(activeReport.smeVatExMTD) : 0) || c.smeVatEx;
+    const runningBida = (activeReport.bidaMTD ? parseCountFromText(activeReport.bidaMTD) : 0) || c.bida;
+    const runningS2s = (activeReport.s2sMTD ? parseCountFromText(activeReport.s2sMTD) : 0) || c.s2s;
 
     return [
-      {
-        name: 'FIBERX',
-        sublabel: 'JO Count',
-        runrateDisplay: formatVal(rFiber, false),
-        targetDisplay: formatVal(targets.fiberX, false),
-        progressPercent: pFiber,
-        progressDisplay: formatPercent(pFiber),
-      },
-      {
-        name: 'SME (VAT INC)',
-        sublabel: 'MRC Inc',
-        runrateDisplay: formatVal(rSmeInc, true),
-        targetDisplay: formatVal(targets.sme, true),
-        progressPercent: pSmeInc,
-        progressDisplay: formatPercent(pSmeInc),
-      },
-      {
-        name: 'SME (VAT EX)',
-        sublabel: 'MRC Ex',
-        runrateDisplay: formatVal(rSmeEx, true),
-        targetDisplay: formatVal(targets.sme, true),
-        progressPercent: pSmeEx,
-        progressDisplay: formatPercent(pSmeEx),
-      },
-      {
-        name: 'BIDA',
-        sublabel: 'JO Count',
-        runrateDisplay: formatVal(rBida, false),
-        targetDisplay: formatVal(targets.bida, false),
-        progressPercent: pBida,
-        progressDisplay: formatPercent(pBida),
-      },
-      {
-        name: 'S2S',
-        sublabel: 'JO Count',
-        runrateDisplay: formatVal(rS2s, false),
-        targetDisplay: formatVal(targets.s2s, false),
-        progressPercent: pS2s,
-        progressDisplay: formatPercent(pS2s),
-      },
+      buildRunrateRow('FIBERX', 'JO Count', isToday ? activeReport.fiberRunrate : undefined, runningFiber, targets.fiberX, false),
+      buildRunrateRow('SME (VAT INC)', 'MRC Inc', isToday ? activeReport.smeVatIncRunrate : undefined, runningSmeInc, targets.sme, true),
+      buildRunrateRow('SME (VAT EX)', 'MRC Ex', isToday ? activeReport.smeVatExRunrate : undefined, runningSmeEx, targets.sme, true),
+      buildRunrateRow('BIDA', 'JO Count', isToday ? activeReport.bidaRunrate : undefined, runningBida, targets.bida, false),
+      buildRunrateRow('S2S', 'JO Count', isToday ? activeReport.s2sRunrate : undefined, runningS2s, targets.s2s, false),
     ];
-  }, [isToday, activeReport, targets, historicalMtd, dayNum, daysInMonth]);
+  }, [isToday, activeReport, targets, calculatedMtd, dayNum, daysInMonth]);
 
   return (
     <div
@@ -642,7 +558,9 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
               <div className="w-full bg-[#e8f3ee] h-1.5 rounded-full overflow-hidden mt-2">
                 <div
                   className="bg-[#0aa37a] h-full rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(Math.max(row.progressPercent, 0), 100)}%` }}
+                  style={{
+                    width: `${row.progressPercent > 0 ? Math.max(Math.min(row.progressPercent, 100), 2) : 0}%`,
+                  }}
                 />
               </div>
             </div>
@@ -721,7 +639,9 @@ export const DailySLIReport: React.FC<DailySLIReportProps> = ({
               <div className="w-full bg-[#e8f3ee] h-1.5 rounded-full overflow-hidden mt-2">
                 <div
                   className="bg-[#0aa37a] h-full rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(Math.max(row.progressPercent, 0), 100)}%` }}
+                  style={{
+                    width: `${row.progressPercent > 0 ? Math.max(Math.min(row.progressPercent, 100), 2) : 0}%`,
+                  }}
                 />
               </div>
             </div>

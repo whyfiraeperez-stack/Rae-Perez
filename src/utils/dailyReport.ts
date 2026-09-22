@@ -72,44 +72,85 @@ export async function fetchDailyReportCell(cell: string, signal?: AbortSignal): 
 }
 
 export async function fetchDailyReportAlmasor(signal?: AbortSignal): Promise<DailyReportAlmasor> {
-  const cells = await Promise.all([
-    fetchDailyReportCell('AJ9', signal),
+  const url =
+    `${GOOGLE_SHEET_URL}/gviz/tq` +
+    `?sheet=${encodeURIComponent('DAILY REPORT ALMASOR')}` +
+    `&range=${encodeURIComponent('AJ1:AK45')}` +
+    `&tqx=out:json` +
+    `&_=${Date.now()}`;
 
-    fetchDailyReportCell('AK11', signal),
-    fetchDailyReportCell('AK12', signal),
-    fetchDailyReportCell('AK14', signal),
-    fetchDailyReportCell('AK17', signal),
-    fetchDailyReportCell('AK18', signal),
+  const response = await fetch(url, {
+    cache: 'no-store',
+    signal,
+  });
 
-    fetchDailyReportCell('AK21', signal),
-    fetchDailyReportCell('AK22', signal),
-    fetchDailyReportCell('AK23', signal),
-    fetchDailyReportCell('AK24', signal),
-    fetchDailyReportCell('AK25', signal),
+  if (!response.ok) {
+    throw new Error(
+      `DAILY REPORT ALMASOR fetch failed: HTTP ${response.status}`
+    );
+  }
 
-    fetchDailyReportCell('AK29', signal),
-    fetchDailyReportCell('AK30', signal),
-    fetchDailyReportCell('AK31', signal),
-    fetchDailyReportCell('AK32', signal),
-    fetchDailyReportCell('AK33', signal),
-  ]);
+  const text = await response.text();
+  const match = text.match(
+    /google\.visualization\.Query\.setResponse\(([\s\S]*)\);?\s*$/
+  );
 
-  return {
-    reportLabel: cells[0].formatted,
-    fiberYesterday: cells[1].formatted,
-    fiberToday: cells[2].formatted,
-    fsoi: cells[3].formatted,
-    forCloseout: cells[4].formatted,
-    forActivation: cells[5].formatted,
-    fiberMTD: cells[6].formatted,
-    smeVatIncMTD: cells[7].formatted,
-    smeVatExMTD: cells[8].formatted,
-    bidaMTD: cells[9].formatted,
-    s2sMTD: cells[10].formatted,
-    fiberRunrate: cells[11].formatted,
-    smeVatIncRunrate: cells[12].formatted,
-    smeVatExRunrate: cells[13].formatted,
-    bidaRunrate: cells[14].formatted,
-    s2sRunrate: cells[15].formatted,
-  };
+  if (!match) {
+    throw new Error('Could not parse DAILY REPORT ALMASOR table response');
+  }
+
+  const json = JSON.parse(match[1]);
+  if (json.status === 'error') {
+    throw new Error(
+      json.errors?.[0]?.detailed_message ||
+      json.errors?.[0]?.message ||
+      'Google Sheet error in DAILY REPORT ALMASOR'
+    );
+  }
+
+  const rows = json.table?.rows || [];
+  let section = '';
+  const result: DailyReportAlmasor = { ...DEFAULT_DAILY_REPORT };
+
+  for (const r of rows) {
+    if (!r || !r.c) continue;
+    const aj = (r.c[0]?.f ?? r.c[0]?.v ?? '').toString().trim();
+    const ak = (r.c[1]?.f ?? r.c[1]?.v ?? '').toString().trim();
+    if (!aj) continue;
+
+    const ajLower = aj.toLowerCase();
+
+    if (ajLower.includes('daily sli report as of') || ajLower.startsWith('*daily sli report')) {
+      result.reportLabel = aj;
+    } else if (ajLower.includes('runrate vs target')) {
+      section = 'runrate';
+    } else if (ajLower.includes('mtd activations vs target')) {
+      section = 'mtd';
+    } else if (ajLower.includes('open jos for closing')) {
+      section = 'closing';
+    } else if (ajLower.includes('daily activations and fsoi')) {
+      section = 'daily';
+    } else if (section === 'daily') {
+      if (ajLower.includes('yesterday')) result.fiberYesterday = ak;
+      else if (ajLower.includes('today')) result.fiberToday = ak;
+      else if (ajLower.includes('fsoi')) result.fsoi = ak;
+    } else if (section === 'closing') {
+      if (ajLower.includes('closeout')) result.forCloseout = ak;
+      else if (ajLower.includes('activation')) result.forActivation = ak;
+    } else if (section === 'mtd') {
+      if (ajLower.startsWith('fiberx')) result.fiberMTD = ak;
+      else if (ajLower.includes('vat inc')) result.smeVatIncMTD = ak;
+      else if (ajLower.includes('vat ex')) result.smeVatExMTD = ak;
+      else if (ajLower.startsWith('bida')) result.bidaMTD = ak;
+      else if (ajLower.startsWith('s2s')) result.s2sMTD = ak;
+    } else if (section === 'runrate') {
+      if (ajLower.startsWith('fiberx')) result.fiberRunrate = ak;
+      else if (ajLower.includes('vat inc')) result.smeVatIncRunrate = ak;
+      else if (ajLower.includes('vat ex')) result.smeVatExRunrate = ak;
+      else if (ajLower.startsWith('bida')) result.bidaRunrate = ak;
+      else if (ajLower.startsWith('s2s')) result.s2sRunrate = ak;
+    }
+  }
+
+  return result;
 }
