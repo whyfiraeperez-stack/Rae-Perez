@@ -83,8 +83,9 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
   const mrcByKey = useMemo(() => {
     const map = new Map<string, number>();
     for (const r of rows) {
-      const type = (r.sliType || '').toUpperCase();
-      const sli = (r.sli || '').toUpperCase();
+      let type = (r.sliType || r.vendorType || '').toUpperCase();
+      let sli = (r.sli || r.vendor || '').toUpperCase();
+      if (sli === 'LOADING...') sli = (r.vendor || '').toUpperCase();
       if (!type || !sli) continue;
       const k = `${type}|||${sli}`;
       map.set(k, (map.get(k) || 0) + Number(r.mrc || 0));
@@ -119,18 +120,26 @@ export const TopPerformingSliSection: React.FC<TopPerformingSliSectionProps> = (
 
     for (const row of deduplicated) {
       let sliName = String(row.sli ?? '').trim().replace(/\s+/g, ' ');
-      const sliType = String(row.sliType ?? '').trim().toUpperCase();
+      let sliType = String(row.sliType ?? '').trim().toUpperCase();
 
       if (sliType !== 'INHOUSE' && sliType !== 'MSA') {
-        continue;
+        const vt = String(row.vendorType ?? '').trim().toUpperCase();
+        if (vt === 'INHOUSE' || vt === 'MSA') {
+          sliType = vt;
+        } else {
+          continue;
+        }
+      }
+
+      if (!sliName || sliName === 'Loading...' || sliName.toLowerCase() === 'loading') {
+        sliName = String(row.vendor ?? (row as any)['VENDOR'] ?? '').trim();
       }
 
       if (!sliName) {
-        const vendor = String(row.vendorType ?? '').toUpperCase();
-        if (vendor === 'MSA' || sliType === 'MSA') {
-          sliName = 'RAVENOUS SLR';
+        if (sliType === 'MSA') {
+          sliName = 'MSA VENDOR';
         } else {
-          continue;
+          sliName = 'INHOUSE TEAM';
         }
       }
 

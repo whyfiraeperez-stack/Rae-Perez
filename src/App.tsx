@@ -201,23 +201,69 @@ function normalizePackage(value: any): string {
 }
 
 /*
-  SLI TYPE MUST COME ONLY FROM COLUMN S.
-  Do NOT use Column U / VENDOR TYPE as a fallback.
-  Valid SLI TYPE values: INHOUSE, MSA
+  Normalize SLI Channel Type (INHOUSE vs MSA):
+  1. Priority: Column S (SLI TYPE) if populated in the sheet
+  2. Fallback: Column U (VENDOR TYPE) which in the Google Sheet is the authoritative INHOUSE / MSA channel distribution
+  3. Fallback: Column T (VENDOR) or SLI name heuristics
 */
 function normalizeSLI(row: RawRow): string {
-  const sliType =
-    String(
-      row["SLI TYPE"] ?? row["S"] ?? ""
-    )
-      .trim()
-      .toUpperCase();
+  // 1. Check Column S (SLI TYPE)
+  const sliType = String(
+    row["SLI TYPE"] ?? row["S"] ?? getRowValue(row, "SLI TYPE", "S") ?? ""
+  )
+    .trim()
+    .toUpperCase();
 
-  if (sliType === "INHOUSE") {
+  if (sliType === "INHOUSE" || sliType.includes("INHOUSE") || sliType.includes("IN-HOUSE") || sliType.includes("INTERNAL")) {
     return "INHOUSE";
   }
+  if (sliType === "MSA" || sliType.includes("MSA") || sliType.includes("OUTSOURCE") || sliType.includes("DEALER")) {
+    return "MSA";
+  }
 
-  if (sliType === "MSA") {
+  // 2. Fallback to Column U (VENDOR TYPE)
+  const vendorType = String(
+    row["VENDOR TYPE"] ?? row["U"] ?? getRowValue(row, "VENDOR TYPE", "U", "VENDORTYPE") ?? ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (vendorType === "INHOUSE" || vendorType.includes("INHOUSE") || vendorType.includes("IN-HOUSE") || vendorType.includes("INTERNAL")) {
+    return "INHOUSE";
+  }
+  if (vendorType === "MSA" || vendorType.includes("MSA") || vendorType.includes("OUTSOURCE") || vendorType.includes("DEALER")) {
+    return "MSA";
+  }
+
+  // 3. Fallback to Column T (VENDOR) / SLI name
+  const vendor = String(
+    row["VENDOR"] ?? row["T"] ?? row["SLI"] ?? row["Q"] ?? ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (
+    vendor.includes("INHOUSE") ||
+    vendor.includes("IN-HOUSE") ||
+    vendor.includes("INTERNAL") ||
+    vendor.includes("BUSINESS CENTER") ||
+    vendor.includes("TELEDIGISALES") ||
+    vendor.includes("ONLINE APPLICATION")
+  ) {
+    return "INHOUSE";
+  }
+  if (
+    vendor.includes("MSA") ||
+    vendor.includes("ENTERPRISE") ||
+    vendor.includes("OUTSOURCE") ||
+    vendor.includes("STORE") ||
+    vendor.includes("TRUCKING") ||
+    vendor.includes("SERAPH") ||
+    vendor.includes("BRYTH") ||
+    vendor.includes("SBAS") ||
+    vendor.includes("TOUKON") ||
+    vendor.includes("NARVAEZ")
+  ) {
     return "MSA";
   }
 
@@ -226,11 +272,9 @@ function normalizeSLI(row: RawRow): string {
 
 function normalizeVendorType(row: RawRow): string {
   const vendorType = normalizeText(getRowValue(row, "VENDOR TYPE", "U", "VENDORTYPE"));
-
   if (vendorType === "INHOUSE") return "INHOUSE";
   if (vendorType === "MSA") return "MSA";
-
-  return vendorType;
+  return normalizeSLI(row);
 }
 
 /*
@@ -548,6 +592,7 @@ async function fetchGoogleSheet(sheetName: string, query: string, signal?: Abort
   G  = STATEORPROVINCE
   Q  = SLI
   S  = SLI TYPE
+  T  = VENDOR
   U  = VENDOR TYPE
   Y  = SLA
   AC = PACKAGE
@@ -557,7 +602,7 @@ async function fetchGoogleSheet(sheetName: string, query: string, signal?: Abort
 */
 async function fetchJOActivated(signal?: AbortSignal): Promise<RawRow[]> {
   const sheetName = "JO ACTIVATED";
-  const query = "select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null";
+  const query = "select A,G,Q,S,T,U,Y,AC,AE,AF,AU where A is not null";
   const url =
     `${GOOGLE_SHEET_URL}/gviz/tq` +
     `?sheet=${encodeURIComponent(sheetName)}` +
@@ -600,22 +645,24 @@ async function fetchJOActivated(signal?: AbortSignal): Promise<RawRow[]> {
       "STATEORPROVINCE": values[1]?.v ?? "",
       "SLI": values[2]?.v ?? "",
       "SLI TYPE": values[3]?.v ?? "",
-      "VENDOR TYPE": values[4]?.v ?? "",
-      "SLA": values[5]?.v ?? "",
-      "PACKAGE": values[6]?.v ?? "",
-      "MRC": values[7]?.v ?? "",
-      "CLOSING DATE": values[8]?.v ?? "",
-      "VAT EX MRC": values[9]?.v ?? "",
+      "VENDOR": values[4]?.v ?? "",
+      "VENDOR TYPE": values[5]?.v ?? "",
+      "SLA": values[6]?.v ?? "",
+      "PACKAGE": values[7]?.v ?? "",
+      "MRC": values[8]?.v ?? "",
+      "CLOSING DATE": values[9]?.v ?? "",
+      "VAT EX MRC": values[10]?.v ?? "",
       A: values[0]?.v ?? "",
       G: values[1]?.v ?? "",
       Q: values[2]?.v ?? "",
       S: values[3]?.v ?? "",
-      U: values[4]?.v ?? "",
-      Y: values[5]?.v ?? "",
-      AC: values[6]?.v ?? "",
-      AE: values[7]?.v ?? "",
-      AF: values[8]?.v ?? "",
-      AU: values[9]?.v ?? "",
+      T: values[4]?.v ?? "",
+      U: values[5]?.v ?? "",
+      Y: values[6]?.v ?? "",
+      AC: values[7]?.v ?? "",
+      AE: values[8]?.v ?? "",
+      AF: values[9]?.v ?? "",
+      AU: values[10]?.v ?? "",
     };
   });
 }
@@ -808,8 +855,15 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
       continue;
     }
 
+    const vendorName = String(
+      row["VENDOR"] ?? getRowValue(row, "VENDOR", "T", "VENDORTITLE") ?? ""
+    ).trim();
+
     const rawSli = String(row["SLI"] ?? getRowValue(row, "SLI", "Q", "SLINAME") ?? "").trim();
-    const sli = rawSli.replace(/\s+/g, " ");
+    let sli = rawSli.replace(/\s+/g, " ");
+    if (!sli || sli === "Loading..." || sli.toLowerCase() === "loading") {
+      sli = vendorName;
+    }
 
     const rawMrc = numberValue(row["MRC"] ?? getRowValue(row, "MRC", "AE", "AMOUNT"));
     const rawMrcVatEx = numberValue(
@@ -831,6 +885,7 @@ function parseJORows(rawRows: RawRow[]): ParsedJO[] {
       sli,
       sliType: normalizeSLI(row),
       vendorType: normalizeVendorType(row),
+      vendor: vendorName,
       package: packageName,
       mrc: rawMrc,
       vatExMrc,
@@ -1530,14 +1585,33 @@ export default function App() {
   */
   const sliMetrics = useMemo(() => {
     let inhouse = 0;
+    let inhouseMrc = 0;
     let msa = 0;
+    let msaMrc = 0;
 
     for (const r of filteredRows) {
-      if (r.sliType === "INHOUSE") inhouse++;
-      if (r.sliType === "MSA") msa++;
+      if (r.sliType === "INHOUSE") {
+        inhouse++;
+        inhouseMrc += r.mrc || 0;
+      } else if (r.sliType === "MSA") {
+        msa++;
+        msaMrc += r.mrc || 0;
+      }
     }
 
-    return { inhouse, msa };
+    const total = inhouse + msa;
+    const inhousePct = total > 0 ? Math.round((inhouse / total) * 100) : 0;
+    const msaPct = total > 0 ? Math.round((msa / total) * 100) : 0;
+
+    return {
+      inhouse,
+      inhouseMrc,
+      inhousePct,
+      msa,
+      msaMrc,
+      msaPct,
+      total,
+    };
   }, [filteredRows]);
 
   /*
@@ -2243,8 +2317,18 @@ export default function App() {
         </div>
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8" id="sli-breakdown">
-          <ChannelCard title="INHOUSE" value={sliMetrics.inhouse} />
-          <ChannelCard title="MSA" value={sliMetrics.msa} />
+          <ChannelCard
+            title="INHOUSE"
+            value={sliMetrics.inhouse}
+            percentage={sliMetrics.inhousePct}
+            mrc={sliMetrics.inhouseMrc}
+          />
+          <ChannelCard
+            title="MSA"
+            value={sliMetrics.msa}
+            percentage={sliMetrics.msaPct}
+            mrc={sliMetrics.msaMrc}
+          />
         </section>
 
         {/* ================================================
@@ -2567,15 +2651,38 @@ function TargetCard({ title, value }: { title: string; value: string }) {
   );
 }
 
-function ChannelCard({ title, value }: { title: string; value: number }) {
+function ChannelCard({
+  title,
+  value,
+  percentage,
+  mrc,
+}: {
+  title: string;
+  value: number;
+  percentage?: number;
+  mrc?: number;
+}) {
   return (
-    <div className="bg-white border border-[#dcece6] rounded-2xl p-6 shadow-sm">
-      <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-        {title}
+    <div className="bg-white border border-[#dcece6] rounded-2xl p-6 shadow-sm hover:border-[#0aa37a] transition-all">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          {title}
+        </div>
+        {percentage !== undefined && (
+          <span className="text-xs font-bold text-[#0aa37a] bg-[#eef7f3] px-2.5 py-0.5 rounded-full border border-[#cbe6db]">
+            {percentage}% Share
+          </span>
+        )}
       </div>
-      <div className="text-4xl font-bold mt-2 text-[#07563f]">
+      <div className="text-4xl font-black mt-2 text-[#07563f]">
         {formatCount(value)}
       </div>
+      {mrc !== undefined && (
+        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 font-medium">
+          <span>Activated MRC</span>
+          <span className="font-bold font-mono text-[#123b31]">{formatPeso(mrc)}</span>
+        </div>
+      )}
     </div>
   );
 }

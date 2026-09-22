@@ -109,6 +109,7 @@ export type ParsedJO = {
   sli: string;
   sliType: string;
   vendorType: string;
+  vendor?: string;
   package: string;
   mrc: number;
   vatExMrc: number;

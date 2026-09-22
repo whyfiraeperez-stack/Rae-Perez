@@ -259,15 +259,46 @@ export function matchesProvince(record: JORecord, selectedProvince: string): boo
 }
 
 /**
- * Checks if a record matches SLI Type filter (Column S: SLI TYPE)
+ * Checks if a record matches SLI Type filter (Column S: SLI TYPE, Column U: VENDOR TYPE, Column T: VENDOR)
  */
 export function matchesSliType(record: JORecord, selectedSliType: string): boolean {
   if (!selectedSliType || selectedSliType === 'All' || selectedSliType === 'ALL' || selectedSliType === 'All SLI Types') {
     return true;
   }
   const cleanFilter = selectedSliType.trim().toUpperCase();
-  const cleanRecordSli = (record.sliType || record.vendorType || '').trim().toUpperCase();
-  return cleanRecordSli === cleanFilter;
+  const rawType = (record.sliType || record.vendorType || '').trim().toUpperCase();
+
+  if (cleanFilter === 'INHOUSE') {
+    if (rawType === 'INHOUSE' || rawType.includes('INHOUSE') || rawType.includes('IN-HOUSE') || rawType.includes('INTERNAL')) return true;
+    const vendor = (record.vendor || record.sli || '').trim().toUpperCase();
+    return (
+      vendor.includes('INHOUSE') ||
+      vendor.includes('IN-HOUSE') ||
+      vendor.includes('INTERNAL') ||
+      vendor.includes('BUSINESS CENTER') ||
+      vendor.includes('TELEDIGISALES') ||
+      vendor.includes('ONLINE APPLICATION')
+    );
+  }
+
+  if (cleanFilter === 'MSA') {
+    if (rawType === 'MSA' || rawType.includes('MSA') || rawType.includes('OUTSOURCE') || rawType.includes('DEALER')) return true;
+    const vendor = (record.vendor || record.sli || '').trim().toUpperCase();
+    return (
+      vendor.includes('MSA') ||
+      vendor.includes('ENTERPRISE') ||
+      vendor.includes('OUTSOURCE') ||
+      vendor.includes('STORE') ||
+      vendor.includes('TRUCKING') ||
+      vendor.includes('SERAPH') ||
+      vendor.includes('BRYTH') ||
+      vendor.includes('SBAS') ||
+      vendor.includes('TOUKON') ||
+      vendor.includes('NARVAEZ')
+    );
+  }
+
+  return rawType === cleanFilter;
 }
 
 /**

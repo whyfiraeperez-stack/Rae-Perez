@@ -93,10 +93,10 @@ try {
         summaryRows: parsed.summaryRows || [],
         targetsMap: parsed.targetsMap || DEFAULT_TARGETS_MAP,
         operationalStatus: parsed.operationalStatus || {
-          asOfText: '18 Sep 2026 10:28 am',
-          fsoi: 14,
-          forCloseout: 2,
-          forActivation: 1,
+          asOfText: '19 Sep 2026',
+          fsoi: 16,
+          forCloseout: 1,
+          forActivation: 2,
         },
         sliPivotRows: parsed.sliPivotRows || [],
         sliPivotSource: parsed.sliPivotSource || 'SLI ACTIVATION - SEPTEMBER 2026',
@@ -109,6 +109,25 @@ try {
   }
 } catch (e) {
   console.error('Failed to read live cache file on startup:', e);
+}
+
+if (!liveCache) {
+  liveCache = {
+    joRows: [],
+    summaryRows: [],
+    targetsMap: DEFAULT_TARGETS_MAP,
+    operationalStatus: {
+      asOfText: '19 Sep 2026',
+      fsoi: 16,
+      forCloseout: 1,
+      forActivation: 2,
+    },
+    sliPivotRows: [],
+    sliPivotSource: 'SLI ACTIVATION - SEPTEMBER 2026',
+    sliPivotAvailable: true,
+    lastSynced: new Date().toISOString(),
+    sourceName: 'Live Google Sheet',
+  };
 }
 
 // Helper: fetch Google Sheet GViz
@@ -125,6 +144,7 @@ async function fetchGoogleSheetGViz(sheetName: string, query?: string, range?: s
   const response = await fetch(url, {
     method: 'GET',
     headers: { Accept: 'text/plain' },
+    signal: AbortSignal.timeout(10000),
   });
 
   if (!response.ok) {
@@ -167,18 +187,20 @@ async function fetchGoogleSheetGViz(sheetName: string, query?: string, range?: s
       record['SLI'] = record['SLI'] || getVal(2);
       record['S'] = record['S'] || getVal(3);
       record['SLI TYPE'] = record['SLI TYPE'] || getVal(3);
-      record['U'] = record['U'] || getVal(4);
-      record['VENDOR TYPE'] = record['VENDOR TYPE'] || getVal(4);
-      record['Y'] = record['Y'] || getVal(5);
-      record['SLA'] = record['SLA'] || getVal(5);
-      record['AC'] = record['AC'] || getVal(6);
-      record['PACKAGE'] = record['PACKAGE'] || getVal(6);
-      record['AE'] = record['AE'] || getVal(7);
-      record['MRC'] = record['MRC'] || getVal(7);
-      record['AF'] = record['AF'] || getVal(8);
-      record['CLOSING DATE'] = record['CLOSING DATE'] || getVal(8);
-      record['AU'] = record['AU'] || getVal(9);
-      record['VAT EX MRC'] = record['VAT EX MRC'] || getVal(9);
+      record['T'] = record['T'] || getVal(4);
+      record['VENDOR'] = record['VENDOR'] || getVal(4);
+      record['U'] = record['U'] || getVal(5);
+      record['VENDOR TYPE'] = record['VENDOR TYPE'] || getVal(5);
+      record['Y'] = record['Y'] || getVal(6);
+      record['SLA'] = record['SLA'] || getVal(6);
+      record['AC'] = record['AC'] || getVal(7);
+      record['PACKAGE'] = record['PACKAGE'] || getVal(7);
+      record['AE'] = record['AE'] || getVal(8);
+      record['MRC'] = record['MRC'] || getVal(8);
+      record['AF'] = record['AF'] || getVal(9);
+      record['CLOSING DATE'] = record['CLOSING DATE'] || getVal(9);
+      record['AU'] = record['AU'] || getVal(10);
+      record['VAT EX MRC'] = record['VAT EX MRC'] || getVal(10);
     }
     return record;
   });
@@ -363,7 +385,7 @@ async function syncLiveGoogleSheets(): Promise<any> {
       const currentPivotTab = getSliPivotTabName(currentMonthKey);
 
       const [joRows, summaryRows, albay, sorsogon, masbate, overall, draReport, sliPivot] = await Promise.all([
-        fetchGoogleSheetGViz('JO ACTIVATED', 'select A,G,Q,S,U,Y,AC,AE,AF,AU where A is not null'),
+        fetchGoogleSheetGViz('JO ACTIVATED', 'select A,G,Q,S,T,U,Y,AC,AE,AF,AU where A is not null'),
         fetchGoogleSheetGViz('SUMMARY', 'select B,C,D,E,F,G').catch(() => []),
         fetchSummaryTargetRow(11).catch(() => DEFAULT_TARGETS_MAP.Albay),
         fetchSummaryTargetRow(17).catch(() => DEFAULT_TARGETS_MAP.Sorsogon),
