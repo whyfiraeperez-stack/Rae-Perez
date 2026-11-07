@@ -1,0 +1,13 @@
+name = "sli-dashboard"
+compatibility_date = "2026-11-01"
+
+[assets]
+directory = "./dist"
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+persist = true
