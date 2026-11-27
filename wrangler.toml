@@ -1,5 +1,5 @@
 name = "sli-dashboard"
-main = "src/worker.ts"
+main = "worker.ts"
 compatibility_date = "2026-11-01"
 
 [assets]
