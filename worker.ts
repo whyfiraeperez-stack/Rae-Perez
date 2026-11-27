@@ -2,7 +2,7 @@ import {
   fetchSliActivationPivot,
   parseSliActivationPivotTable,
   getSliPivotTabName,
-} from './services/sliPivotService';
+} from './sliPivotService';
 
 export interface Env {
   ASSETS: {
