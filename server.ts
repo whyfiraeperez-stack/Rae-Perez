@@ -6,7 +6,7 @@ import {
   fetchSliActivationPivot,
   parseSliActivationPivotTable,
   getSliPivotTabName,
-} from './src/services/sliPivotService';
+} from './sliPivotService';
 
 const PORT = 3000;
 const DATA_FILE = path.join(process.cwd(), 'data', 'saved_records.json');
